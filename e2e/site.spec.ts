@@ -51,7 +51,7 @@ test("moving between projects never reloads the page", async ({ page }) => {
         .first()
         .click();
     await expect(page).toHaveURL(/\/dockable\/$/);
-    await page.getByRole("link", { name: "Browse the examples" }).click();
+    await page.getByRole("link", { name: "Browse the 13 examples" }).click();
     await expect(page).toHaveURL(/\/dockable\/examples\/hello-layout\/$/);
     await expectReady(page.getByTestId("stage"));
     await page.getByRole("link", { name: "Docs", exact: true }).click();
@@ -61,7 +61,7 @@ test("moving between projects never reloads the page", async ({ page }) => {
     expect(await marked(page)).toBe(true);
 });
 
-test("a project's landing: the hero, its actions, a live bleed example", async ({
+test("a project's landing: the hero, its actions, a live showcase", async ({
     page,
 }) => {
     const errors = collectErrors(page);
@@ -74,17 +74,19 @@ test("a project's landing: the hero, its actions, a live bleed example", async (
         hero.getByRole("link", { name: "Read the docs" }),
     ).toHaveAttribute("href", "/dockable/docs/getting-started/installation/");
     await expect(
-        hero.getByRole("link", { name: "Browse the examples" }),
+        hero.getByRole("link", { name: "Browse the 13 examples" }),
     ).toHaveAttribute("href", "/dockable/examples/");
     await expect(hero.getByRole("link", { name: "GitHub" })).toHaveAttribute(
         "href",
         "https://github.com/fragiola/dockable",
     );
-    const bleed = page.locator('[data-variant="bleed"]');
-    await expectReady(bleed);
-    // no chrome: no toolbar, no code
-    await expect(bleed.getByTestId("toggle-code")).toHaveCount(0);
-    await expect(embed(bleed).getByRole("heading")).toHaveText("Hello layout");
+    const showcase = page.locator('[data-variant="showcase"]');
+    await expectReady(showcase);
+    // no toolbar, no code panel: the theme switcher and a link to the gallery
+    await expect(showcase.getByTestId("toggle-code")).toHaveCount(0);
+    await expect(embed(showcase).getByRole("heading")).toHaveText(
+        "Hello layout",
+    );
     await expect(page).toHaveTitle("Dockable · Fragiola");
     expect(errors).toEqual([]);
 });

@@ -4,12 +4,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectProvider } from "@/components/framework";
 import { getMDXComponents } from "@/components/mdx";
+import { ProjectFooter } from "@/components/project-footer";
 import { baseOptions, projectLinks } from "@/lib/layout.shared";
 import { getProject } from "@/lib/projects";
 import { source } from "@/lib/source";
 
 // /<slug>: the project's landing (§3.5), its docs/index.mdx in the vocabulary (typically a
-// <Hero> and an <Example variant="bleed">). The project owns the content; the site the layout.
+// <Hero>, an <Example variant="showcase"> and <Section>s), then the project's footer. The
+// project owns the content; the site the look of each piece. The page is full width: Hero and
+// Section are bands that centre their own content, everything else takes the landing's column
+// (.landing in app/globals.css).
 
 type Props = { params: Promise<{ project: string }> };
 
@@ -48,14 +52,13 @@ export default async function ProjectLanding({ params }: Props) {
                     defaultFramework: project.defaultFramework,
                 }}
             >
-                <main
-                    data-testid="landing"
-                    className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6"
-                >
-                    <DocsBody className="max-w-none">
+                {/* a div, not a <main>: HomeLayout renders the page's <main> */}
+                <div data-testid="landing" className="flex flex-1 flex-col">
+                    <DocsBody className="landing max-w-none pb-24">
                         <MDX components={getMDXComponents(slug)} />
                     </DocsBody>
-                </main>
+                </div>
+                <ProjectFooter project={project} />
             </ProjectProvider>
         </HomeLayout>
     );

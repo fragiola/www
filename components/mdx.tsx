@@ -7,19 +7,24 @@ import type { MDXComponents } from "mdx/types";
 import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { Example } from "@/components/example";
 import { Framework } from "@/components/framework";
-import { Hero } from "@/components/hero";
 import { InstallCommand } from "@/components/install-command";
+import { Feature, Features } from "@/components/landing/features";
+import { Hero, type HeroAction } from "@/components/landing/hero";
+import { Pills } from "@/components/landing/pills";
+import { Section } from "@/components/landing/section";
 import { isAppRoute, siteHref } from "@/lib/contract/links";
-import { installCommand } from "@/lib/projects";
+import { LABEL_TOKEN } from "@/lib/contract/types";
+import { getGallery, getProject, installCommand } from "@/lib/projects";
 
-// The v1 vocabulary (§3.4), and nothing else: Example, Callout, Tabs/Tab, Steps/Step,
-// Cards/Card, InstallCommand, Framework, Hero, plus Markdown with GFM and titled code blocks.
-// The build checks every page against the same list before it compiles one
-// (lib/contract/validate.ts), so a component outside it never reaches the site.
+// The vocabulary (§3.4, v1.1), and nothing else: Example, Callout, Tabs/Tab, Steps/Step,
+// Cards/Card, InstallCommand, Framework, and for the landing Hero, Section, Features/Feature,
+// Pills; plus Markdown with GFM and titled code blocks. The build checks every page against the
+// same list before it compiles one (lib/contract/validate.ts), so a component outside it never
+// reaches the site.
 //
 // Links are written base-free (§3.3) and served under /<slug>: every href goes through
 // siteHref(). A link inside the Next app navigates client-side; a file (the registry, an embed)
-// is a plain <a>.
+// is a plain <a>. An action label's {examples} is the project's example count.
 
 const CALLOUT_TYPES = { info: "info", warn: "warn", danger: "error" } as const;
 
@@ -45,6 +50,14 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
             ? value
             : siteHref(slug, value);
 
+    const withTokens = (label: string) =>
+        label.replace(LABEL_TOKEN, (token, name: string) => {
+            const project = slug === undefined ? undefined : getProject(slug);
+            return name === "examples" && project
+                ? String(getGallery(project).examples.length)
+                : token;
+        });
+
     function Link(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
         const target = href(props.href);
         if (target && !isAppRoute(target) && !target.startsWith("#")) {
@@ -69,12 +82,19 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
         Hero: ({ actions, ...props }: ComponentProps<typeof Hero>) => (
             <Hero
                 {...props}
-                actions={actions?.map((action) => ({
-                    ...action,
-                    href: href(action.href) ?? action.href,
-                }))}
+                actions={actions?.map(
+                    (action): HeroAction => ({
+                        ...action,
+                        label: withTokens(action.label),
+                        href: href(action.href) ?? action.href,
+                    }),
+                )}
             />
         ),
+        Section,
+        Features,
+        Feature,
+        Pills,
         InstallCommand: ({ item }: { item: string }) => (
             <InstallCommand command={installCommand([item])} />
         ),

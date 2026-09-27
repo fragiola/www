@@ -7,5 +7,6 @@
     "defaultFramework": "react",
     "registry": {
         "namespace": "@fragiola"
-    }
+    },
+    "repository": "https://github.com/fragiola/ui"
 }

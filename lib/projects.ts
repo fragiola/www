@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { Root } from "fumadocs-core/page-tree";
 import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
+import { readFrontmatter } from "@/lib/contract/mdx";
 import type {
     DocsConfig,
     ExamplesConfig,
@@ -12,11 +13,12 @@ import type {
     RegistryIndex,
 } from "@/lib/contract/types";
 
-// Build-time reads of .sources/ (the exports, already checked by scripts/prepare-site.ts).
-// Server only. What reaches the client is the small, serializable shapes at the bottom.
+// Build-time reads of .sources/ (the exports, already checked by scripts/prepare-site.ts), or of
+// $FRAGIOLA_SOURCES (.sources-fixtures/ for the tests' build, scripts/build.ts). Server only.
+// What reaches the client is the small, serializable shapes at the bottom.
 
 const ROOT = process.cwd();
-const SOURCES = join(ROOT, ".sources");
+const SOURCES = resolve(ROOT, process.env.FRAGIOLA_SOURCES ?? ".sources");
 
 function readJson<T>(file: string): T {
     return JSON.parse(readFileSync(file, "utf-8")) as T;
@@ -51,7 +53,8 @@ export function getProjects(): Project[] {
                         ),
                     ]),
                 ),
-                repoUrl: entry.repo.replace(/\.git$/, ""),
+                // project.json's repository (v1.1), else the repo projects.json clones
+                repoUrl: info.repository ?? entry.repo.replace(/\.git$/, ""),
             };
         },
     );
@@ -72,31 +75,65 @@ export function firstPageUrl(project: Project): string {
     return `/${project.slug}/`;
 }
 
-/** The sidebar for one framework: config.json's sections in order, other frameworks' left out. */
+/** A page's frontmatter description: the page footer's next/previous links show it. */
+function pageDescription(slug: string, path: string): string | undefined {
+    const file = join(SOURCES, slug, "docs", `${path}.mdx`);
+    const description = readFrontmatter(
+        readFileSync(file, "utf-8"),
+    )?.description;
+    return typeof description === "string" ? description : undefined;
+}
+
+/**
+ * The sidebar for one framework: config.json's sections in order, other frameworks' left out.
+ * Each section is a folder, so the page's breadcrumb names it (§3.1): `collapsible` folds it,
+ * `defaultOpen` opens it on load, and the section of the current page is always open
+ * (Fumadocs opens a folder holding the active page). A section that does not fold is always
+ * open.
+ */
 export function getPageTree(project: Project, framework: string): Root {
+    const $id = `${project.slug}:${framework}`;
     return {
         // Fumadocs memoizes the tree by $id: one per framework, or switching keeps the first
-        $id: `${project.slug}:${framework}`,
+        $id,
         name: project.title,
         children: project.docs.sections
             .filter((s) => !s.framework || s.framework === framework)
-            .flatMap((section) => [
-                { type: "separator" as const, name: section.label },
-                ...section.pages.map((entry) =>
-                    "path" in entry
-                        ? {
-                              type: "page" as const,
-                              name: entry.label,
-                              url: docsHref(project.slug, entry.path),
-                          }
-                        : {
-                              type: "page" as const,
-                              name: entry.label,
-                              url: entry.href,
-                              external: true,
-                          },
-                ),
-            ]),
+            .map((section, index) => ({
+                $id: `${$id}:${index}`,
+                type: "folder" as const,
+                name: section.label,
+                collapsible: section.collapsible ?? false,
+                ...(section.collapsible
+                    ? { defaultOpen: section.defaultOpen ?? false }
+                    : {}),
+                children: section.pages.map((entry) => {
+                    if (!("path" in entry)) {
+                        return {
+                            type: "page" as const,
+                            name: entry.label,
+                            url: entry.href,
+                            external: true,
+                        };
+                    }
+                    const description = pageDescription(
+                        project.slug,
+                        entry.path,
+                    );
+                    return {
+                        type: "page" as const,
+                        name: entry.label,
+                        // without the trailing slash: Fumadocs finds the current page (the
+                        // breadcrumb, the open section) by comparing it with the pathname, which
+                        // it normalizes without one. Next adds it back when it navigates.
+                        url: docsHref(project.slug, entry.path).replace(
+                            /\/$/,
+                            "",
+                        ),
+                        ...(description ? { description } : {}),
+                    };
+                }),
+            })),
     };
 }
 

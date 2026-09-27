@@ -1,7 +1,7 @@
 /* Import order is load-bearing (the same as Fragiola UI's own site):
    1. Tailwind
    2. Fumadocs UI theme + preset (declares --color-fd-* in @theme)
-   3. Fragiola's theme and palettes, vendored from .sources/ui/r by
+   3. Fragiola's theme and palettes, vendored from <sources>/ui/r by
       scripts/prepare-site.ts (global.css resets --color-*, which deletes the
       fd tokens just declared)
    4. The fd → palette bridge, copied from ui/apps/www/app/globals.css:
@@ -78,7 +78,72 @@
     --color-fd-diff-add-symbol: rgb(10, 200, 100);
 }
 
+/* ─── Landings (§3.4, §3.5) ──────────────────────────────────────────────
+   The pieces of a project's landing (components/landing/), ported from Fragiola
+   UI's own landing (ui/apps/www): the same look for every project. */
+
+/* The landing's column. Hero and Section are full-width bands (a border, a
+   backdrop) that centre their own content; anything else at the top level of
+   the page (prose, an <Example>, <Features>, <Cards>…) takes the same column:
+   the bands' max-w-5xl (64rem) less their px-6 on each side. */
+.landing > :not(.landing-band) {
+    width: min(61rem, 100% - 3rem);
+    margin-inline: auto;
+}
+
+/* The hero's background grid. Both axes are drawn, so the pattern is
+   symmetric and needs no RTL treatment. */
+.landing-grid {
+    background-image:
+        linear-gradient(to right, var(--palette-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--palette-line) 1px, transparent 1px);
+    background-size: 3.5rem 3.5rem;
+}
+
+/* Scroll reveal — additive by construction. The default state is fully
+   visible; the animation exists only inside @supports, and only when motion
+   is not reduced: where scroll-driven animations are not implemented, an
+   element stuck at opacity 0 would be a blank landing. */
+@media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+        .landing-reveal {
+            animation: landing-reveal linear both;
+            animation-timeline: view();
+            /* Finishes early in the entry range, so the last section before
+               the footer completes while scroll room is left. */
+            animation-range: entry 0% entry 35%;
+        }
+    }
+}
+
+@keyframes landing-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(1.5rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* <Features numbered>: 01, 02, … from a counter, so a <Feature> needs no
+   index of its own. */
+.landing-features[data-numbered] {
+    counter-reset: landing-feature;
+}
+.landing-features[data-numbered] > li {
+    counter-increment: landing-feature;
+}
+.landing-features:not([data-numbered]) [data-feature-number] {
+    display: none;
+}
+.landing-features[data-numbered] > li [data-feature-number]::before {
+    content: counter(landing-feature, decimal-leading-zero);
+}
+
 @source "../node_modules/fumadocs-ui/dist/**/*.js";
 @source "../components/**/*.{ts,tsx}";
 @source "../app/**/*.{ts,tsx}";
 @source "../.sources/*/docs/**/*.mdx";
+@source "../.sources-fixtures/*/docs/**/*.mdx";

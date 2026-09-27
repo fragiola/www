@@ -12,6 +12,7 @@ import { useState } from "react";
 import { ExampleFrame } from "@/components/example-frame";
 import { defaultTheme, useSiteScheme } from "@/components/example-theme";
 import { useFramework } from "@/components/framework";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, ThemeSummary } from "@/lib/projects";
@@ -22,11 +23,14 @@ const CodePanel = dynamic(
     { ssr: false },
 );
 
-// <Example> in a page (§3.4), in its three variants:
+// <Example> in a page (§3.4), in its four variants:
 //
 //   inline (default)  the embed, a toolbar (reset, code, the gallery) and a toggleable code panel
 //   bleed             the embed alone, full width, no chrome (landings)
 //   card              a link card to the gallery
+//   showcase          (v1.1) the embed at full content width under the project's theme
+//                     switcher (swatches, as in the gallery), after an optional label, with
+//                     "See the code →" to the gallery entry in the chosen theme, code open
 //
 // The framework is the site's choice unless the page pins one; an example the chosen framework
 // does not have says so. The theme is the page's `theme`, else the site scheme's default, and
@@ -36,12 +40,17 @@ export interface ExampleBlockProps {
     slug: string;
     id: string;
     variants: Record<string, ExampleVariant>;
-    themes: Pick<ThemeSummary, "name" | "scheme">[];
+    themes: Pick<
+        ThemeSummary,
+        "name" | "title" | "description" | "scheme" | "swatch"
+    >[];
     /** `framework` on the tag: this framework only */
     framework?: string;
     theme?: string;
     height?: number;
-    variant: "inline" | "bleed" | "card";
+    variant: "inline" | "bleed" | "card" | "showcase";
+    /** showcase: the words before the theme switcher */
+    label?: string;
 }
 
 const toolButton =
@@ -56,16 +65,21 @@ export function ExampleBlock({
     theme: fixedTheme,
     height,
     variant: kind,
+    label,
 }: ExampleBlockProps) {
     const chosen = useFramework();
     const framework = pinned ?? chosen;
     const scheme = useSiteScheme();
     const [code, setCode] = useState(false);
     const [resetKey, setResetKey] = useState(0);
+    // showcase: the theme the reader picked, over the page's and the site's
+    const [picked, setPicked] = useState<string>();
     const gallery = `/${slug}/examples/${id}/`;
     const variant = variants[framework];
     const theme =
-        fixedTheme ?? (scheme ? defaultTheme(themes, scheme) : undefined);
+        picked ??
+        fixedTheme ??
+        (scheme ? defaultTheme(themes, scheme) : undefined);
 
     if (kind === "card") {
         const shown = variant ?? Object.values(variants)[0];
@@ -122,6 +136,45 @@ export function ExampleBlock({
             lazy
         />
     );
+
+    if (kind === "showcase") {
+        const query = new URLSearchParams({
+            ...(theme ? { theme } : {}),
+            code: "1",
+            ...(pinned ? { framework: pinned } : {}),
+        });
+        return (
+            <div
+                data-example={id}
+                data-variant="showcase"
+                className="not-prose my-10 flex flex-col gap-3"
+            >
+                <div className="flex flex-wrap items-center gap-1">
+                    {label ? (
+                        <span className="pe-2 text-palette-accent/85 text-sm">
+                            {label}
+                        </span>
+                    ) : null}
+                    <ThemeSwitcher
+                        themes={themes}
+                        value={theme}
+                        onChange={setPicked}
+                        buttonClassName="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-palette-accent/85 text-xs outline-none hover:bg-palette-soft focus-visible:ring-2 focus-visible:ring-palette-ring aria-pressed:bg-palette-soft aria-pressed:text-palette-contrast"
+                    />
+                    <Link
+                        href={`${gallery}?${query}`}
+                        data-testid="see-the-code"
+                        className="ms-auto text-palette-contrast text-sm underline-offset-4 hover:underline"
+                    >
+                        See the code →
+                    </Link>
+                </div>
+                <div className="palette-surface overflow-hidden rounded-xl border border-palette-line bg-palette-base text-palette-contrast shadow-lg">
+                    {frame}
+                </div>
+            </div>
+        );
+    }
 
     if (kind === "bleed") {
         return (

@@ -1,7 +1,10 @@
-// The site export contract, v1 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site.
+// The site export contract, v1.1 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 is
+// additive: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
+/** The revision www implements, as the messages print it. */
+export const CONTRACT_REVISION = "1.1";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -12,6 +15,8 @@ export interface ProjectInfo {
     frameworks: string[];
     defaultFramework: string;
     registry?: { namespace: string };
+    /** v1.1: the repository, linked from the header and the footer */
+    repository?: string;
 }
 
 /** An entry of a sidebar section: a page of the export, or an external link. */
@@ -24,6 +29,10 @@ export interface DocsConfig {
     sections: {
         label: string;
         framework?: string;
+        /** v1.1: a folder that folds (default false: always open) */
+        collapsible?: boolean;
+        /** v1.1: a collapsible section open on load (the current page's section always is) */
+        defaultOpen?: boolean;
         pages: SidebarEntry[];
     }[];
 }
@@ -97,6 +106,22 @@ export interface RegistryIndex {
     homepage?: string;
     items: RegistryItem[];
 }
+
+/** A landing call to action (§3.4): `<Hero actions>`. */
+export interface Action {
+    label: string;
+    href: string;
+    variant?: ActionVariant;
+    icon?: ActionIcon;
+}
+
+export const ACTION_VARIANTS = ["primary", "secondary", "ghost"] as const;
+export type ActionVariant = (typeof ACTION_VARIANTS)[number];
+export const ACTION_ICONS = ["arrow", "external"] as const;
+export type ActionIcon = (typeof ACTION_ICONS)[number];
+
+/** The tokens an action label may carry: `{examples}`, the project's example count. */
+export const LABEL_TOKEN = /\{([^{}]*)\}/g;
 
 /** An entry of `projects.json` (§9). */
 export interface ProjectEntry {

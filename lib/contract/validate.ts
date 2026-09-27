@@ -15,9 +15,13 @@ import { join, relative, sep } from "node:path";
 import { parseLink } from "./links.ts";
 import { type PageScan, type PropValue, scanPage, type Tag } from "./mdx.ts";
 import {
+    ACTION_ICONS,
+    ACTION_VARIANTS,
     CONTRACT,
+    CONTRACT_REVISION,
     type DocsConfig,
     type ExamplesConfig,
+    LABEL_TOKEN,
     type Manifest,
     type ProjectInfo,
     type RegistryIndex,
@@ -46,10 +50,16 @@ export interface ExportRead {
 /** Slugs the site uses for itself. */
 const RESERVED_SLUGS = new Set(["r", "api", "_next", "docs", "examples"]);
 
-/** The v1 vocabulary (§3.4): each component, the props it takes and the ones it needs. */
-const VOCABULARY: Record<string, { props: string[]; required: string[] }> = {
+/**
+ * The vocabulary (§3.4, v1.1): each component, the props it takes and the ones it needs, and
+ * whether it belongs on the landing only.
+ */
+const VOCABULARY: Record<
+    string,
+    { props: string[]; required: string[]; landing?: true }
+> = {
     Example: {
-        props: ["id", "framework", "theme", "height", "variant"],
+        props: ["id", "framework", "theme", "height", "variant", "label"],
         required: ["id"],
     },
     Callout: { props: ["type", "title"], required: ["type"] },
@@ -65,12 +75,24 @@ const VOCABULARY: Record<string, { props: string[]; required: string[] }> = {
     InstallCommand: { props: ["item"], required: ["item"] },
     Framework: { props: ["name"], required: ["name"] },
     Hero: {
-        props: ["title", "description", "actions"],
+        props: ["title", "description", "eyebrow", "background", "actions"],
         required: ["title"],
+        landing: true,
     },
+    Section: {
+        props: ["title", "eyebrow", "description"],
+        required: ["title"],
+        landing: true,
+    },
+    Features: { props: ["columns", "numbered"], required: [], landing: true },
+    Feature: { props: ["title"], required: ["title"], landing: true },
+    Pills: { props: ["items", "strike"], required: ["items"], landing: true },
 };
 
-const VARIANTS = ["inline", "bleed", "card"];
+const VARIANTS = ["inline", "bleed", "card", "showcase"];
+const BACKGROUNDS = ["none", "grid"];
+const COLUMNS = [2, 3, 4];
+const ACTION_KEYS = ["label", "href", "variant", "icon"];
 const CALLOUTS = ["info", "warn", "danger"];
 const LAYOUTS = ["fill", "flow"];
 const SCHEMES = ["light", "dark"];
@@ -173,7 +195,7 @@ function checkProject(
         problems.push({
             file,
             line: at("contract"),
-            message: `contract ${JSON.stringify(info.contract)}: www implements contract ${CONTRACT}`,
+            message: `contract ${JSON.stringify(info.contract)}: www implements contract ${CONTRACT} (v${CONTRACT_REVISION})`,
         });
         return undefined;
     }
@@ -213,6 +235,19 @@ function checkProject(
             file,
             line: at("defaultFramework"),
             message: `defaultFramework "${info.defaultFramework}" is not in frameworks`,
+        });
+    }
+    if (
+        info.repository !== undefined &&
+        !(
+            typeof info.repository === "string" &&
+            /^https:\/\/\S+$/.test(info.repository)
+        )
+    ) {
+        problems.push({
+            file,
+            line: at("repository"),
+            message: `repository must be an https:// URL (got ${JSON.stringify(info.repository)})`,
         });
     }
     if (
@@ -545,6 +580,25 @@ function checkConfig(context: Context, config: JsonFile<DocsConfig>) {
                 message: `section "${section.label}": framework "${section.framework}" is not in project.json`,
             });
         }
+        for (const key of ["collapsible", "defaultOpen"] as const) {
+            if (
+                section[key] !== undefined &&
+                typeof section[key] !== "boolean"
+            ) {
+                problems.push({
+                    file,
+                    line: config.lineOf(key) ?? sectionLine,
+                    message: `section "${section.label}": ${key} is true or false (§3.1)`,
+                });
+            }
+        }
+        if (section.defaultOpen !== undefined && section.collapsible !== true) {
+            problems.push({
+                file,
+                line: config.lineOf("defaultOpen") ?? sectionLine,
+                message: `section "${section.label}": defaultOpen needs collapsible: true (a section that does not fold is always open)`,
+            });
+        }
         if (!Array.isArray(section.pages)) {
             problems.push({
                 file,
@@ -675,9 +729,12 @@ function checkTag(context: Context, page: string, tag: Tag) {
     if (!spec) {
         at(
             tag,
-            `<${tag.name}> is not in the v1 vocabulary (§3.4): Example, Callout, Tabs/Tab, Steps/Step, Cards/Card, InstallCommand, Framework, Hero`,
+            `<${tag.name}> is not in the vocabulary (§3.4): ${Object.keys(VOCABULARY).join(", ")}`,
         );
         return;
+    }
+    if (spec.landing && page !== "index") {
+        at(tag, `<${tag.name}> belongs on the landing only (§3.4)`);
     }
     for (const spread of tag.spreads) {
         at(spread, `<${tag.name}> takes no {...spread} props`);
@@ -697,6 +754,20 @@ function checkTag(context: Context, page: string, tag: Tag) {
     }
     const prop = (name: string) => tag.props.get(name);
     const string = (name: string) => stringOf(prop(name));
+    /** a bare attribute (`numbered`) or {true}/{false} */
+    const checkBoolean = (name: string) => {
+        const value = prop(name);
+        if (
+            value &&
+            value.kind !== "boolean" &&
+            !(value.kind === "expression" && typeof value.value === "boolean")
+        ) {
+            at(
+                value,
+                `<${tag.name} ${name}> is a flag: write ${name} (or ${name}={false})`,
+            );
+        }
+    };
 
     switch (tag.name) {
         case "Example": {
@@ -738,8 +809,14 @@ function checkTag(context: Context, page: string, tag: Tag) {
             if (variant && !VARIANTS.includes(stringOf(variant) ?? "")) {
                 at(
                     variant,
-                    `<Example variant="${stringOf(variant)}">: inline, bleed or card`,
+                    `<Example variant="${stringOf(variant)}">: inline, bleed, card or showcase`,
                 );
+            }
+            const label = prop("label");
+            if (label && string("variant") !== "showcase") {
+                at(label, '<Example label> goes with variant="showcase"');
+            } else if (label && !isString(stringOf(label))) {
+                at(label, "<Example label> takes a string");
             }
             const height = prop("height");
             if (
@@ -807,21 +884,111 @@ function checkTag(context: Context, page: string, tag: Tag) {
             break;
         }
         case "Hero": {
-            if (page !== "index") at(tag, "<Hero> belongs on the landing only");
-            const actions = prop("actions");
+            const background = prop("background");
             if (
-                actions &&
-                !(
-                    actions.kind === "expression" &&
-                    Array.isArray(actions.value) &&
-                    actions.value.every(
-                        (action) =>
-                            isString((action as { label?: unknown })?.label) &&
-                            isString((action as { href?: unknown })?.href),
+                background &&
+                !BACKGROUNDS.includes(stringOf(background) ?? "")
+            ) {
+                at(
+                    background,
+                    `<Hero background="${stringOf(background)}">: none or grid`,
+                );
+            }
+            const actions = prop("actions");
+            if (!actions) break;
+            if (
+                !(actions.kind === "expression" && Array.isArray(actions.value))
+            ) {
+                at(
+                    actions,
+                    "<Hero actions> takes a list of { label, href, variant?, icon? }",
+                );
+                break;
+            }
+            for (const [index, value] of actions.value.entries()) {
+                const action = (value ?? {}) as Record<string, unknown>;
+                const which = `<Hero actions>[${index}]`;
+                if (!isString(action.label) || !isString(action.href)) {
+                    at(actions, `${which} needs a label and an href`);
+                    continue;
+                }
+                for (const key of Object.keys(action)) {
+                    if (!ACTION_KEYS.includes(key)) {
+                        at(actions, `${which} takes no "${key}"`);
+                    }
+                }
+                if (
+                    action.variant !== undefined &&
+                    !(ACTION_VARIANTS as readonly unknown[]).includes(
+                        action.variant,
                     )
+                ) {
+                    at(
+                        actions,
+                        `${which}: variant ${JSON.stringify(action.variant)} (${ACTION_VARIANTS.join(", ")})`,
+                    );
+                }
+                if (
+                    action.icon !== undefined &&
+                    !(ACTION_ICONS as readonly unknown[]).includes(action.icon)
+                ) {
+                    at(
+                        actions,
+                        `${which}: icon ${JSON.stringify(action.icon)} (${ACTION_ICONS.join(", ")})`,
+                    );
+                }
+                for (const [, token] of action.label.matchAll(LABEL_TOKEN)) {
+                    if (token !== "examples") {
+                        at(
+                            actions,
+                            `${which}: "{${token}}" is not a label token (only {examples})`,
+                        );
+                    } else if (context.exampleIds.size === 0) {
+                        at(
+                            actions,
+                            `${which}: {examples}, but the project has no examples`,
+                        );
+                    }
+                }
+            }
+            break;
+        }
+        case "Features": {
+            checkBoolean("numbered");
+            const columns = prop("columns");
+            if (
+                columns &&
+                !(
+                    columns.kind === "expression" &&
+                    COLUMNS.includes(columns.value as number)
                 )
             ) {
-                at(actions, "<Hero actions> takes a list of { label, href }");
+                at(columns, "<Features columns> is {2}, {3} or {4}");
+            }
+            break;
+        }
+        case "Feature": {
+            if (tag.within !== "Features") {
+                at(tag, "<Feature> goes inside <Features>");
+            }
+            break;
+        }
+        case "Pills": {
+            checkBoolean("strike");
+            const items = prop("items");
+            if (
+                items &&
+                !(
+                    items.kind === "expression" &&
+                    isStringArray(items.value) &&
+                    items.value.length > 0 &&
+                    items.value.every(isString)
+                )
+            ) {
+                at(
+                    items,
+                    '<Pills items> takes a list of strings: items={["CSS", "Icons"]}',
+                );
             }
             break;
         }
@@ -1093,7 +1260,7 @@ export function validateAll(
     if (lines.length === 0) return reads;
     for (const line of lines) console.error(`✗ ${line}`);
     console.error(
-        `\n${lines.length} problem(s) against the site export contract v${CONTRACT} (CONTRACT.md §8)`,
+        `\n${lines.length} problem(s) against the site export contract v${CONTRACT_REVISION} (CONTRACT.md §8)`,
     );
     return undefined;
 }

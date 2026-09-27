@@ -11,10 +11,14 @@
         },
         {
             "label": "Atoms",
+            "collapsible": true,
+            "defaultOpen": true,
             "pages": [{ "label": "Clickable", "path": "atoms/clickable" }]
         },
         {
             "label": "Menus",
+            "collapsible": true,
+            "defaultOpen": false,
             "pages": [
                 { "label": "Dropdown Menu", "path": "menus/dropdown-menu" }
             ]

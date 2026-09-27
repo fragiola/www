@@ -5,27 +5,57 @@ layout: "landing"
 ---
 
 <Hero
+    eyebrow="Base UI · Tailwind v4 · copy & paste"
+    background="grid"
     title="Components that take the colour you give them."
     description="A copy-paste component library built on Base UI and Tailwind v4."
     actions={[
-        { label: "Read the documentation", href: "/docs/getting-started/installation" },
-        { label: "Examples", href: "/examples/clickable" },
+        { label: "Read the documentation", href: "/docs/getting-started/installation", variant: "primary", icon: "arrow" },
+        { label: "Examples", href: "/examples/clickable", variant: "secondary" },
     ]}
 />
 
-## Six palettes, one surface
+<Section
+    eyebrow="Why it exists"
+    title="Three problems, three decisions"
+    description="Fragiola starts from shadcn/ui. Three things about that baseline stopped scaling."
+>
+    <Features columns={3} numbered>
+        <Feature title="Colour you can scope">
+            Colour is applied with a class, so a page, a card or one button can carry its own palette.
+        </Feature>
+        <Feature title="Styles shared, not pasted">
+            Components that share a visual skeleton share the CSS that draws it.
+        </Feature>
+        <Feature title="One component per idea">
+            Families of components are built from one factory.
+        </Feature>
+    </Features>
+</Section>
 
-<Example id="clickable" variant="bleed" />
+<Section
+    eyebrow="The demonstration"
+    title="Six palettes, one surface"
+    description="One neutral floor, six palettes, one component."
+>
+    <Example id="clickable" variant="bleed" />
+</Section>
 
-## Install a component
+<Section eyebrow="Get started" title="Install a component">
+    Add the `@fragiola` registry, then install with the shadcn CLI:
 
-<InstallCommand item="clickable" />
+    <InstallCommand item="clickable" />
 
-<Cards>
-    <Card
-        title="Installation"
-        href="/docs/getting-started/installation#add-the-registry"
-        description="Add the registry, install an item, and wire the CSS."
-    />
-    <Card title="Dropdown Menu" href="/docs/menus/dropdown-menu" />
-</Cards>
+    ```tsx title="app.tsx"
+    <Clickable.Button className="palette-danger">Delete</Clickable.Button>
+    ```
+
+    <Cards>
+        <Card
+            title="Installation"
+            href="/docs/getting-started/installation#add-the-registry"
+            description="Add the registry, install an item, and wire the CSS."
+        />
+        <Card title="Dropdown Menu" href="/docs/menus/dropdown-menu" />
+    </Cards>
+</Section>

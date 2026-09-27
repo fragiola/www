@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ProjectDocsLayout } from "@/components/project-docs-layout";
+import { ProjectFooter } from "@/components/project-footer";
 import { baseOptions, projectLinks } from "@/lib/layout.shared";
 import { getPageTree, getProject } from "@/lib/projects";
 
@@ -36,6 +37,12 @@ export default async function Layout({
             }}
         >
             {children}
+            {/* under the page and its table of contents: a fourth row of Fumadocs' docs grid,
+                whose three named rows the sidebar, the header and the page take */}
+            <ProjectFooter
+                project={project}
+                className="[grid-column:3/-1] [grid-row:4]"
+            />
         </ProjectDocsLayout>
     );
 }

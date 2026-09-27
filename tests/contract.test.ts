@@ -157,14 +157,14 @@ describe("vocabulary (§3.4)", () => {
     test("a component outside the vocabulary", () => {
         const line = append(page, '<Badge tone="red">new</Badge>');
         expect(problems()).toEqual([
-            `${page}:${line}:1: <Badge> is not in the v1 vocabulary (§3.4): Example, Callout, Tabs/Tab, Steps/Step, Cards/Card, InstallCommand, Framework, Hero`,
+            `${page}:${line}:1: <Badge> is not in the vocabulary (§3.4): Example, Callout, Tabs, Tab, Steps, Step, Cards, Card, InstallCommand, Framework, Hero, Section, Features, Feature, Pills`,
         ]);
     });
 
     test("an HTML element is not in the vocabulary either", () => {
         const line = append(page, "<div>raw</div>");
         expect(problems()[0]).toMatch(
-            new RegExp(`^${page}:${line}:1: <div> is not in the v1 vocabulary`),
+            new RegExp(`^${page}:${line}:1: <div> is not in the vocabulary`),
         );
     });
 
@@ -174,7 +174,7 @@ describe("vocabulary (§3.4)", () => {
             'import { X } from "x";\n\n{1 + 1}\n\n{/* a comment is fine */}',
         );
         expect(problems()).toEqual([
-            `${page}:${line}:1: import/export is not allowed: pages use the v1 vocabulary only (§3.4)`,
+            `${page}:${line}:1: import/export is not allowed: pages use the vocabulary only (§3.4)`,
             `${page}:${line + 2}:1: the expression {1 + 1} is not allowed: only {/* comments */}`,
         ]);
     });
@@ -193,7 +193,7 @@ describe("vocabulary (§3.4)", () => {
         expect(problems()).toEqual([
             `${page}:${line}:1: <Example id="nope">: no such example in the manifests`,
             `${page}:${line + 1}:25: <Example theme="sepia">: not in examples.json`,
-            `${page}:${line + 2}:25: <Example variant="huge">: inline, bleed or card`,
+            `${page}:${line + 2}:25: <Example variant="huge">: inline, bleed, card or showcase`,
             `${page}:${line + 3}:25: <Example framework="vue">: not a framework of project.json`,
             `${page}:${line + 4}:25: <Example height> takes a positive number: height={480}`,
         ]);
@@ -237,7 +237,7 @@ describe("vocabulary (§3.4)", () => {
             `${page}:${line + 1}:1: <Callout> needs "type"`,
             `${page}:${line + 2}:7: <Tabs items={items}>: a prop takes a literal value`,
             `${page}:${line + 2}:7: <Tabs items> takes a list of strings: items={["a", "b"]}`,
-            `${page}:${line + 5}:1: <Hero> belongs on the landing only`,
+            `${page}:${line + 5}:1: <Hero> belongs on the landing only (§3.4)`,
         ]);
     });
 
@@ -257,6 +257,123 @@ describe("vocabulary (§3.4)", () => {
         expect(problems()[0]).toMatch(
             new RegExp(`^${page}:${line}(:\\d+)?: MDX does not parse:`),
         );
+    });
+});
+
+describe("landing vocabulary (§3.4, §3.5, v1.1)", () => {
+    const landing = "dockable/docs/index.mdx";
+
+    test("the fixtures' landings use every piece", () => {
+        const source = readFileSync(path("ui/docs/index.mdx"), "utf-8");
+        for (const piece of [
+            "eyebrow=",
+            'background="grid"',
+            'variant: "primary"',
+            'icon: "arrow"',
+            "<Section",
+            "<Features columns={3} numbered>",
+            "<Feature ",
+        ]) {
+            expect(source).toContain(piece);
+        }
+        const dockable = readFileSync(path(landing), "utf-8");
+        for (const piece of [
+            "{examples}",
+            'variant="showcase"',
+            "label=",
+            "<Features columns={4}>",
+            "<Pills strike",
+        ]) {
+            expect(dockable).toContain(piece);
+        }
+        expect(problems()).toEqual([]);
+    });
+
+    test("Hero: background, and each action's keys, variant, icon and label tokens", () => {
+        const line = append(
+            landing,
+            [
+                '<Hero title="x" background="dots" actions={[',
+                '    { label: "a", href: "/", variant: "loud" },',
+                '    { label: "b", href: "/", icon: "star", target: "_blank" },',
+                '    { label: "{pages} pages", href: "/" },',
+                "]} />",
+            ].join("\n"),
+        );
+        expect(problems()).toEqual([
+            `${landing}:${line}:17: <Hero background="dots">: none or grid`,
+            `${landing}:${line}:35: <Hero actions>[0]: variant "loud" (primary, secondary, ghost)`,
+            `${landing}:${line}:35: <Hero actions>[1] takes no "target"`,
+            `${landing}:${line}:35: <Hero actions>[1]: icon "star" (arrow, external)`,
+            `${landing}:${line}:35: <Hero actions>[2]: "{pages}" is not a label token (only {examples})`,
+        ]);
+    });
+
+    test("{examples} needs examples", () => {
+        rmSync(path("dockable/embed"), { recursive: true });
+        editJson<{ frameworks: string[] }>("dockable/project.json", () => {});
+        expect(problems().filter((p) => p.includes("{examples}"))).toEqual([
+            expect.stringMatching(
+                /^dockable\/docs\/index\.mdx:\d+:\d+: <Hero actions>\[1\]: \{examples\}, but the project has no examples$/,
+            ),
+        ]);
+    });
+
+    test("Features, Feature, Pills and Section: props, nesting, the landing only", () => {
+        const line = append(
+            landing,
+            [
+                '<Features columns={5} numbered="yes">',
+                '    <Feature title="a">a</Feature>',
+                "</Features>",
+                '<Feature title="stray">b</Feature>',
+                '<Pills items="CSS" strike={1} />',
+                '<Section eyebrow="no title">x</Section>',
+            ].join("\n"),
+        );
+        const page = "ui/docs/atoms/clickable.mdx";
+        const other = append(page, '<Pills items={["a"]} />');
+        expect(problems()).toEqual([
+            `${page}:${other}:1: <Pills> belongs on the landing only (§3.4)`,
+            `${landing}:${line}:23: <Features numbered> is a flag: write numbered (or numbered={false})`,
+            `${landing}:${line}:11: <Features columns> is {2}, {3} or {4}`,
+            `${landing}:${line + 3}:1: <Feature> goes inside <Features>`,
+            `${landing}:${line + 4}:20: <Pills strike> is a flag: write strike (or strike={false})`,
+            `${landing}:${line + 4}:8: <Pills items> takes a list of strings: items={["CSS", "Icons"]}`,
+            `${landing}:${line + 5}:1: <Section> needs "title"`,
+        ]);
+    });
+
+    test("<Example label> goes with the showcase", () => {
+        const line = append(
+            landing,
+            '<Example id="hello-layout" label="Themes:" />',
+        );
+        expect(problems()).toEqual([
+            `${landing}:${line}:28: <Example label> goes with variant="showcase"`,
+        ]);
+    });
+
+    test("project.json repository, and the sidebar's collapsible sections", () => {
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.repository = "git@github.com:fragiola/ui.git";
+        });
+        editJson<{
+            sections: { collapsible?: unknown; defaultOpen?: unknown }[];
+        }>("dockable/docs/config.json", (config) => {
+            const [first, second] = config.sections;
+            if (first) first.collapsible = "yes";
+            if (second) second.defaultOpen = true;
+        });
+        expect(problems()).toEqual([
+            'ui/project.json:13: repository must be an https:// URL (got "git@github.com:fragiola/ui.git")',
+            expect.stringMatching(
+                /^dockable\/docs\/config\.json:\d+: section "Getting started": collapsible is true or false \(§3\.1\)$/,
+            ),
+            expect.stringMatching(
+                /^dockable\/docs\/config\.json:\d+: section "Guides": defaultOpen needs collapsible: true/,
+            ),
+        ]);
     });
 });
 
@@ -316,7 +433,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.1)",
         ]);
     });
 

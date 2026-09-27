@@ -34,6 +34,8 @@ export type PropValue =
 
 export interface Tag extends Place {
     name: string;
+    /** the nearest enclosing component, if any (`Features` for a `<Feature>`) */
+    within?: string;
     props: Map<string, PropValue & Place>;
     /** `{...spread}` props, which the vocabulary does not take */
     spreads: Place[];
@@ -63,6 +65,25 @@ export interface PageScan {
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
 const processor = createProcessor({ remarkPlugins: [remarkGfm] });
+
+/**
+ * A page's frontmatter fields, without parsing the page (the site's sidebar reads each page's
+ * description). Undefined when there is none or it does not parse: the checks report that.
+ */
+export function readFrontmatter(
+    source: string,
+): Record<string, unknown> | undefined {
+    const yaml = FRONTMATTER.exec(source)?.[1];
+    if (yaml === undefined) return undefined;
+    try {
+        const data = parseYaml(yaml) as unknown;
+        return data && typeof data === "object" && !Array.isArray(data)
+            ? (data as Record<string, unknown>)
+            : undefined;
+    } catch {
+        return undefined;
+    }
+}
 
 /** Replaces the frontmatter block with as many empty lines, so positions stay the file's. */
 function splitFrontmatter(source: string): {
@@ -284,6 +305,22 @@ export function scanPage(source: string): PageScan {
     }
 
     const slugger = new GithubSlugger();
+    // the nearest enclosing component of each component: set by the ancestor, which the visit
+    // (preorder) reaches first
+    const within = new Map<Nodes, string>();
+    const markDescendants = (node: Nodes, name: string) => {
+        if (!("children" in node)) return;
+        for (const child of node.children as Nodes[]) {
+            if (
+                child.type === "mdxJsxFlowElement" ||
+                child.type === "mdxJsxTextElement"
+            ) {
+                within.set(child, name);
+            } else {
+                markDescendants(child, name);
+            }
+        }
+    };
     visit(tree, (node: Nodes) => {
         switch (node.type) {
             case "heading":
@@ -314,7 +351,7 @@ export function scanPage(source: string): PageScan {
                 scan.problems.push({
                     ...placeOf(node),
                     message:
-                        "import/export is not allowed: pages use the v1 vocabulary only (§3.4)",
+                        "import/export is not allowed: pages use the vocabulary only (§3.4)",
                 });
                 break;
             case "mdxFlowExpression":
@@ -338,11 +375,14 @@ export function scanPage(source: string): PageScan {
                     });
                     break;
                 }
+                const parent = within.get(node);
                 scan.tags.push({
                     name: node.name,
+                    ...(parent ? { within: parent } : {}),
                     ...place,
                     ...readProps(node),
                 });
+                markDescendants(node, node.name);
                 if (node.name === "Card") {
                     const href = node.attributes.find(
                         (a): a is MdxJsxAttribute =>

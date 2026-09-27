@@ -14,12 +14,14 @@ the contract wins; if the contract does not close, stop and say so rather than i
 
 Do not "fix" these.
 
-1. **The contract is checked before anything is built.** `prepare:site` (the first half of
+1. **The contract is checked before anything is built, and only real exports are published.** `prepare:site` (the first half of
    `pnpm build` and `pnpm dev`) runs `lib/contract/validate.ts` on every export and fails with
    `<file>:<line>:<column>: <message>` for each problem: contract version, config ↔ files,
    frontmatter, vocabulary, links, `<Example id>`/`<InstallCommand item>`/manifest references,
    levels and themes, registry namespacing and duplicates (§8). A broken link fails the build.
-   Never downgrade a check to a warning to get a build through: fix the export.
+   Never downgrade a check to a warning to get a build through: fix the export. `pnpm build`
+   refuses the fixtures (they live in `.sources-fixtures/`, built with `--fixtures`), an empty
+   `.sources/`, and an export older than its checkout: re-sync instead of forcing it.
 2. **One module per rule.** Links are classified and rewritten only by `lib/contract/links.ts`
    (the checks, the MDX components and the gallery all use it). Pages are read only by
    `lib/contract/mdx.ts` (a real MDX parse with positions, never regexes over the source).
@@ -49,22 +51,22 @@ Do not "fix" these.
 | command | does |
 |---|---|
 | `pnpm install` | install dependencies |
-| `pnpm sources:sync [slug…]` | `site:export` in each project (`localPath`, or `$FRAGIOLA_PROJECTS_DIR/<slug>` in CI; `--install` first installs it) into `.sources/<slug>`, then the contract checks |
-| `pnpm sources:fixtures` | fill `.sources/` from `fixtures/` instead (what the tests build from) |
-| `pnpm prepare:site` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/` |
-| `pnpm build` | `prepare:site` + `next build` → `out/` |
+| `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
+| `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
+| `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
+| `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
 | `pnpm check` / `pnpm check:fix` | Biome |
-| `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`) |
+| `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
 | `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing |
-| `pnpm e2e:build` then `pnpm e2e` | Playwright (Chromium) against `out/` built from the fixtures |
+| `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`), served like Pages / by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1)
+CONTRACT.md                 the site export contract (v1.1)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the checks (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client
@@ -72,10 +74,12 @@ lib/code.ts                 the code panel's files: URLs, fetch-once cache
 app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
 components/gallery/         the gallery: chrome (layout), example view (page)
 components/example-frame.tsx  the iframe side of §5
-components/example-block.tsx  <Example> in a page: inline, bleed, card
-components/mdx.tsx          the v1 vocabulary
-scripts/                    sources-sync, sources-fixtures, prepare-site, dev, serve, measure
-fixtures/<slug>/            a minimal v1 export per project (fixtures/README.md)
+components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
+components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
+components/project-footer.tsx the project footer on every landing and docs page (§3.5)
+components/mdx.tsx          the v1.1 vocabulary
+scripts/                    sources-sync, sources-fixtures, prepare-site, build, dev, serve, measure
+fixtures/<slug>/            a minimal v1.1 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```

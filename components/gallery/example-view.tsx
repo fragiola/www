@@ -6,9 +6,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ExampleFrame } from "@/components/example-frame";
 import { setFramework } from "@/components/framework";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
-import type { ThemeSummary } from "@/lib/projects";
 import { iconButton, useShell, variantFor } from "./gallery-chrome";
 
 // the panel (and the code block it renders with) loads when it first opens
@@ -22,44 +22,6 @@ const CodePanel = dynamic(
 // reset, fullscreen, code), the live example in the centre (the project's embed app in an iframe,
 // §5) and the code on the right. The list around it is the gallery's layout (gallery-chrome.tsx),
 // which stays mounted between examples.
-
-function ThemeSwitcher({
-    themes,
-    value,
-    onChange,
-}: {
-    themes: ThemeSummary[];
-    value: string | undefined;
-    onChange: (theme: string) => void;
-}) {
-    return (
-        <fieldset className="flex flex-wrap items-center gap-1">
-            <legend className="sr-only">Theme</legend>
-            {themes.map((theme) => (
-                <button
-                    key={theme.name}
-                    type="button"
-                    aria-pressed={value === theme.name}
-                    title={theme.description}
-                    data-theme-option={theme.name}
-                    className={cn(iconButton, "h-7 px-2 text-xs")}
-                    onClick={() => onChange(theme.name)}
-                >
-                    <span aria-hidden className="flex -space-x-1">
-                        {theme.swatch.map((color) => (
-                            <span
-                                key={color}
-                                className="size-3 rounded-full border border-palette-line"
-                                style={{ backgroundColor: color }}
-                            />
-                        ))}
-                    </span>
-                    {theme.title}
-                </button>
-            ))}
-        </fieldset>
-    );
-}
 
 function FrameworkSwitcher({
     frameworks,
@@ -175,6 +137,7 @@ export function ExampleView({ id }: { id: string }) {
                         onChange={(value) =>
                             setState((s) => ({ ...s, theme: value }))
                         }
+                        buttonClassName={cn(iconButton, "h-7 px-2 text-xs")}
                     />
                     {project.frameworks.length > 1 ? (
                         <FrameworkSwitcher
