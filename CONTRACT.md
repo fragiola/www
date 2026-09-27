@@ -60,7 +60,8 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
     "description": "One sentence.",
     "frameworks": ["react"],          // every framework with an embed app
     "defaultFramework": "react",
-    "registry": { "namespace": "@fragiola" }   // only when r/ is present
+    "registry": { "namespace": "@fragiola" },  // only when r/ is present
+    "repository": "https://github.com/fragiola/dockable"   // v1.1: header and footer links
 }
 ```
 
@@ -77,6 +78,9 @@ Pages are `.mdx` under `docs/`. A page's path is its file path without the exten
         {
             "label": "Guides",
             "framework": "react",            // optional: shown only for this framework
+            "collapsible": true,             // v1.1, optional (default false): a folder that folds
+            "defaultOpen": false,            // v1.1, optional: open on load (the current page's
+                                             // section always opens)
             "pages": [
                 { "label": "Tabs", "path": "guides/tabs" },
                 { "label": "Found a problem?", "href": "https://github.com/…", "external": true }
@@ -121,13 +125,29 @@ and the build.
 | `<Cards>` / `<Card>` | `title`, `href`, `description?` | link cards (`href` follows §3.3) |
 | `<InstallCommand>` | `item` | the registry install command for `<namespace>/<item>`; the item must exist in `r/` |
 | `<Framework>` | `name` | its children only when that framework is selected |
-| `<Hero>` | `title`, `description?`, `actions?: { label, href }[]` | the landing header (landing only) |
+| `<Hero>` | `title`, `description?`, `eyebrow?`, `background?: "none" \| "grid"`, `actions?: Action[]` | the landing header (landing only) |
+| `<Section>` | `title`, `eyebrow?`, `description?` | a landing section: an eyebrow, a heading, a lead paragraph, then its children (landing only) |
+| `<Features>` / `<Feature>` | `columns?: 2 \| 3 \| 4`, `numbered?` / `title` | a grid of feature cards; `numbered` prints 01, 02, … (landing only) |
+| `<Pills>` | `items: string[]`, `strike?` | a row of pills; `strike` crosses them out ("what it never ships") (landing only) |
+
+`Action` is `{ label, href, variant?: "primary" | "secondary" | "ghost", icon?: "arrow" |
+"external" }`. `href` follows §3.3; an `https://` URL opens as external. A label may contain
+`{examples}`, replaced by the project's example count ("Browse {examples} examples").
+
+`<Example>` gains a fourth variant in v1.1: **`showcase`** — the embed at full content width with
+the project's theme switcher above it (swatches, as in the gallery), an optional `label` before
+the switcher ("Same markup, five themes:") and a "See the code" link to the gallery entry with
+the chosen theme and `?code=1`. `theme` is the initial theme.
 
 ### 3.5 Landing
 
-`docs/index.mdx` with `layout: "landing"` is served at `/<slug>`. It is a normal page in the
-vocabulary above, typically a `<Hero>` and an `<Example variant="bleed">` for a live demo. The
-project owns its hero, docs and examples; `www` only provides the layout around them.
+`docs/index.mdx` with `layout: "landing"` is served at `/<slug>`. It is written in the vocabulary
+above: typically a `<Hero>`, an `<Example variant="showcase">` (or `bleed`) for a live demo, and
+`<Section>`s with `<Features>`, `<Pills>`, `<Cards>`, code blocks and prose. The project owns its
+hero, docs and examples; `www` owns the look of each piece, the same for every project.
+
+`www` renders a footer on every page of a project: the project's title and description, its
+first sidebar section, and `repository`.
 
 ## 4. The example gallery
 
@@ -179,8 +199,10 @@ One static app per framework, built with base `<base>/embed/<framework>/`.
 
 ### 5.1 Rendering
 
-- `index.html?id=<id>&theme=<name>` renders **only** that example, filling the viewport, with no
-  chrome.
+- `<base>/embed/<framework>/?id=<id>&theme=<name>` renders **only** that example, filling the
+  viewport, with no chrome. `www` always addresses the app by its **directory** URL, never
+  `index.html?…`: static servers with "clean URLs" (e.g. `serve`) redirect `index.html?…` to
+  `index` and drop the query string.
 - An inline script applies `theme` before first paint (the theme's `name` and `scheme`, however
   the project maps them onto its own DOM — e.g. `data-theme` and `.dark` on `<html>`, plus
   `data-example-theme` on the stage). Missing or unknown `theme` → the project's first `light`
@@ -266,6 +288,16 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.1
+
+Additive: a v1 export without them stays valid, and `project.json` keeps `"contract": 1`.
+
+- Landing vocabulary: `Hero` `eyebrow`/`background`, `Action` variants and icons with the
+  `{examples}` token, `Section`, `Features`/`Feature`, `Pills`, `<Example variant="showcase">`.
+- A project footer on every page; `project.json` → `repository`.
+- Sidebar sections can be `collapsible` with `defaultOpen`.
+- Embeds are addressed by their directory URL (`…/embed/<fw>/?id=`), never `index.html?…`.
 
 ## Changes from v0
 
