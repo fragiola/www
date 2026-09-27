@@ -1,0 +1,91 @@
+# Deploy fragiola.com to GitHub Pages as a static export.
+#
+# One-time repository setup: Settings → Pages → Build and deployment →
+# Source: "GitHub Actions".
+#
+# 1. Clone every project of projects.json at its `ref` (a branch, a tag or a
+#    commit SHA) into $RUNNER_TEMP/projects/<slug>.
+# 2. `pnpm sources:sync --install`: in each clone, `pnpm install
+#    --frozen-lockfile` with the project's own lockfile, then `pnpm
+#    site:export --base /<slug> --out .sources/<slug>`. This repo never
+#    installs a project's dependencies.
+# 3. `pnpm build` = prepare:site (examples and registry into public/, the
+#    theme vendored from the ui registry) + `next build` → out/.
+#
+# The site is served from the domain root: the exports are built for
+# /<slug>, so a project-page deploy (fragiola.github.io/www) would need
+# `--base /www/<slug>` and a Next basePath. Out of the POC's scope.
+#
+# A project can trigger a rebuild after a push with a repository_dispatch
+# of type "project-updated".
+
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [project-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes a queued one but never
+# cancels a deploy already in flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FRAGIOLA_PROJECTS_DIR: ${{ runner.temp }}/projects
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pnpm version from `packageManager` in package.json. The
+      # projects pin the same pnpm major.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Clone the projects
+        run: |
+          node -e '
+            for (const p of require("./projects.json"))
+              console.log([p.slug, p.repo, p.ref].join(" "));
+          ' | while read -r slug repo ref; do
+            dir="$FRAGIOLA_PROJECTS_DIR/$slug"
+            git init -q "$dir"
+            git -C "$dir" fetch -q --depth 1 "$repo" "$ref"
+            git -C "$dir" checkout -q FETCH_HEAD
+            echo "$slug: $repo@$ref → $(git -C "$dir" rev-parse --short HEAD)"
+          done
+
+      - run: pnpm sources:sync --install
+
+      - run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
