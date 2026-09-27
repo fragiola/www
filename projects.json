@@ -1,0 +1,14 @@
+[
+    {
+        "slug": "ui",
+        "repo": "https://github.com/fragiola/ui.git",
+        "ref": "main",
+        "localPath": "../ui/.worktrees/poc-www"
+    },
+    {
+        "slug": "dockable",
+        "repo": "https://github.com/fragiola/dockable.git",
+        "ref": "main",
+        "localPath": "../dockable/.worktrees/poc-www"
+    }
+]
