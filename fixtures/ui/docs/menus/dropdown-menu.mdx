@@ -1,0 +1,35 @@
+---
+title: "Dropdown Menu"
+description: "A menu of actions triggered by a button. Shares the `popup` and `menu` style families with context-menu, select and combobox — the only things this component declares for itself are `Root`, `Trigger` and its positioning defaults."
+---
+
+<InstallCommand item="dropdown-menu" />
+
+<Example id="dropdown-menu" height={360} />
+
+The [clickable](/docs/atoms/clickable#three-axes-none-of-them-colour) is its trigger.
+
+## Style families
+
+`dropdown-menu` and `context-menu` render from the same `menu` source. The parts factory (`createMenuParts`) takes a Base UI namespace and returns the styled wrappers — twelve of them, written once. Each component file declares only `Root`, `Trigger`, `Content` and `SubContent` with its own positioning defaults.
+
+The namespace is **injected, not imported**. `ContextMenu.Item === Menu.Item` at runtime today, but if Base UI ever diverges, injection means each component inherits its own divergence instead of being silently pinned to the wrong primitive.
+
+## Destructive tone
+
+There is no `tone`, `variant` or `destructive` prop. Tone arrives as a palette class applied from outside: `className="palette-danger"`. The `highlighted:bg-palette-soft` and `text-palette-accent` rules resolve against whichever palette is active — inheritance does the work.
+
+## Parts
+
+| Part | Source |
+|---|---|
+| `Root` | Base UI `Menu.Root` |
+| `Trigger` | Base UI `Menu.Trigger` |
+| `Content` | `popup.content()` + positioning |
+| `Item` | `menu.item()` |
+| `CheckboxItem` | `menu.selectableItem()` |
+| `RadioGroup` / `RadioItem` | `menu.selectableItem()` |
+| `Label` | `menu.label()` |
+| `Separator` | `menu.separator()` |
+| `Shortcut` | `menu.shortcut()` |
+| `Sub` / `SubTrigger` / `SubContent` | `menu.subTrigger()` + `popup.content()` |

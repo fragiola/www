@@ -3,12 +3,14 @@
         "slug": "ui",
         "repo": "https://github.com/fragiola/ui.git",
         "ref": "main",
-        "localPath": "../ui/.worktrees/poc-www"
+        "localPath": "../ui/.worktrees/site-export-v1",
+        "devUrl": "http://localhost:5174"
     },
     {
         "slug": "dockable",
         "repo": "https://github.com/fragiola/dockable.git",
         "ref": "main",
-        "localPath": "../dockable/.worktrees/poc-www"
+        "localPath": "../dockable",
+        "devUrl": "http://localhost:5180"
     }
 ]

@@ -1,0 +1,86 @@
+---
+title: "Installation"
+description: "Fragiola distributes through shadcn's registry format and CLI. There is no package to install — the CLI copies source files into your project."
+---
+
+Fragiola distributes through shadcn's registry format and CLI. There is no
+`@fragiola/ui` package to install — the CLI copies source files into your
+project, and you own them from that point on.
+
+## Add the registry
+
+Add the `@fragiola` namespace to your `components.json`:
+
+<Tabs items={["fragiola.com", "Local"]}>
+<Tab value="fragiola.com">
+
+```json title="components.json"
+{
+  "registries": {
+    "@fragiola": {
+      "url": "https://fragiola.com/r/{name}.json"
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Local">
+
+For local development, point at a locally running site:
+
+```json
+{
+  "registries": {
+    "@fragiola": {
+      "url": "http://localhost:3000/r/{name}.json"
+    }
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Install an item
+
+<InstallCommand item="text" />
+
+The CLI resolves the dependency graph recursively. Installing `text` pulls
+`cn` and `theme`; installing a component that depends on `text` afterwards
+writes only the files that are missing.
+
+## What you get
+
+Each item lands at a target determined by its type and your `components.json`
+aliases:
+
+| type | target |
+|---|---|
+| `registry:ui` | `@ui/` (your `ui` alias) |
+| `registry:lib` | `@lib/` (your `lib` alias) |
+| `registry:hook` | `@hooks/` (your `hooks` alias) |
+| `registry:file` | explicit `target` per file |
+
+Palettes ship as `registry:file` items with `target: ~/styles/palettes/`, so
+they land in a predictable place regardless of your alias configuration.
+
+## CSS is idempotent
+
+`global.css` is touched by every item that depends on `theme`, and each
+palette adds an `@import`. Installing a second component does **not**
+overwrite a `global.css` you have edited — the CLI appends only the `@import`
+that is missing.
+
+<Callout type="info" title="A rough edge">
+This is a known rough edge of the format; the item definitions and the
+Registry page document the strategy deliberately.
+</Callout>
+
+## No versioning
+
+The registry format has no `version` field. Whoever installs keeps a frozen
+copy. That is inherent to copy-paste distribution, and it is accepted
+deliberately — pretending otherwise would be worse than saying it plainly. If
+it becomes a real problem, that is when a custom CLI would be worth building,
+not before.

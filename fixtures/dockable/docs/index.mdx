@@ -1,0 +1,32 @@
+---
+title: Dockable
+description: A headless layout manager for dockable panels. It ships the behaviour and the accessibility; every pixel is yours.
+layout: landing
+---
+
+<Hero
+    title="Dockable panels, without a single line of CSS from us."
+    description="A headless layout manager: tabs, tabsets, splitters, drag and drop and popout windows."
+    actions={[
+        { label: "Read the docs", href: "/docs/getting-started/installation" },
+        { label: "Browse the examples", href: "/examples" },
+        { label: "GitHub", href: "https://github.com/fragiola/dockable" },
+    ]}
+/>
+
+<Example id="hello-layout" theme="terminal" variant="bleed" />
+
+## What it ships
+
+- **Behaviour.** Resize, drag and drop, popout windows, maximize.
+- **Accessibility.** The APG tabs pattern and keyboard splitters.
+- ~~CSS~~ — the state is exposed as `data-*` attributes.
+
+<Cards>
+    <Card
+        title="Your first layout"
+        href="/docs/getting-started/first-layout#what-you-have"
+        description="From a JSON model to a draggable layout, in five steps."
+    />
+    <Card title="Popouts" href="/docs/guides/popouts" />
+</Cards>

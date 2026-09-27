@@ -1,0 +1,15 @@
+{
+    "name": "cn",
+    "type": "registry:lib",
+    "title": "cn helper",
+    "description": "clsx + extendTailwindMerge with a palette class group so cn(\"palette-blue\", \"palette-danger\") resolves to one.",
+    "dependencies": ["clsx", "tailwind-merge"],
+    "files": [
+        {
+            "path": "registry/lib/cn.ts",
+            "type": "registry:lib",
+            "target": "~/lib/cn.ts",
+            "content": "import type { ClassValue } from \"clsx\";\nimport { clsx } from \"clsx\";\nimport { extendTailwindMerge } from \"tailwind-merge\";\n\n// NOTE: the palette list is hardcoded on purpose. tailwind-merge needs to know\n// which classes form a single \"palette\" group so that `cn(\"palette-blue\",\n// \"palette-danger\")` resolves to one (the last) rather than both. The cost of\n// correct merge behaviour is that adding a palette means adding it here too.\n// A test asserts this list agrees with the palettes directory — see\n// tests/palette-contract.test.ts.\nconst customTwMerge = extendTailwindMerge<\"palette\">({\n    extend: {\n        classGroups: {\n            palette: [\n                {\n                    palette: [\n                        \"surface\",\n                        \"raised\",\n                        \"danger\",\n                        \"blue\",\n                        \"green\",\n                        \"orange\",\n                        \"purple\",\n                        \"rose\",\n                        \"surface-blue\",\n                        \"surface-purple\",\n                        \"surface-green\",\n                        \"surface-orange\",\n                        \"surface-rose\",\n                    ],\n                },\n            ],\n        },\n    },\n});\n\nexport function cn(...inputs: ClassValue[]) {\n    return customTwMerge(clsx(inputs));\n}\n"
+        }
+    ]
+}

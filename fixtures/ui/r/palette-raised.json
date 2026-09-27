@@ -1,0 +1,15 @@
+{
+    "name": "palette-raised",
+    "type": "registry:file",
+    "title": "Raised palette",
+    "description": "Elevated surface (card, popover, dialog). Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/raised.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/raised.css",
+            "content": "/* Raised — an elevated surface (card, popover, dialog).\n   Like surface, fully neutral; the difference is a step up in lightness so a\n   raised element reads as sitting above the floor. Both themes declare all\n   six roles. */\n\n:root[data-theme=\"light\"] .palette-raised {\n    --palette-base: oklch(0.98 0.003 250);\n    --palette-soft: oklch(0.94 0.005 250);\n    --palette-line: oklch(0.84 0.006 250);\n    --palette-contrast: oklch(0.15 0.01 250);\n    --palette-accent: oklch(0.28 0.01 250);\n    --palette-ring: var(--palette-accent);\n}\n\n:root[data-theme=\"dark\"] .palette-raised {\n    --palette-base: oklch(0.2 0.01 250);\n    --palette-soft: oklch(0.3 0.012 250);\n    --palette-line: oklch(0.35 0.012 250);\n    --palette-contrast: oklch(0.95 0.005 250);\n    --palette-accent: oklch(0.88 0.005 250);\n    --palette-ring: var(--palette-accent);\n}\n"
+        }
+    ]
+}

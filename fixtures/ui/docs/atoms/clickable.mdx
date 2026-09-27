@@ -1,0 +1,26 @@
+---
+title: "Clickable"
+description: "The button surface — one component, three exports: `Button`, `Link` and `ExternalLink`. Every clickable affordance in the project composes against it: a dialog's close, an alert-dialog's action pair, a badge's dismiss, a field addon's button."
+---
+
+<InstallCommand item="clickable" />
+
+<Example id="clickable" />
+
+## Three axes, none of them colour
+
+`variant` (solid / ghost / outline / icon) is a fill strategy, `size` (sm / md) is a measure — `md` is `h-control`, so a button lines up with a field — and `shape` (auto / square) is a form. They are orthogonal: `size="sm" shape="square"` produces a small square button, which is what an addon needs. Folding form into measure is what produces a `size="icon"` that cannot also be small.
+
+No axis names a colour. A destructive button is `<Clickable.Button className="palette-danger" />` — there is no `variant="destructive"` and no `tone` prop. This is what keeps `destructive` from coming back as a hundred copies.
+
+## Links and `render`
+
+`Clickable.Link` is a plain `<a>` — it has no dependency on any router. Consumers stitch Next's or TanStack's link through `render`, the project's single polymorphism mechanism. `ExternalLink` is a separate export (not a prop) because it differs in defaults and semantics (`target`, `rel`), not in appearance.
+
+## Parts
+
+| Part | Source |
+|---|---|
+| `Button` | Base UI `Button` + `clickable()` |
+| `Link` | `useRender` (`<a>`) + `clickable()` |
+| `ExternalLink` | `useRender` (`<a>`) + outbound defaults + `clickable()` |

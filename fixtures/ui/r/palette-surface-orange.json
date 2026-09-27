@@ -1,0 +1,15 @@
+{
+    "name": "palette-surface-orange",
+    "type": "registry:file",
+    "title": "Surface-orange palette",
+    "description": "Neutral surface with an orange focus ring (~55). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/surface-orange.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/surface-orange.css",
+            "content": "/* Surface-orange — a neutral surface whose focus ring carries an orange\n   hue (~55). The neutrals are byte-identical to surface.css; the ONLY\n   role that differs is --palette-ring, which is a literal chromatic value\n   taken verbatim from orange.css's base. A field's frame must read as a\n   surface, not as a coloured element (Rule 3: a control never carries its\n   own body), but its focus ring should state the theme's colour. This\n   tier exists for that: the need is real (theme a field's focus), the\n   answer is a new palette, not a seventh role. Both themes declare all\n   six roles. */\n\n:root[data-theme=\"light\"] .palette-surface-orange {\n    --palette-base: oklch(1 0 0);\n    --palette-soft: oklch(0.96 0.003 250);\n    --palette-line: oklch(0.86 0.004 250);\n    --palette-contrast: oklch(0.15 0.01 250);\n    --palette-accent: oklch(0.3 0.01 250);\n    --palette-ring: oklch(0.68 0.17 55);\n}\n\n:root[data-theme=\"dark\"] .palette-surface-orange {\n    --palette-base: oklch(0.15 0.01 250);\n    --palette-soft: oklch(0.26 0.012 250);\n    --palette-line: oklch(0.31 0.012 250);\n    --palette-contrast: oklch(0.95 0.005 250);\n    --palette-accent: oklch(0.88 0.005 250);\n    --palette-ring: oklch(0.75 0.16 55);\n}\n"
+        }
+    ]
+}

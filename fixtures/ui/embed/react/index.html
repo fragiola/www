@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- The fixture embed app of www/fixtures (contract v1 §5): see app.js. -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Fragiola UI examples (react, fixture)</title>
+        <script id="fixture-config" type="application/json">
+            {"framework":"react","themes":{"light":"light","dark":"dark"},"examples":{"clickable":{"title":"Clickable","layout":"flow","rows":2},"text":{"title":"Text","layout":"flow","rows":1},"dropdown-menu":{"title":"Dropdown Menu","layout":"flow","rows":3}}}
+        </script>
+        <script>
+            (() => {
+                const schemes = JSON.parse(document.getElementById("fixture-config").textContent).themes;
+                const asked = new URLSearchParams(location.search).get("theme");
+                const theme = asked && Object.hasOwn(schemes, asked) ? asked : "light";
+                const html = document.documentElement;
+                html.dataset.theme = schemes[theme];
+                html.classList.toggle("dark", schemes[theme] === "dark");
+                html.dataset.exampleTheme = theme;
+            })();
+        </script>
+        <link rel="stylesheet" href="/ui/embed/react/app.css" />
+    </head>
+    <body>
+        <div id="stage" data-testid="stage"></div>
+        <script type="module" src="/ui/embed/react/app.js"></script>
+    </body>
+</html>

@@ -1,0 +1,15 @@
+{
+    "name": "palette-rose",
+    "type": "registry:file",
+    "title": "Rose palette",
+    "description": "Chromatic palette, hue ~345. Distinct from danger (hue ~25) — reads as pink, not as an error state. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/rose.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/rose.css",
+            "content": "/* Rose — a chromatic palette, hue ~345. Deliberately kept distinct from\n   danger (hue ~25): 345 reads as pink/magenta, not as an error state. The\n   chroma is held a touch lower than danger's so the two never collapse to\n   the same red under any viewing condition. Both themes declare all six\n   roles. */\n\n:root[data-theme=\"light\"] .palette-rose {\n    --palette-base: oklch(0.57 0.18 345);\n    --palette-soft: oklch(0.94 0.06 345);\n    --palette-line: oklch(0.85 0.07 345);\n    --palette-contrast: oklch(1 0 0);\n    --palette-accent: oklch(0.48 0.16 345);\n    --palette-ring: var(--palette-accent);\n}\n\n:root[data-theme=\"dark\"] .palette-rose {\n    --palette-base: oklch(0.72 0.16 345);\n    --palette-soft: oklch(0.3 0.08 345);\n    --palette-line: oklch(0.4 0.1 345);\n    --palette-contrast: oklch(0.12 0.02 345);\n    --palette-accent: oklch(0.8 0.14 345);\n    --palette-ring: var(--palette-accent);\n}\n"
+        }
+    ]
+}

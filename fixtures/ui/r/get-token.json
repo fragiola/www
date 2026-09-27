@@ -1,0 +1,14 @@
+{
+    "name": "get-token",
+    "type": "registry:lib",
+    "title": "getToken helper",
+    "description": "Reads a CSS custom property from the document, with px/rem formatting and a fallback.",
+    "files": [
+        {
+            "path": "registry/lib/get-token/index.ts",
+            "type": "registry:lib",
+            "target": "~/lib/get-token/index.ts",
+            "content": "type GetThemeTokenOptionsBase<TFallback> = {\n    fallbackReturn?: TFallback;\n    /** Element to read the token from. Defaults to documentElement. Palette\n     *  roles and chart tokens are declared on `.palette-*` elements — not on\n     *  <html> — so a scoped read has to pass the element in. */\n    from?: Element | null;\n};\n\ntype GetThemeTokenOptionsFormatted<TFallback = undefined> =\n    GetThemeTokenOptionsBase<TFallback> & {\n        formatToNumber: true;\n    };\n\ntype GetThemeTokenOptionsRaw<TFallback = undefined> =\n    GetThemeTokenOptionsBase<TFallback> & {\n        formatToNumber?: false;\n    };\n\nexport function getToken<TFallback>(\n    token: string,\n    options: GetThemeTokenOptionsFormatted<TFallback>,\n): number | TFallback;\n\nexport function getToken<TFallback>(\n    token: string,\n    options?: GetThemeTokenOptionsRaw<TFallback>,\n): string | TFallback;\n\nexport function getToken<TFallback>(\n    token: string,\n    options:\n        | GetThemeTokenOptionsFormatted<TFallback>\n        | GetThemeTokenOptionsRaw<TFallback> = {},\n) {\n    const {\n        fallbackReturn = undefined,\n        formatToNumber = false,\n        from = null,\n    } = options;\n\n    if (typeof getComputedStyle === \"undefined\") return fallbackReturn;\n\n    const styles = getComputedStyle(from ?? document.documentElement);\n    const rawValue = styles.getPropertyValue(token).trim();\n\n    if (!rawValue) return fallbackReturn;\n\n    if (!formatToNumber) return rawValue;\n\n    if (rawValue.endsWith(\"px\")) {\n        return parseFloat(rawValue);\n    }\n\n    if (rawValue.endsWith(\"rem\")) {\n        const htmlFontSize =\n            getComputedStyle(document.documentElement).getPropertyValue(\n                \"font-size\",\n            ) || \"16px\";\n        const baseFontSize = parseFloat(htmlFontSize);\n\n        return parseFloat(rawValue) * baseFontSize;\n    }\n\n    return fallbackReturn;\n}\n"
+        }
+    ]
+}

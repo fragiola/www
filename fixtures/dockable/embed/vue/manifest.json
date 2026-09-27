@@ -1,0 +1,63 @@
+{
+    "files": {
+        "_kit/layout.vue": {
+            "lang": "vue",
+            "shared": true,
+            "content": "<script setup lang=\"ts\">\n// The fixture's Vue kit.\ndefineProps<{ id: string }>();\n</script>\n\n<template>\n    <div :data-example=\"id\" />\n</template>\n"
+        },
+        "hello-layout/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport Layout from \"#/examples/_kit/layout.vue\";\n</script>\n\n<template>\n    <Layout id=\"hello-layout\" />\n</template>\n"
+        },
+        "add-tabs/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport Layout from \"#/examples/_kit/layout.vue\";\n</script>\n\n<template>\n    <Layout id=\"add-tabs\" />\n</template>\n"
+        },
+        "keyboard/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport Layout from \"#/examples/_kit/layout.vue\";\n</script>\n\n<template>\n    <Layout id=\"keyboard\" />\n</template>\n"
+        }
+    },
+    "examples": [
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-vue"],
+            "layout": "fill",
+            "features": ["Root", "Row", "TabSet", "Panels", "Model.fromJson"],
+            "id": "hello-layout",
+            "title": "Hello layout",
+            "description": "The smallest themed layout: two tabsets side by side, splitters, and panels whose content survives every move.",
+            "level": "basic",
+            "order": 1,
+            "docs": "/docs/getting-started/first-layout",
+            "height": 420,
+            "files": ["hello-layout/App.vue", "_kit/layout.vue"]
+        },
+        {
+            "registry": ["cn", "input"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-vue"],
+            "layout": "fill",
+            "features": ["Actions.addTab", "DockLocation"],
+            "id": "add-tabs",
+            "title": "Add tabs",
+            "description": "A button that adds a tab to the active tabset.",
+            "level": "basic",
+            "order": 2,
+            "height": 400,
+            "files": ["add-tabs/App.vue", "_kit/layout.vue"]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-vue"],
+            "layout": "fill",
+            "features": ["Tab", "Splitter"],
+            "id": "keyboard",
+            "title": "Keyboard",
+            "description": "Every move without a pointer.",
+            "level": "intermediate",
+            "order": 2,
+            "height": 420,
+            "files": ["keyboard/App.vue", "_kit/layout.vue"]
+        }
+    ]
+}

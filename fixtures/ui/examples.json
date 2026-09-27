@@ -1,0 +1,28 @@
+{
+    "levels": [
+        {
+            "id": "atoms",
+            "title": "Atoms"
+        },
+        {
+            "id": "menus",
+            "title": "Menus"
+        }
+    ],
+    "themes": [
+        {
+            "name": "light",
+            "title": "Light",
+            "description": "The surface palette, light.",
+            "scheme": "light",
+            "swatch": ["oklch(1 0 0)", "oklch(0.3 0 0)"]
+        },
+        {
+            "name": "dark",
+            "title": "Dark",
+            "description": "The surface palette, dark.",
+            "scheme": "dark",
+            "swatch": ["oklch(0.2 0 0)", "oklch(0.9 0 0)"]
+        }
+    ]
+}

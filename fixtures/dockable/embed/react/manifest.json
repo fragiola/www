@@ -1,0 +1,335 @@
+{
+    "files": {
+        "hello-layout/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { type IJsonModel, Model } from \"@fragiola/dockable\";\nimport { useState } from \"react\";\nimport { Card } from \"../_kit/card\";\nimport { DockLayout } from \"../_kit/layout\";\n\n// A layout is a JSON model: rows split space, tabsets hold tabs. Weights are relative sizes.\nconst json: IJsonModel = {\n    global: {},\n    borders: [],\n    layout: {\n        type: \"row\",\n        children: [\n            {\n                type: \"tabset\",\n                weight: 60,\n                children: [\n                    { type: \"tab\", name: \"Welcome\", component: \"card\" },\n                    { type: \"tab\", name: \"Notes\", component: \"card\" },\n                ],\n            },\n            {\n                type: \"tabset\",\n                weight: 40,\n                children: [\n                    { type: \"tab\", name: \"Inspector\", component: \"card\" },\n                ],\n            },\n        ],\n    },\n};\n\nexport default function HelloLayout() {\n    // The model is the source of truth: create it once, the layout renders from it.\n    const [model] = useState(() => Model.fromJson(json));\n    return (\n        <DockLayout model={model} renderContent={(tab) => <Card tab={tab} />} />\n    );\n}\n"
+        },
+        "_kit/card.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport type { TabNode } from \"@fragiola/dockable\";\nimport { type ReactNode, useState } from \"react\";\nimport { cn } from \"#/lib/cn\";\nimport * as styles from \"./styles\";\n\n// Demo content: a panel body, and a card with state you can see. Nothing here is part of\n// Dockable: a panel renders whatever the consumer gives it.\n\n/** A padded, scrollable panel body with a title. */\nexport function PanelBody({\n    title,\n    children,\n    className,\n}: {\n    title?: ReactNode;\n    children?: ReactNode;\n    className?: string;\n}) {\n    return (\n        <div className={cn(\"flex min-h-full flex-col gap-3 p-4\", className)}>\n            {title ? <h2 className=\"text-base\">{title}</h2> : null}\n            {children}\n        </div>\n    );\n}\n\n/**\n * Content with state you can see: a counter and a text input. Move the tab to another tabset,\n * maximize it or pop it out, and both keep their value: the content is never remounted.\n */\nexport function Card({\n    tab,\n    children,\n}: {\n    tab: TabNode;\n    children?: ReactNode;\n}) {\n    const [count, setCount] = useState(0);\n    return (\n        <PanelBody title={tab.getName()}>\n            <p className=\"text-palette-accent/85\">\n                Drag the tab, resize with the splitters. The counter and the\n                notes survive every move.\n            </p>\n            <div className=\"flex flex-wrap items-center gap-2\">\n                <button\n                    type=\"button\"\n                    data-testid=\"counter\"\n                    className={cn(\"palette-blue\", styles.solidButton)}\n                    onClick={() => setCount((c) => c + 1)}\n                >\n                    {`Count: ${count}`}\n                </button>\n                <input\n                    data-testid=\"notes\"\n                    aria-label={`${tab.getName()} notes`}\n                    placeholder=\"Notes\"\n                    className=\"h-8 min-w-0 rounded-md border border-palette-line bg-palette-soft px-3 text-sm placeholder:text-palette-accent/85 focus-visible:outline-2 focus-visible:outline-palette-ring\"\n                />\n            </div>\n            {children}\n        </PanelBody>\n    );\n}\n",
+            "shared": true
+        },
+        "_kit/labels.ts": {
+            "lang": "ts",
+            "content": "import { DockableLabel } from \"@fragiola/dockable\";\n\n/**\n * The examples' accessible names, in English. The package has no text of its own: it resolves\n * the names it needs (today, the splitter's) through `getLabel` on `Dockable.Root`, and the\n * examples reuse the same map for their own buttons so every name lives in one place.\n */\nexport const labels: Partial<Record<DockableLabel, string>> = {\n    [DockableLabel.Splitter]: \"Resize\",\n    [DockableLabel.Close_Tab]: \"Close\",\n    [DockableLabel.Close_Tabset]: \"Close tabset\",\n    [DockableLabel.Pinned_Tab]: \"Pinned\",\n    [DockableLabel.Rename_Tab]: \"Rename\",\n    [DockableLabel.Active_Tabset]: \"Active tabset\",\n    [DockableLabel.Maximize]: \"Maximize\",\n    [DockableLabel.Restore]: \"Restore\",\n    [DockableLabel.Popout_Tab]: \"Pop out\",\n    [DockableLabel.Overflow_Menu_Tooltip]: \"More tabs\",\n    [DockableLabel.Menu_Rename]: \"Rename\",\n    [DockableLabel.Menu_Pin]: \"Pin\",\n    [DockableLabel.Menu_Unpin]: \"Unpin\",\n    [DockableLabel.Menu_Popout]: \"Pop out\",\n    [DockableLabel.Menu_Maximize]: \"Maximize tabset\",\n    [DockableLabel.Menu_Restore]: \"Restore tabset\",\n    [DockableLabel.Menu_Close_All]: \"Close all\",\n    [DockableLabel.Menu_Close_Right]: \"Close to the right\",\n    [DockableLabel.Menu_Close_Others]: \"Close others\",\n};\n\n/** `getLabel` for `Dockable.Root`: the key's text, or `undefined` (no text) when unmapped. */\nexport function getLabel(key: DockableLabel): string | undefined {\n    return labels[key];\n}\n\n/** The text for a key the examples always map. */\nexport function label(key: DockableLabel): string {\n    return labels[key] ?? \"\";\n}\n",
+            "shared": true
+        },
+        "_kit/layout.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport {\n    type BorderNode,\n    type Model,\n    type ModelLayout,\n    type OnAction,\n    type OnModelChange,\n    RowNode,\n    type TabNode,\n    TabSetNode,\n} from \"@fragiola/dockable\";\nimport {\n    Dockable,\n    type RootProps,\n    type RowSplitterProps,\n} from \"@fragiola/dockable-react\";\nimport { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from \"lucide-react\";\nimport { type ReactNode, useCallback, useEffect, useRef } from \"react\";\nimport { cn } from \"#/lib/cn\";\nimport { getLabel } from \"./labels\";\nimport * as styles from \"./styles\";\n\n/**\n * The example kit: the recursion every Dockable layout writes once (Row › TabSet › TabList ›\n * Tab, TabSetContent, nested Rows), styled with `styles.ts`, plus the panel layer, the drop\n * indicator and popouts. Examples override only what they are about, through the props below.\n * The whole file is plain Dockable primitives: copy it and change anything.\n */\n\n/** Renders what goes inside a `Dockable.Tab` (default: the tab's name). */\nexport type RenderTab = (tab: TabNode) => ReactNode;\n\nexport interface TabSetOptions {\n    /** the content of each tab button */\n    renderTab?: RenderTab | undefined;\n    /** extra class names for each tab button */\n    tabClassName?: string | ((tab: TabNode) => string) | undefined;\n    /** buttons at the end of the tabset's header (close tabset, maximize, …) */\n    renderActions?: ((tabset: TabSetNode) => ReactNode) | undefined;\n    /** replaces the whole header (strip and buttons); receives the default one */\n    renderHeader?:\n        | ((tabset: TabSetNode, header: ReactNode) => ReactNode)\n        | undefined;\n    /** extra class names for each tabset */\n    tabsetClassName?: string | ((tabset: TabSetNode) => string) | undefined;\n    /** put the strip below the content */\n    stripAtBottom?: boolean | undefined;\n}\n\n/** The kit's splitter: the themed bar with an optional grip. */\nexport function KitSplitter(props: RowSplitterProps & { className?: string }) {\n    const { className, ...rest } = props;\n    return (\n        <Dockable.Splitter {...rest} className={cn(styles.splitter, className)}>\n            <span aria-hidden=\"true\" className={styles.splitterGrip} />\n        </Dockable.Splitter>\n    );\n}\n\n/** The kit's tab button. */\nexport function KitTab({\n    node,\n    className,\n    children,\n}: {\n    node: TabNode;\n    className?: string | undefined;\n    children?: ReactNode;\n}) {\n    return (\n        <Dockable.Tab\n            node={node}\n            data-kit-tab=\"\"\n            className={cn(styles.tab, className)}\n        >\n            {children ?? (\n                <span data-tab-label className={styles.tabLabel}>\n                    {node.getName()}\n                </span>\n            )}\n            <span\n                aria-hidden=\"true\"\n                data-tab-marker\n                className={styles.tabMarker}\n            />\n        </Dockable.Tab>\n    );\n}\n\nfunction resolve<T>(\n    value: string | ((node: T) => string) | undefined,\n    node: T,\n): string | undefined {\n    return typeof value === \"function\" ? value(node) : value;\n}\n\n/** The kit's tabset: a header (tab list and buttons) and the measured content area. */\nexport function KitTabSet({\n    node,\n    options = {},\n}: {\n    node: TabSetNode;\n    options?: TabSetOptions | undefined;\n}) {\n    const header = (\n        <div className={styles.tabsetHeader}>\n            <Dockable.TabList\n                aria-label={node.getName() ?? \"Tabs\"}\n                data-kit-tablist=\"\"\n                className={styles.tabList}\n            >\n                {(tab) => (\n                    <KitTab\n                        node={tab}\n                        className={resolve(options.tabClassName, tab)}\n                    >\n                        {options.renderTab?.(tab)}\n                    </KitTab>\n                )}\n            </Dockable.TabList>\n            {options.renderActions ? (\n                <div className={styles.tabsetActions}>\n                    {options.renderActions(node)}\n                </div>\n            ) : null}\n        </div>\n    );\n    const strip = options.renderHeader\n        ? options.renderHeader(node, header)\n        : header;\n    return (\n        <Dockable.TabSet\n            node={node}\n            data-kit-tabset=\"\"\n            className={cn(\n                styles.tabset,\n                resolve(options.tabsetClassName, node),\n            )}\n        >\n            {options.stripAtBottom ? null : strip}\n            <Dockable.TabSetContent />\n            {options.stripAtBottom ? strip : null}\n        </Dockable.TabSet>\n    );\n}\n\nexport interface RenderNodeOptions extends TabSetOptions {\n    /** the splitter between two children of a row */\n    renderSplitter?: ((props: RowSplitterProps) => ReactNode) | undefined;\n    /** replaces the tabset renderer entirely */\n    renderTabSet?:\n        | ((tabset: TabSetNode, options: TabSetOptions) => ReactNode)\n        | undefined;\n}\n\n/**\n * Builds the recursive child function for `Dockable.Row`: a tabset, or a nested row rendered by\n * the same function. The developer owns this recursion; the kit only writes it once.\n */\nexport function createRenderNode(options: RenderNodeOptions = {}) {\n    const renderSplitter =\n        options.renderSplitter ?? ((props) => <KitSplitter {...props} />);\n    const renderNode = (child: TabSetNode | RowNode): ReactNode => {\n        if (child instanceof TabSetNode) {\n            return options.renderTabSet ? (\n                options.renderTabSet(child, options)\n            ) : (\n                <KitTabSet node={child} options={options} />\n            );\n        }\n        if (child instanceof RowNode) {\n            return (\n                <Dockable.Row node={child} renderSplitter={renderSplitter}>\n                    {renderNode}\n                </Dockable.Row>\n            );\n        }\n        return null;\n    };\n    return { renderNode, renderSplitter };\n}\n\n/** Renders what goes inside a border's `Dockable.Tab` (default: the tab's name). */\nexport type RenderBorderTab = (tab: TabNode) => ReactNode;\n\n/** How a border's strip and tabs look, per example (the kit's default: vertical side labels). */\nexport interface BorderOptions {\n    /** the content of a border's tab button (default: the tab's name) */\n    renderBorderTab?: RenderBorderTab | undefined;\n    /**\n     * classes for a border's tab, replacing the kit's vertical side labels\n     * (`styles.borderTabVertical`) when given: upright labels, icon-only tabs\n     */\n    borderTabClassName?:\n        | string\n        | ((tab: TabNode) => string | undefined)\n        | undefined;\n    /** an accessible name for a border's tab, when its content has no text (an icon) */\n    borderTabLabel?: ((tab: TabNode) => string | undefined) | undefined;\n    /** extra classes for a border's strip (its width, say) */\n    borderClassName?:\n        | string\n        | ((border: BorderNode) => string | undefined)\n        | undefined;\n}\n\n/** The kit's border strip: a `Dockable.Border` with its tab list. */\nexport function KitBorder({\n    node,\n    options = {},\n}: {\n    node: BorderNode;\n    options?: BorderOptions | undefined;\n}) {\n    const tabClass = (tab: TabNode) =>\n        typeof options.borderTabClassName === \"function\"\n            ? options.borderTabClassName(tab)\n            : options.borderTabClassName;\n    return (\n        <Dockable.Border\n            node={node}\n            className={cn(\n                styles.border,\n                typeof options.borderClassName === \"function\"\n                    ? options.borderClassName(node)\n                    : options.borderClassName,\n            )}\n        >\n            <Dockable.TabList\n                aria-label={`${node.getLocation().getName()} panels`}\n                className={styles.borderTabList}\n            >\n                {(tab) => (\n                    <Dockable.Tab\n                        node={tab}\n                        aria-label={options.borderTabLabel?.(tab)}\n                        className={cn(\n                            styles.borderTab,\n                            tabClass(tab) ?? styles.borderTabVertical,\n                        )}\n                    >\n                        {options.renderBorderTab\n                            ? options.renderBorderTab(tab)\n                            : tab.getName()}\n                    </Dockable.Tab>\n                )}\n            </Dockable.TabList>\n        </Dockable.Border>\n    );\n}\n\n/** The kit's border panel area, with the kit's splitter on the layout's side of it. */\nexport function KitBorderContent({ node }: { node: BorderNode }) {\n    return (\n        <Dockable.BorderContent\n            node={node}\n            className={styles.borderContent}\n            renderSplitter={(border) => (\n                <Dockable.Splitter node={border} className={styles.splitter}>\n                    <span aria-hidden=\"true\" className={styles.splitterGrip} />\n                </Dockable.Splitter>\n            )}\n        />\n    );\n}\n\nconst EDGES = [\n    [\"top\", ArrowUp],\n    [\"bottom\", ArrowDown],\n    [\"left\", ArrowLeft],\n    [\"right\", ArrowRight],\n] as const;\n\n/** The four edge indicators, each with an arrow pointing at its edge. */\nexport function KitEdgeIndicators() {\n    return (\n        <>\n            {EDGES.map(([edge, Arrow]) => (\n                <Dockable.EdgeIndicator\n                    key={edge}\n                    edge={edge}\n                    className={styles.edgeIndicator}\n                >\n                    <Arrow aria-hidden=\"true\" className=\"size-3\" />\n                </Dockable.EdgeIndicator>\n            ))}\n        </>\n    );\n}\n\n/** The popout host page, under the site's base path (it is opened by hand, not by Next). */\nexport const popoutURL = `${process.env.NEXT_PUBLIC_BASE_PATH ?? \"\"}/popout.html`;\n\n/**\n * Keeps each open popout on the example's theme. The page's own `<html>`/`<body>` attributes\n * (light/dark, the body's palette class) are mirrored by the core (`popoutMirrorRoot` on the root);\n * the example theme lives on the docs stage, not on the page's root, so the kit copies it into the\n * popout's `<body>` on open and whenever it changes. An app that themes `<html>` or `<body>` needs\n * only `popoutMirrorRoot`.\n */\nfunction usePopoutTheme(root: React.RefObject<HTMLElement | null>) {\n    const documents = useRef(new Set<Document>());\n\n    const apply = useCallback(\n        (doc: Document) => {\n            const theme = root.current?.closest<HTMLElement>(\n                \"[data-example-theme]\",\n            )?.dataset.exampleTheme;\n            if (theme) {\n                doc.body.dataset.exampleTheme = theme;\n            }\n        },\n        [root],\n    );\n\n    useEffect(() => {\n        const themed = root.current?.closest(\"[data-example-theme]\");\n        if (!themed) {\n            return;\n        }\n        const observer = new MutationObserver(() => {\n            for (const doc of documents.current) {\n                apply(doc);\n            }\n        });\n        observer.observe(themed, { attributeFilter: [\"data-example-theme\"] });\n        return () => observer.disconnect();\n    }, [root, apply]);\n\n    const onOpen = useCallback(\n        (_layout: ModelLayout, _window: Window, doc: Document) => {\n            documents.current.add(doc);\n            apply(doc);\n        },\n        [apply],\n    );\n    const onClose = useCallback(\n        (_layout: ModelLayout, _window: Window, doc: Document) => {\n            documents.current.delete(doc);\n        },\n        [],\n    );\n    return { onOpen, onClose };\n}\n\nexport interface DockLayoutProps extends RenderNodeOptions {\n    model: Model;\n    /** the content of a tab's panel */\n    renderContent: (tab: TabNode) => ReactNode;\n    /** intercepts every action: return it to apply it, `undefined` to veto */\n    onAction?: OnAction | undefined;\n    onModelChange?: OnModelChange | undefined;\n    /** extra class names for each panel */\n    panelClassName?: string | ((tab: TabNode) => string) | undefined;\n    /** extra class names for the root */\n    className?: string | undefined;\n    /** more props for `Dockable.Root` */\n    rootProps?: Partial<RootProps> | undefined;\n    /** extra elements inside the root (overlays, effects that need `useDockable`) */\n    children?: ReactNode;\n    /** how the model's borders look (see `BorderOptions`) */\n    borders?: BorderOptions | undefined;\n    /** show the edge docking targets (`Dockable.EdgeIndicator`) during a drag */\n    edgeIndicators?: boolean | undefined;\n}\n\n/**\n * A complete themed layout: `Dockable.Root` with the kit's recursion, the borders of the model\n * around it, the panel layer, the drop indicator and popout windows.\n */\nexport function DockLayout(props: DockLayoutProps) {\n    const {\n        model,\n        renderContent,\n        onAction,\n        onModelChange,\n        panelClassName,\n        className,\n        rootProps,\n        children,\n        borders,\n        edgeIndicators,\n        ...options\n    } = props;\n    const { renderNode, renderSplitter } = createRenderNode(options);\n    const rootRef = useRef<HTMLDivElement | null>(null);\n    const popoutTheme = usePopoutTheme(rootRef);\n\n    return (\n        <div className={styles.frame}>\n            <Dockable.Root\n                ref={rootRef}\n                model={model}\n                onAction={onAction}\n                onModelChange={onModelChange}\n                getLabel={getLabel}\n                popoutURL={popoutURL}\n                // the page's light/dark and body palette class, into each popout (kept in sync)\n                popoutMirrorRoot\n                className={cn(styles.root, className)}\n                {...rootProps}\n            >\n                <Dockable.Borders\n                    renderBar={(border) => (\n                        <KitBorder node={border} options={borders} />\n                    )}\n                    renderContent={(border) => (\n                        <KitBorderContent node={border} />\n                    )}\n                >\n                    <Dockable.Row renderSplitter={renderSplitter}>\n                        {renderNode}\n                    </Dockable.Row>\n                </Dockable.Borders>\n                <Dockable.Panels>\n                    {(tab) => (\n                        <Dockable.Panel\n                            node={tab}\n                            data-kit-panel=\"\"\n                            className={cn(\n                                styles.panel,\n                                resolve(panelClassName, tab),\n                            )}\n                        >\n                            {renderContent(tab)}\n                        </Dockable.Panel>\n                    )}\n                </Dockable.Panels>\n                <Dockable.DropIndicator\n                    className={styles.dropIndicator}\n                    style={(state) => ({\n                        transitionDuration: `${state.tabDragSpeed}s`,\n                    })}\n                />\n                <Dockable.Popout\n                    onOpen={popoutTheme.onOpen}\n                    onClose={popoutTheme.onClose}\n                    className={styles.root}\n                >\n                    {() => (\n                        <>\n                            <Dockable.Row renderSplitter={renderSplitter}>\n                                {renderNode}\n                            </Dockable.Row>\n                            {/* a window shows its own outline during a drag into it */}\n                            <Dockable.DropIndicator\n                                className={styles.dropIndicator}\n                                style={(state) => ({\n                                    transitionDuration: `${state.tabDragSpeed}s`,\n                                })}\n                            />\n                        </>\n                    )}\n                </Dockable.Popout>\n                {edgeIndicators ? <KitEdgeIndicators /> : null}\n                {children}\n            </Dockable.Root>\n        </div>\n    );\n}\n",
+            "shared": true
+        },
+        "_kit/styles.ts": {
+            "lang": "ts",
+            "content": "import type { DropIndicatorState } from \"@fragiola/dockable-react\";\n\n/**\n * The example kit's class names: Tailwind utilities over the Fragiola palette roles\n * (`bg-palette-base`, `text-palette-contrast`, …), the package's `data-*` state\n * (`data-selected:`, `data-dragging:`, `in-data-active:`, …) and the theme's shape tokens\n * (`--dk-radius`, `--dk-splitter-size`, … declared by each `_themes/<name>.css`).\n *\n * Nothing here is required by the package: it paints nothing. Copy this file, or replace any\n * string with your own.\n */\n\n/** The element around `Dockable.Root`: the outer gutter. The root row is `position: absolute;\n * inset: 0`, so padding on the root itself would not move it; the gutter goes on a wrapper. */\nexport const frame = \"flex min-h-0 flex-1 flex-col p-(--dk-gap)\";\n\n/** `Dockable.Root`: the floor the tabsets sit on. It needs a size: an unsized root shows nothing. */\nexport const root =\n    \"palette-surface min-h-0 flex-1 bg-palette-base text-palette-contrast font-(family-name:--dk-font)\";\n\n/** `Dockable.TabSet`: a card on the floor. */\nexport const tabset = [\n    \"palette-raised bg-palette-base text-palette-contrast\",\n    \"rounded-(--dk-radius) border-(length:--dk-border) border-palette-line shadow-(--dk-shadow)\",\n].join(\" \");\n\n/** The strip row: the tab list plus the tabset's own buttons. */\nexport const tabsetHeader =\n    \"flex min-h-(--dk-tab-height) items-stretch border-b border-palette-line\";\n\n/**\n * `Dockable.TabList`. The start padding is load-bearing: a tab flush with the tabset's edge\n * cannot take a drop before it (the edge belongs to the tabset's side drop; gap 10 in the\n * walking-skeleton report), so the list always keeps a few pixels (`ps-1` minimum).\n */\nexport const tabList =\n    \"flex min-w-0 flex-1 items-end gap-(--dk-tab-gap) overflow-hidden ps-[max(0.25rem,var(--dk-strip-padding))] pt-[calc(var(--dk-strip-padding)/2)]\";\n\n/**\n * `Dockable.Tab`. The selected tab takes the `soft` role; the dragged one fades.\n * `in-data-active:` reads the enclosing `TabSet`'s `data-active` (the kit's workaround for the\n * missing `data-tabset-active` on `Tab`, gap 1).\n */\nexport const tab = [\n    \"group/tab relative flex h-(--dk-tab-height) max-w-60 shrink-0 cursor-pointer select-none items-center gap-1.5 px-3\",\n    \"rounded-t-(--dk-tab-radius) font-(family-name:--dk-tab-font) text-(length:--dk-tab-size) text-palette-accent/85\",\n    \"outline-none transition-colors duration-(--dk-motion) hover:bg-palette-soft\",\n    \"focus-visible:ring-2 focus-visible:ring-palette-ring focus-visible:ring-inset\",\n    \"data-selected:bg-palette-soft data-selected:text-palette-contrast data-dragging:opacity-40\",\n].join(\" \");\n\n/** The tab's label: truncates, so a long name never breaks the strip. */\nexport const tabLabel = \"truncate\";\n\n/** The active-tabset marker inside the selected tab: shown only when its tabset is active. */\nexport const tabMarker =\n    \"palette-blue pointer-events-none absolute inset-x-2 bottom-0 hidden h-0.5 rounded-full bg-palette-base in-data-active:group-data-selected/tab:block\";\n\n/** A small icon button inside a tab or a tabset header (close, pop out, maximize, …). */\nexport const iconButton = [\n    \"grid size-6 shrink-0 place-items-center self-center rounded-sm text-palette-accent/85\",\n    \"outline-none hover:bg-palette-soft hover:text-palette-contrast\",\n    \"focus-visible:ring-2 focus-visible:ring-palette-ring\",\n    \"disabled:pointer-events-none disabled:opacity-40\",\n].join(\" \");\n\n/** The buttons at the end of a tabset header. */\nexport const tabsetActions = \"flex items-center gap-0.5 pe-1\";\n\n/** `Dockable.Panel`: repeats the tabset's inner radius on its bottom corners, since panels live in\n * a layer above the tabsets and their `overflow` cannot clip them (gap 2). */\nexport const panel =\n    \"palette-raised overflow-auto rounded-b-[max(0px,calc(var(--dk-radius)-var(--dk-border)))] bg-palette-base text-palette-contrast\";\n\n/**\n * `Dockable.Splitter`: the visible part is `--dk-splitter-size` thick, the grab area (`::after`,\n * centred on it) is `--dk-splitter-grab`. The engine measures the element for the split maths and\n * ignores the pseudo-element. `relative z-10` keeps the grab area above the tabsets it overlaps.\n */\nexport const splitter = [\n    \"group/splitter relative z-10 flex shrink-0 items-center justify-center bg-(--dk-splitter-bg) outline-none\",\n    \"after:absolute after:transition-colors after:duration-(--dk-motion)\",\n    \"hover:after:bg-palette-ring/30 data-dragging:after:bg-palette-ring/60 focus-visible:after:bg-palette-ring/60\",\n    // side-by-side children: a vertical bar\n    \"data-[orientation=vertical]:w-(--dk-splitter-size) data-[orientation=vertical]:cursor-ew-resize\",\n    \"data-[orientation=vertical]:after:inset-y-0 data-[orientation=vertical]:after:start-1/2\",\n    \"data-[orientation=vertical]:after:w-(--dk-splitter-grab) data-[orientation=vertical]:after:-translate-x-1/2\",\n    \"rtl:data-[orientation=vertical]:after:translate-x-1/2\",\n    // stacked children: a horizontal bar\n    \"data-[orientation=horizontal]:h-(--dk-splitter-size) data-[orientation=horizontal]:cursor-ns-resize\",\n    \"data-[orientation=horizontal]:after:inset-x-0 data-[orientation=horizontal]:after:top-1/2\",\n    \"data-[orientation=horizontal]:after:h-(--dk-splitter-grab) data-[orientation=horizontal]:after:-translate-y-1/2\",\n].join(\" \");\n\n/** The grip drawn in the middle of a splitter, for themes that set `--dk-grip: block`. */\nexport const splitterGrip = [\n    \"pointer-events-none [display:var(--dk-grip)] rounded-full bg-palette-line\",\n    // group-data (the splitter itself), not in-data: an enclosing Row has data-orientation too\n    \"group-data-[orientation=vertical]/splitter:h-8 group-data-[orientation=vertical]/splitter:w-1\",\n    \"group-data-[orientation=horizontal]/splitter:h-1 group-data-[orientation=horizontal]/splitter:w-8\",\n].join(\" \");\n\n/**\n * `Dockable.DropIndicator`: blue for a drop into a tabset, orange (and the theme's\n * `--dk-indicator-style`) for a drop at a row's edge. `z-10`: panels are portalled into the root\n * after the indicator, so without a stacking order they would paint over it (gap 12).\n */\nexport function dropIndicator(state: DropIndicatorState): string {\n    const shared =\n        \"z-20 rounded-(--dk-radius) border-2 [border-style:var(--dk-indicator-style)] border-palette-base transition-[left,top,width,height]\";\n    return state.kind === \"edge\"\n        ? `palette-orange bg-palette-base/25 ${shared}`\n        : `palette-blue bg-palette-base/20 ${shared}`;\n}\n\n/** A regular button in an example's toolbar. */\nexport const button = [\n    \"inline-flex h-8 items-center gap-1.5 rounded-md border border-palette-line bg-palette-base px-3 text-sm\",\n    \"text-palette-contrast outline-none hover:bg-palette-soft focus-visible:ring-2 focus-visible:ring-palette-ring\",\n    \"disabled:pointer-events-none disabled:opacity-50\",\n].join(\" \");\n\n/** A coloured call-to-action button (put a palette class next to it, e.g. `palette-blue`). */\nexport const solidButton = [\n    \"inline-flex h-8 items-center gap-1.5 rounded-md bg-palette-base px-3 text-sm font-medium text-palette-contrast\",\n    \"outline-none hover:bg-palette-base-hover focus-visible:ring-2 focus-visible:ring-palette-ring focus-visible:ring-offset-2\",\n    \"disabled:pointer-events-none disabled:opacity-50\",\n].join(\" \");\n\n/** An example's toolbar, above the layout. */\nexport const toolbar =\n    \"palette-surface flex flex-wrap items-center gap-2 border-b border-palette-line bg-palette-base px-3 py-2 text-palette-contrast\";\n\n/**\n * `Dockable.Border`: a border's strip, `--dk-tab-height` thick, on the floor's colour, with a line\n * on the layout's side. `data-orientation` is the direction its tabs run.\n */\nexport const border = [\n    \"palette-surface shrink-0 bg-palette-base text-palette-contrast\",\n    \"data-[orientation=vertical]:w-(--dk-tab-height) data-[orientation=horizontal]:h-(--dk-tab-height)\",\n    \"data-[location=left]:border-e data-[location=right]:border-s data-[location=top]:border-b data-[location=bottom]:border-t border-palette-line\",\n    \"data-drop-target:bg-palette-soft\",\n].join(\" \");\n\n/** The border's `Dockable.TabList`: a column in a side border. */\nexport const borderTabList =\n    \"flex min-h-0 min-w-0 flex-1 gap-(--dk-tab-gap) p-1 data-[orientation=vertical]:flex-col\";\n\n/** A border's `Dockable.Tab`: the button, whichever way its label reads. */\nexport const borderTab = [\n    \"flex shrink-0 cursor-pointer select-none items-center gap-1.5 rounded-sm px-2 py-1\",\n    \"font-(family-name:--dk-tab-font) text-(length:--dk-tab-size) text-palette-accent/85\",\n    \"outline-none hover:bg-palette-soft focus-visible:ring-2 focus-visible:ring-palette-ring focus-visible:ring-inset\",\n    \"data-selected:bg-palette-soft data-selected:text-palette-contrast data-dragging:opacity-40\",\n].join(\" \");\n\n/**\n * The kit's default for side borders: labels turned with `writing-mode`, and a left border that\n * reads \"up\" (the model's `borderLeftTabDirection`, on the strip as `data-tab-direction`) turns\n * them half a turn more. The tabs stay in order from the top. Pure styling: `DockLayout`'s\n * `borderTabClassName` replaces it (upright labels, icon-only tabs).\n */\nexport const borderTabVertical = [\n    \"in-data-[orientation=vertical]:[writing-mode:vertical-rl] in-data-[orientation=vertical]:px-1 in-data-[orientation=vertical]:py-2\",\n    \"in-data-[tab-direction=up]:rotate-180\",\n].join(\" \");\n\n/**\n * `Dockable.BorderContent`: where a border's panel opens. An overlay border paints over the layout,\n * so it gets a stacking order (above the tabsets and their splitters), a shadow, and a line on the\n * side facing the layout: in themes whose splitters are transparent, and on a dark floor where a\n * shadow does not show, the line is where the overlay ends.\n */\nexport const borderContent = [\n    \"data-overlay:z-30 data-overlay:shadow-xl data-overlay:border-palette-line\",\n    \"data-overlay:data-[location=left]:border-e data-overlay:data-[location=right]:border-s\",\n    \"data-overlay:data-[location=top]:border-b data-overlay:data-[location=bottom]:border-t\",\n].join(\" \");\n\n/**\n * `Dockable.EdgeIndicator`: the band along a layout edge where a drop docks to that edge, shown\n * during a drag. Orange like the edge drop outline; solid while the drop would go there.\n */\nexport const edgeIndicator = [\n    \"palette-orange z-20 flex items-center justify-center rounded-sm bg-palette-base/40 text-palette-contrast\",\n    \"transition-colors duration-(--dk-motion) data-drop-target:bg-palette-base\",\n].join(\" \");\n",
+            "shared": true
+        },
+        "popout/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport {\n    type IJsonModel,\n    Model,\n    type TabNode,\n    type TabSetNode,\n} from \"@fragiola/dockable\";\nimport { Dockable } from \"@fragiola/dockable-react\";\nimport { ArrowDownToLine, SquareArrowOutUpRight } from \"lucide-react\";\nimport { useState } from \"react\";\nimport { Card } from \"../_kit/card\";\nimport { DockLayout } from \"../_kit/layout\";\nimport * as styles from \"../_kit/styles\";\n\n// Pop a tab out into its own browser window, and back. The core opens the window (`popoutURL`,\n// served under the site's base path), copies the page's styles into it and moves the tab's\n// content element there: the counter and the notes keep their state both ways. Closing the window\n// docks its tabs back into the main layout (the default \"dock\" policy). A tab can also be dragged\n// from the window into the main layout, and back (see the popout-drag example).\n\nconst json: IJsonModel = {\n    // tabs may be popped out (off by default)\n    global: { tabEnablePopout: true },\n    borders: [],\n    layout: {\n        type: \"row\",\n        children: [\n            {\n                type: \"tabset\",\n                weight: 55,\n                children: [\n                    { type: \"tab\", name: \"Editor\", component: \"card\" },\n                    { type: \"tab\", name: \"Preview\", component: \"card\" },\n                ],\n            },\n            {\n                type: \"tabset\",\n                weight: 45,\n                children: [\n                    { type: \"tab\", name: \"Chat\", component: \"card\" },\n                    {\n                        type: \"tab\",\n                        name: \"Pinned here\",\n                        component: \"card\",\n                        // this one stays in the main window\n                        enablePopout: false,\n                    },\n                ],\n            },\n        ],\n    },\n};\n\n/**\n * `Dockable.PopoutTrigger` pops the selected tab out and, in a popout, docks it back into the main\n * layout's active tabset. It renders nothing when the tab cannot pop out (here \"Pinned here\"), and\n * says which way it goes with `data-mode` (\"popout\" or \"dock\"): the icons follow it.\n */\nfunction PopoutButton({ tabset }: { tabset: TabSetNode }) {\n    const selected = tabset.getSelectedNode() as TabNode | undefined;\n    const inWindow = tabset.getLayoutId() !== Model.MAIN_LAYOUT_ID;\n    const name = selected?.getName() ?? \"\";\n    return (\n        <Dockable.PopoutTrigger\n            aria-label={inWindow ? `Dock ${name} back` : `Pop out ${name}`}\n            className={styles.iconButton}\n        >\n            <SquareArrowOutUpRight\n                aria-hidden\n                className=\"size-3.5 in-data-[mode=dock]:hidden\"\n            />\n            <ArrowDownToLine\n                aria-hidden\n                className=\"hidden size-3.5 in-data-[mode=dock]:block\"\n            />\n        </Dockable.PopoutTrigger>\n    );\n}\n\nexport default function Popout() {\n    const [model] = useState(() => Model.fromJson(json));\n    return (\n        <DockLayout\n            model={model}\n            renderActions={(tabset) => <PopoutButton tabset={tabset} />}\n            renderContent={(tab) => (\n                <Card tab={tab}>\n                    <p className=\"text-sm text-palette-accent/85\">\n                        Count, type a note, then pop the tab out with the button\n                        in its header. Dock it back from the window, or close\n                        the window.\n                    </p>\n                </Card>\n            )}\n        />\n    );\n}\n"
+        },
+        "add-tabs/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Add tabs: a fixture stand-in for the real example.\nexport default function Addtabs() {\n    return <ExampleLayout id=\"add-tabs\" />;\n}\n"
+        },
+        "close-tabs/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Close tabs: a fixture stand-in for the real example.\nexport default function Closetabs() {\n    return <ExampleLayout id=\"close-tabs\" />;\n}\n"
+        },
+        "tabs-at-bottom/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Tabs at bottom: a fixture stand-in for the real example.\nexport default function Tabsatbottom() {\n    return <ExampleLayout id=\"tabs-at-bottom\" />;\n}\n"
+        },
+        "splitter-wide/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Wide splitter: a fixture stand-in for the real example.\nexport default function Widesplitter() {\n    return <ExampleLayout id=\"splitter-wide\" />;\n}\n"
+        },
+        "save-restore/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Save restore: a fixture stand-in for the real example.\nexport default function Saverestore() {\n    return <ExampleLayout id=\"save-restore\" />;\n}\n"
+        },
+        "keyboard/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Keyboard: a fixture stand-in for the real example.\nexport default function Keyboard() {\n    return <ExampleLayout id=\"keyboard\" />;\n}\n"
+        },
+        "maximize/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Maximize: a fixture stand-in for the real example.\nexport default function Maximize() {\n    return <ExampleLayout id=\"maximize\" />;\n}\n"
+        },
+        "undo-redo/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Undo redo: a fixture stand-in for the real example.\nexport default function Undoredo() {\n    return <ExampleLayout id=\"undo-redo\" />;\n}\n"
+        },
+        "drag-and-drop/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Drag and drop: a fixture stand-in for the real example.\nexport default function Draganddrop() {\n    return <ExampleLayout id=\"drag-and-drop\" />;\n}\n"
+        },
+        "two-layouts/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Two layouts: a fixture stand-in for the real example.\nexport default function Twolayouts() {\n    return <ExampleLayout id=\"two-layouts\" />;\n}\n"
+        },
+        "slow-start/index.tsx": {
+            "lang": "tsx",
+            "content": "import { ExampleLayout } from \"#/examples/_kit/layout\";\n\n// Slow start: a fixture stand-in for the real example.\nexport default function Slowstart() {\n    return <ExampleLayout id=\"slow-start\" />;\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["Root", "Row", "TabSet", "Panels", "Model.fromJson"],
+            "id": "hello-layout",
+            "title": "Hello layout",
+            "description": "The smallest themed layout: two tabsets side by side, splitters, and panels whose content survives every move.",
+            "level": "basic",
+            "order": 1,
+            "docs": "/docs/getting-started/first-layout",
+            "height": 420,
+            "files": [
+                "hello-layout/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn", "input"],
+            "packages": [
+                "@fragiola/dockable",
+                "@fragiola/dockable-react",
+                "lucide-react"
+            ],
+            "layout": "fill",
+            "features": ["Actions.addTab", "DockLocation"],
+            "id": "add-tabs",
+            "title": "Add tabs",
+            "description": "A button that adds a tab to the active tabset.",
+            "level": "basic",
+            "order": 2,
+            "height": 400,
+            "files": [
+                "add-tabs/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["Dockable.TabClose"],
+            "id": "close-tabs",
+            "title": "Close tabs",
+            "description": "Close buttons on every tab, and Ctrl+Delete.",
+            "level": "basic",
+            "order": 3,
+            "height": 400,
+            "files": [
+                "close-tabs/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["tabLocation"],
+            "id": "tabs-at-bottom",
+            "title": "Tabs at the bottom",
+            "description": "A tab strip under its content.",
+            "level": "basic",
+            "order": 4,
+            "height": 400,
+            "files": [
+                "tabs-at-bottom/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["splitterSize"],
+            "id": "splitter-wide",
+            "title": "Wide splitter",
+            "description": "An 8px splitter with a grip.",
+            "level": "basic",
+            "order": 5,
+            "height": 400,
+            "files": [
+                "splitter-wide/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["model.toJson", "Model.fromJson"],
+            "id": "save-restore",
+            "title": "Save and restore",
+            "description": "The layout as JSON, saved and loaded back.",
+            "level": "intermediate",
+            "order": 1,
+            "height": 420,
+            "files": [
+                "save-restore/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["Tab", "Splitter"],
+            "id": "keyboard",
+            "title": "Keyboard",
+            "description": "Every move without a pointer.",
+            "level": "intermediate",
+            "order": 2,
+            "height": 420,
+            "files": [
+                "keyboard/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["Actions.maximizeToggle"],
+            "id": "maximize",
+            "title": "Maximize",
+            "description": "A tabset that takes the whole layout, and back.",
+            "level": "intermediate",
+            "order": 3,
+            "height": 420,
+            "files": [
+                "maximize/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["onAction"],
+            "id": "undo-redo",
+            "title": "Undo and redo",
+            "description": "A history over the model's actions.",
+            "level": "intermediate",
+            "order": 4,
+            "height": 420,
+            "files": [
+                "undo-redo/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": [
+                "Dockable.Popout",
+                "Dockable.PopoutTrigger",
+                "popoutURL"
+            ],
+            "id": "popout",
+            "title": "Pop out",
+            "description": "A tab moved into a native window with its content, and docked back.",
+            "level": "advanced",
+            "order": 1,
+            "docs": "/docs/guides/popouts",
+            "height": 480,
+            "files": [
+                "popout/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["DropIndicator"],
+            "id": "drag-and-drop",
+            "title": "Drag and drop",
+            "description": "Tabs dragged between tabsets and to the edges.",
+            "level": "advanced",
+            "order": 2,
+            "height": 480,
+            "files": [
+                "drag-and-drop/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["Dockable.Root"],
+            "id": "two-layouts",
+            "title": "Two layouts",
+            "description": "Two roots on one page, tabs dragged between them.",
+            "level": "advanced",
+            "order": 3,
+            "height": 480,
+            "files": [
+                "two-layouts/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        },
+        {
+            "registry": ["cn"],
+            "packages": ["@fragiola/dockable", "@fragiola/dockable-react"],
+            "layout": "fill",
+            "features": ["fragiola:example:ready"],
+            "id": "slow-start",
+            "title": "Slow start",
+            "description": "A fixture example that says ready a second after it renders: the site keeps it hidden until then.",
+            "level": "advanced",
+            "order": 4,
+            "height": 360,
+            "files": [
+                "slow-start/index.tsx",
+                "_kit/card.tsx",
+                "_kit/labels.ts",
+                "_kit/layout.tsx",
+                "_kit/styles.ts"
+            ]
+        }
+    ]
+}

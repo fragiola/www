@@ -1,0 +1,15 @@
+{
+    "name": "palette-green",
+    "type": "registry:file",
+    "title": "Green palette",
+    "description": "Chromatic palette, hue ~150. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/green.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/green.css",
+            "content": "/* Green — a chromatic palette, hue ~150. Inherits success.css's values\n   verbatim; renamed so the palette set is colour-named, not semantic-named.\n   Both themes declare all six roles. */\n\n:root[data-theme=\"light\"] .palette-green {\n    --palette-base: oklch(0.52 0.16 150);\n    --palette-soft: oklch(0.94 0.07 150);\n    --palette-line: oklch(0.85 0.1 150);\n    --palette-contrast: oklch(1 0 0);\n    --palette-accent: oklch(0.42 0.14 150);\n    --palette-ring: var(--palette-accent);\n}\n\n:root[data-theme=\"dark\"] .palette-green {\n    --palette-base: oklch(0.68 0.16 150);\n    --palette-soft: oklch(0.3 0.07 150);\n    --palette-line: oklch(0.4 0.09 150);\n    --palette-contrast: oklch(0.12 0.02 150);\n    --palette-accent: oklch(0.75 0.14 150);\n    --palette-ring: var(--palette-accent);\n}\n"
+        }
+    ]
+}

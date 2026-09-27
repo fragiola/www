@@ -1,0 +1,16 @@
+{
+    "name": "switch",
+    "type": "registry:ui",
+    "title": "Switch",
+    "description": "A toggle. Uses the choice family's root (the track, w-9 h-5 rounded-full) and control (the thumb that slides). data-checked fills the track with palette-base.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+    "files": [
+        {
+            "path": "registry/ui/switch.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/switch.tsx",
+            "content": "\"use client\";\n\nimport { Switch as SwitchPrimitive } from \"@base-ui/react/switch\";\nimport type * as React from \"react\";\nimport { cn } from \"@/lib/cn\";\n\n// Switch — a toggle. Uses the choice family's root (the track) and control\n// (the thumb). Base UI's Switch provides the behaviour.\n//\n// The choice family root has size-4.5 and rounded-sm; switch overrides to\n// w-9 h-5 rounded-full. The thumb is a circle that slides when checked.\n// data-checked fills the track with palette-base.\n\nfunction SwitchRoot({\n    className,\n    ...props\n}: React.ComponentProps<typeof SwitchPrimitive.Root>) {\n    return (\n        <SwitchPrimitive.Root\n            data-slot=\"switch\"\n            className={cn(\n                \"field-control inline-flex shrink-0 items-center rounded-full border border-transparent\",\n                \"w-8 h-5 p-0.5\",\n                \"bg-palette-soft data-checked:bg-palette-ring\",\n                \"field-focus:outline-solid field-focus:outline-1 field-focus:outline-offset-1 field-focus:outline-palette-ring\",\n                \"data-disabled:opacity-50 data-disabled:cursor-not-allowed\",\n                \"transition-colors\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction SwitchThumb({\n    className,\n    ...props\n}: React.ComponentProps<typeof SwitchPrimitive.Thumb>) {\n    return (\n        <SwitchPrimitive.Thumb\n            data-slot=\"switch-thumb\"\n            className={cn(\n                \"block size-4 rounded-full bg-palette-ring transition-transform data-checked:translate-x-3 data-checked:bg-palette-base\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nexport const Switch = {\n    Root: SwitchRoot,\n    Thumb: SwitchThumb,\n};\n"
+        }
+    ]
+}

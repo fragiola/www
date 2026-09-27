@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- The fixture embed app of www/fixtures (contract v1 §5): see app.js. -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Dockable examples (react, fixture)</title>
+        <script id="fixture-config" type="application/json">
+            {"framework":"react","themes":{"light":"light","dark":"dark","paper":"light","terminal":"dark"},"examples":{"hello-layout":{"title":"Hello layout","layout":"fill"},"add-tabs":{"title":"Add tabs","layout":"fill"},"close-tabs":{"title":"Close tabs","layout":"fill"},"tabs-at-bottom":{"title":"Tabs at the bottom","layout":"fill"},"splitter-wide":{"title":"Wide splitter","layout":"fill"},"save-restore":{"title":"Save and restore","layout":"fill"},"keyboard":{"title":"Keyboard","layout":"fill"},"maximize":{"title":"Maximize","layout":"fill"},"undo-redo":{"title":"Undo and redo","layout":"fill"},"popout":{"title":"Pop out","layout":"fill","popout":true},"drag-and-drop":{"title":"Drag and drop","layout":"fill"},"two-layouts":{"title":"Two layouts","layout":"fill"},"slow-start":{"title":"Slow start","layout":"fill","readyDelay":1200}}}
+        </script>
+        <script>
+            (() => {
+                const schemes = JSON.parse(document.getElementById("fixture-config").textContent).themes;
+                const asked = new URLSearchParams(location.search).get("theme");
+                const theme = asked && Object.hasOwn(schemes, asked) ? asked : "light";
+                const html = document.documentElement;
+                html.dataset.theme = schemes[theme];
+                html.classList.toggle("dark", schemes[theme] === "dark");
+                html.dataset.exampleTheme = theme;
+            })();
+        </script>
+        <link rel="stylesheet" href="/dockable/embed/react/app.css" />
+    </head>
+    <body>
+        <div id="stage" data-testid="stage"></div>
+        <script type="module" src="/dockable/embed/react/app.js"></script>
+    </body>
+</html>

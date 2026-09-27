@@ -1,0 +1,16 @@
+{
+    "name": "avatar",
+    "type": "registry:ui",
+    "title": "Avatar",
+    "description": "A profile picture with a fallback. Uses Base UI primitive for the loading-status state machine. No family — just palette roles and layout. Size is controlled by the consumer via className (default size-10).",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+    "files": [
+        {
+            "path": "registry/ui/avatar.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/avatar.tsx",
+            "content": "\"use client\";\n\nimport { Avatar as AvatarPrimitive } from \"@base-ui/react/avatar\";\nimport type * as React from \"react\";\nimport { cn } from \"@/lib/cn\";\n\n// Avatar — a profile picture with a fallback. Uses Base UI's primitive for\n// the loading-status state machine (idle → loading → loaded → error). No\n// family, no new style — just palette roles and layout.\n//\n// The root is `inline-flex` with `overflow-hidden` and `rounded-full`. The\n// image fills the root. The fallback is centred text on `bg-palette-soft`.\n// The size is controlled by the consumer via className (default `size-10`).\n//\n// `data-[status=loading]` and `data-[status=error]` come from the primitive.\n// The image fades in on load; the fallback is visible until the image loads.\n\nfunction AvatarRoot({\n    className,\n    ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Root>) {\n    return (\n        <AvatarPrimitive.Root\n            data-slot=\"avatar\"\n            className={cn(\n                \"relative flex size-10 shrink-0 overflow-hidden rounded-full\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction AvatarImage({\n    className,\n    ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Image>) {\n    return (\n        <AvatarPrimitive.Image\n            data-slot=\"avatar-image\"\n            className={cn(\n                \"aspect-square size-full object-cover\",\n                \"data-[starting-style]:animate-in data-[starting-style]:fade-in-0\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction AvatarFallback({\n    className,\n    ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {\n    return (\n        <AvatarPrimitive.Fallback\n            data-slot=\"avatar-fallback\"\n            className={cn(\n                \"absolute inset-0 flex size-full items-center justify-center rounded-full bg-palette-soft text-sm font-medium text-palette-contrast\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nexport const Avatar = {\n    Root: AvatarRoot,\n    Image: AvatarImage,\n    Fallback: AvatarFallback,\n};\n"
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+<!doctype html>
+<!-- The fixture's popout host: opened by an example under the embed's base (§5.1). -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Popout</title>
+        <link rel="stylesheet" href="/dockable/embed/vue/app.css" />
+    </head>
+    <body>
+        <p data-testid="popped"></p>
+        <script>
+            const params = new URLSearchParams(location.search);
+            document.body.dataset.exampleTheme = params.get("theme") ?? "";
+            document.documentElement.dataset.exampleTheme = params.get("theme") ?? "";
+            document.querySelector("[data-testid=popped]").textContent =
+                "Popped out: " + params.get("id");
+        </script>
+    </body>
+</html>

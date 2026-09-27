@@ -1,0 +1,37 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Installation",
+                    "path": "getting-started/installation"
+                },
+                {
+                    "label": "Your first layout",
+                    "path": "getting-started/first-layout"
+                }
+            ]
+        },
+        {
+            "label": "Guides",
+            "framework": "react",
+            "pages": [{ "label": "Popouts", "path": "guides/popouts" }]
+        },
+        {
+            "label": "Vue",
+            "framework": "vue",
+            "pages": [{ "label": "Dockable for Vue", "path": "guides/vue" }]
+        },
+        {
+            "label": "Community",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/dockable/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}

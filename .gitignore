@@ -21,11 +21,18 @@ Thumbs.db
 # Editor
 .idea/
 
-# Project exports (`pnpm sources:sync`) and everything generated from them
-# (`pnpm prepare:site`): the fumadocs index, the vendored theme, the examples
-# apps and the registry under public/.
+# Project exports (`pnpm sources:sync` / `pnpm sources:fixtures`) and everything generated from
+# them (`pnpm prepare:site`): the fumadocs index, the vendored theme, the embed apps, the code
+# panel's files, the registry and the build's origin under public/.
 .sources/
 .source/
 styles/fragiola/
-public/*/examples/
+public/*/embed/
+public/*/code/
+public/*/.generated
 public/r/
+public/_sources.json
+
+# Playwright
+test-results/
+playwright-report/

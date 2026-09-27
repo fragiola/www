@@ -1,0 +1,895 @@
+{
+    "name": "fragiola",
+    "items": [
+        {
+            "name": "theme",
+            "type": "registry:theme",
+            "title": "Fragiola theme",
+            "description": "The global stylesheet: @theme inline with the six palette roles, the highlighted and field-focus custom variants, chart token axes, density, radius and --height-control. The chart categorical derivation block lives here (theme machinery, not a palette).",
+            "files": [
+                {
+                    "path": "registry/styles/global.css",
+                    "type": "registry:theme",
+                    "target": "~/styles/global.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface",
+            "type": "registry:file",
+            "title": "Surface palette",
+            "description": "The neutral floor palette. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-raised",
+            "type": "registry:file",
+            "title": "Raised palette",
+            "description": "Elevated surface (card, popover, dialog). Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/raised.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/raised.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-blue",
+            "type": "registry:file",
+            "title": "Blue palette",
+            "description": "Chromatic palette, hue ~250. The colour IS the element: CTA, badge, marked control. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/blue.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/blue.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-green",
+            "type": "registry:file",
+            "title": "Green palette",
+            "description": "Chromatic palette, hue ~150. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/green.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/green.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-orange",
+            "type": "registry:file",
+            "title": "Orange palette",
+            "description": "Chromatic palette, hue ~55. Distinct from danger (hue ~25). Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/orange.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/orange.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-purple",
+            "type": "registry:file",
+            "title": "Purple palette",
+            "description": "Chromatic palette, hue ~300. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/purple.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/purple.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-rose",
+            "type": "registry:file",
+            "title": "Rose palette",
+            "description": "Chromatic palette, hue ~345. Distinct from danger (hue ~25) — reads as pink, not as an error state. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/rose.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/rose.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface-blue",
+            "type": "registry:file",
+            "title": "Surface-blue palette",
+            "description": "Neutral surface with a blue focus ring (~250). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface-blue.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface-blue.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface-purple",
+            "type": "registry:file",
+            "title": "Surface-purple palette",
+            "description": "Neutral surface with a purple focus ring (~300). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface-purple.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface-purple.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface-green",
+            "type": "registry:file",
+            "title": "Surface-green palette",
+            "description": "Neutral surface with a green focus ring (~150). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface-green.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface-green.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface-orange",
+            "type": "registry:file",
+            "title": "Surface-orange palette",
+            "description": "Neutral surface with an orange focus ring (~55). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface-orange.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface-orange.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-surface-rose",
+            "type": "registry:file",
+            "title": "Surface-rose palette",
+            "description": "Neutral surface with a rose focus ring (~345). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/surface-rose.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/surface-rose.css"
+                }
+            ]
+        },
+        {
+            "name": "palette-danger",
+            "type": "registry:file",
+            "title": "Danger palette",
+            "description": "Error, destructive action. Hue ~25. Applied automatically by [data-invalid]. Both themes, all six roles.",
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/styles/palettes/danger.css",
+                    "type": "registry:file",
+                    "target": "~/styles/palettes/danger.css"
+                }
+            ]
+        },
+        {
+            "name": "cn",
+            "type": "registry:lib",
+            "title": "cn helper",
+            "description": "clsx + extendTailwindMerge with a palette class group so cn(\"palette-blue\", \"palette-danger\") resolves to one.",
+            "dependencies": ["clsx", "tailwind-merge"],
+            "files": [
+                {
+                    "path": "registry/lib/cn.ts",
+                    "type": "registry:lib",
+                    "target": "~/lib/cn.ts"
+                }
+            ]
+        },
+        {
+            "name": "get-token",
+            "type": "registry:lib",
+            "title": "getToken helper",
+            "description": "Reads a CSS custom property from the document, with px/rem formatting and a fallback.",
+            "files": [
+                {
+                    "path": "registry/lib/get-token/index.ts",
+                    "type": "registry:lib",
+                    "target": "~/lib/get-token/index.ts"
+                }
+            ]
+        },
+        {
+            "name": "text",
+            "type": "registry:ui",
+            "title": "Text atom",
+            "description": "Heading, Paragraph, Link, Small, Label, Error, Strong, Highlight, Clickable. No react-twc, no router coupling. Text.Link is a plain <a>; consumers wire Next's or TanStack's Link through render.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/atoms/text/index.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/text/index.tsx"
+                }
+            ]
+        },
+        {
+            "name": "clickable",
+            "type": "registry:ui",
+            "title": "Clickable",
+            "description": "The button surface — Button, Link and ExternalLink under one namespace. Three orthogonal axes (variant: solid/ghost/outline/icon, size: sm/md, shape: auto/square), none of which is colour. Tone arrives as a palette class. Link is a plain <a>; consumers stitch a router link through render. ExternalLink is a separate export for its outbound defaults.",
+            "dependencies": ["@base-ui/react", "tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/atoms/clickable/index.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/clickable/index.tsx"
+                }
+            ]
+        },
+        {
+            "name": "icon-size",
+            "type": "registry:ui",
+            "title": "iconSize table",
+            "description": "Icon sizes by context as Tailwind classes. The documented escape from 'which size does an icon use here'.",
+            "files": [
+                {
+                    "path": "registry/atoms/icon/index.ts",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/icon/index.ts"
+                }
+            ]
+        },
+        {
+            "name": "popup",
+            "type": "registry:lib",
+            "title": "popup family",
+            "description": "The floating box family — one member, content. Zero variants. Carries the box (raised palette, border, radius, shadow), sizing from Base UI's positioner, open/close animations and per-side slide-in including logical inline-start/inline-end with rtl counterparts. Shared by dropdown-menu, context-menu, select and combobox.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/families/popup.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/popup.ts"
+                }
+            ]
+        },
+        {
+            "name": "menu",
+            "type": "registry:lib",
+            "title": "menu family + parts factory",
+            "description": "The option list family — item, selectableItem, label, separator, shortcut, subTrigger, itemIndicator. Zero variants. Plus createMenuParts(P): a factory that takes a Base UI menu namespace and returns the styled wrappers (Item, SelectableItem, Label, Separator, Group, Shortcut, CheckboxItem, RadioGroup, RadioItem, SubTrigger, SubContent, Content, Sub). Shared by dropdown-menu, context-menu, select and combobox.",
+            "dependencies": [
+                "tailwind-variants",
+                "@base-ui/react",
+                "lucide-react"
+            ],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/popup"
+            ],
+            "files": [
+                {
+                    "path": "registry/families/menu.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/menu.ts"
+                },
+                {
+                    "path": "registry/families/menu/parts.tsx",
+                    "type": "registry:lib",
+                    "target": "~/components/families/menu/parts.tsx"
+                }
+            ]
+        },
+        {
+            "name": "dropdown-menu",
+            "type": "registry:ui",
+            "title": "Dropdown Menu",
+            "description": "A menu of actions triggered by a button. Declares only Root, Trigger, Content and SubContent with its own positioning defaults — everything else comes from the menu parts factory. No tone/variant/destructive prop; tone arrives as a palette class.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/menu", "@fragiola/popup"],
+            "files": [
+                {
+                    "path": "registry/ui/dropdown-menu.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/dropdown-menu.tsx"
+                }
+            ]
+        },
+        {
+            "name": "context-menu",
+            "type": "registry:ui",
+            "title": "Context Menu",
+            "description": "A menu of actions triggered by right-click. Declares only Root, Trigger (with select-none — behavioural, not visual), Content and SubContent. Installing after dropdown-menu writes exactly one file — the shared families are already on disk.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/menu", "@fragiola/popup"],
+            "files": [
+                {
+                    "path": "registry/ui/context-menu.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/context-menu.tsx"
+                }
+            ]
+        },
+        {
+            "name": "field",
+            "type": "registry:ui",
+            "title": "Field",
+            "description": "The field family (root, choiceRoot, row, body, control, addon, inset, label, description, error — zero variants) plus the Field composition stitching Base UI's Field primitive to the family via render. The box is the row; the control is only its middle. Invalid state by inheritance from data-invalid. Addon sides via data-side in logical vocabulary.",
+            "dependencies": ["@base-ui/react", "tailwind-variants"],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/text"
+            ],
+            "files": [
+                {
+                    "path": "registry/families/field.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/field.ts"
+                },
+                {
+                    "path": "registry/ui/field.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/field.tsx"
+                }
+            ]
+        },
+        {
+            "name": "input",
+            "type": "registry:ui",
+            "title": "Input / Textarea / Numeric",
+            "description": "One input component — Input, Textarea and Numeric. None carry a border, background, height, radius, focus ring, invalid state or theme; the box comes from the row. Numeric is the thesis test: a control written from scratch with no box styling. Includes Input.Template.Simple — a composition template with at most 7 props, no appearance props.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/field"],
+            "files": [
+                {
+                    "path": "registry/atoms/fields/index.ts",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/index.ts"
+                },
+                {
+                    "path": "registry/atoms/fields/input.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/input.tsx"
+                },
+                {
+                    "path": "registry/atoms/fields/textarea.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/textarea.tsx"
+                },
+                {
+                    "path": "registry/atoms/fields/numeric.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/numeric.tsx"
+                },
+                {
+                    "path": "registry/atoms/fields/templates/index.ts",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/templates/index.ts"
+                },
+                {
+                    "path": "registry/atoms/fields/templates/simple.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/fields/templates/simple.tsx"
+                }
+            ]
+        },
+        {
+            "name": "choice",
+            "type": "registry:lib",
+            "title": "choice family",
+            "description": "The checkable controls family — root, control, indicator, label, description. Zero variants. Shared by Checkbox, Radio and Switch. data-checked fills with palette-base and swaps text to contrast.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/families/choice.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/choice.ts"
+                }
+            ]
+        },
+        {
+            "name": "checkbox",
+            "type": "registry:ui",
+            "title": "Checkbox",
+            "description": "A checkable box. Uses the choice family's root (the box) and indicator (the check icon). Base UI's Checkbox provides checked/unchecked/indeterminate states, keyboard and aria.",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+            "files": [
+                {
+                    "path": "registry/ui/checkbox.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/checkbox.tsx"
+                }
+            ]
+        },
+        {
+            "name": "radio",
+            "type": "registry:ui",
+            "title": "Radio + RadioGroup",
+            "description": "A checkable circle. Uses the choice family's root (the circle, rounded-full) and indicator (a filled dot). RadioGroup provides the group behaviour and keyboard navigation.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+            "files": [
+                {
+                    "path": "registry/ui/radio.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/radio.tsx"
+                }
+            ]
+        },
+        {
+            "name": "switch",
+            "type": "registry:ui",
+            "title": "Switch",
+            "description": "A toggle. Uses the choice family's root (the track, w-9 h-5 rounded-full) and control (the thumb that slides). data-checked fills the track with palette-base.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+            "files": [
+                {
+                    "path": "registry/ui/switch.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/switch.tsx"
+                }
+            ]
+        },
+        {
+            "name": "select",
+            "type": "registry:ui",
+            "title": "Select",
+            "description": "The recombination test: field + popup + menu, declaring no new style. Trigger uses field.row + field.control; Content uses popup.content; Item uses menu.selectableItem; Indicator uses menu.itemIndicator. Installing after dropdown-menu and field writes exactly one file.",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/field",
+                "@fragiola/popup",
+                "@fragiola/menu"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/select.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/select.tsx"
+                }
+            ]
+        },
+        {
+            "name": "layer",
+            "type": "registry:lib",
+            "title": "layer family + parts factory",
+            "description": "The backdrop + panel family — backdrop, panel, header, body, footer, title, description. Zero variants. The backdrop uses bg-scrim (outside the palette contract — a scrim is not a role). title/description carry no typography (Text through render). Plus createLayerParts(P): a factory that takes a Base UI overlay namespace (Dialog or AlertDialog) and returns the styled wrappers. Shared by dialog, alert-dialog and drawer.",
+            "dependencies": [
+                "tailwind-variants",
+                "@base-ui/react",
+                "lucide-react"
+            ],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/families/layer.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/layer.ts"
+                },
+                {
+                    "path": "registry/families/layer/parts.tsx",
+                    "type": "registry:lib",
+                    "target": "~/components/families/layer/parts.tsx"
+                }
+            ]
+        },
+        {
+            "name": "dialog",
+            "type": "registry:ui",
+            "title": "Dialog",
+            "description": "A modal layer — a centred panel over a scrim. Consumes the layer family through createLayerParts; declares only Root, Trigger, Portal and the centring transform. Title renders Text.Heading as=\"h2\" through render; Description renders Text.Paragraph. The close affordance is Clickable.Button variant=\"icon\" shape=\"square\" size=\"sm\" with an sr-only label, positioned with logical properties.",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/layer",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/dialog.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/dialog.tsx"
+                }
+            ]
+        },
+        {
+            "name": "alert-dialog",
+            "type": "registry:ui",
+            "title": "Alert Dialog",
+            "description": "A modal layer that requires an explicit action to dismiss — no backdrop click, no close button. This file is the proof that layer is a family: it declares only what genuinely differs from dialog (the namespace, showClose={false}, the action/cancel pair). Installing after dialog writes exactly one file. A destructive confirmation is className=\"palette-danger\" on the action button.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": [
+                "@fragiola/layer",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/alert-dialog.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/alert-dialog.tsx"
+                }
+            ]
+        },
+        {
+            "name": "drawer",
+            "type": "registry:ui",
+            "title": "Drawer",
+            "description": "An edge-anchored layer with real swipe and snap-point support, built on Base UI's Drawer primitive. Consumes the layer family directly (panel, header, body, footer, title, description) but is not built from createLayerParts — it has its own Viewport, Handle and a transform-based positioning model. The inline edges invert under RTL. This is why sheet does not exist: an edge-anchored dialog and a drawer are the same component.",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/layer",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/drawer.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/drawer.tsx"
+                }
+            ]
+        },
+        {
+            "name": "chart",
+            "type": "registry:ui",
+            "title": "Chart",
+            "description": "An ECharts wrapper that resolves the active theme's tokens and applies them to axes, series and tooltip. The chart tokens are a separate axis from the palette contract — no role describes 'the third series'. Includes useThemeTokens hook (MutationObserver on data-theme). Thin wrapper: consumer passes a full EChartsOption, wrapper only injects colours.",
+            "dependencies": ["echarts", "echarts-for-react"],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/get-token"
+            ],
+            "files": [
+                {
+                    "path": "registry/hooks/use-theme-tokens.ts",
+                    "type": "registry:ui",
+                    "target": "~/hooks/use-theme-tokens.ts"
+                },
+                {
+                    "path": "registry/ui/chart.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/chart.tsx"
+                }
+            ]
+        },
+        {
+            "name": "tooltip",
+            "type": "registry:ui",
+            "title": "Tooltip",
+            "description": "A transient text label that appears on hover or focus. Composes popup.tooltip — a new member of the popup family, not a variant of popup.content. Inverted palette (accent as background, base as text), no border, no shadow, compact padding, fade-only animation. Provider coordinates delay between siblings.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/popup"],
+            "files": [
+                {
+                    "path": "registry/ui/tooltip.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/tooltip.tsx"
+                }
+            ]
+        },
+        {
+            "name": "popover",
+            "type": "registry:ui",
+            "title": "Popover",
+            "description": "A floating surface positioned against a trigger. Composes popup.content (the same floating box dropdown-menu uses) and adds Title, Description and Close through render. Title renders Text.Heading as=\"h2\"; Description renders Text.Paragraph. The close affordance is Clickable.Button variant=\"icon\" positioned with logical properties.",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/popup",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/popover.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/popover.tsx"
+                }
+            ]
+        },
+        {
+            "name": "disclosure",
+            "type": "registry:lib",
+            "title": "disclosure family",
+            "description": "The expand/collapse family — trigger, panel, content. Zero variants. trigger is the toggle button (group for chevron rotation, w-full, justify-between, logical padding, hover on soft, focus ring). panel is the animated container (overflow-hidden, data-starting-style/data-ending-style fade). content is the inner padded content (p-4 pt-0). Shared by accordion and collapsible.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/families/disclosure.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/disclosure.ts"
+                }
+            ]
+        },
+        {
+            "name": "accordion",
+            "type": "registry:ui",
+            "title": "Accordion",
+            "description": "A group of expand/collapse items with coordination. Composes the disclosure family (trigger, panel, content). Declares only Root, Item and Header — the coordination points. openMultiple controls whether one or many items can be open. The trigger is a group; put a chevron inside with group-data-[panel-open]:rotate-180.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/disclosure"],
+            "files": [
+                {
+                    "path": "registry/ui/accordion.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/accordion.tsx"
+                }
+            ]
+        },
+        {
+            "name": "collapsible",
+            "type": "registry:ui",
+            "title": "Collapsible",
+            "description": "A single expand/collapse section. Composes the disclosure family (trigger, panel, content). An accordion is a group of collapsibles with coordination; a collapsible is one section on its own. Both share the same trigger, panel and content — the zero-variant rule is preserved.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/disclosure"],
+            "files": [
+                {
+                    "path": "registry/ui/collapsible.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/collapsible.tsx"
+                }
+            ]
+        },
+        {
+            "name": "badge",
+            "type": "registry:ui",
+            "title": "Badge",
+            "description": "A small status indicator. One axis (variant: soft / solid / outline), none of which is colour. Tone arrives as a palette class (palette-danger, palette-blue, etc.) — no variant=\"destructive\", no tone prop. The palette class overrides the six roles, so bg-palette-soft becomes the danger soft tint and text-palette-contrast becomes the danger contrast.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/atoms/badge/index.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/atoms/badge/index.tsx"
+                }
+            ]
+        },
+        {
+            "name": "breadcrumb",
+            "type": "registry:ui",
+            "title": "Breadcrumb",
+            "description": "A navigation trail. Uses a semantic nav with an ordered list. The last item is the current page (aria-current), not a link. Separators are chevrons on the inline axis, RTL-aware. No variants — visual differences (separator type, truncation) are composition. Breadcrumb.Ellipsis for collapsed items.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/breadcrumb.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/breadcrumb.tsx"
+                }
+            ]
+        },
+        {
+            "name": "track",
+            "type": "registry:lib",
+            "title": "track family",
+            "description": "A rail with a filled portion — the two things slider and progress genuinely share. Two members (rail, fill), zero variants. Orientation is data-orientation from the primitive, not a style axis. The fill's geometry comes from the primitive's inline styles (logical properties, so RTL inverts automatically); the family carries only the visual treatment. Installing slider after progress writes exactly one file.",
+            "dependencies": ["tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme"],
+            "files": [
+                {
+                    "path": "registry/families/track.ts",
+                    "type": "registry:lib",
+                    "target": "~/components/families/track.ts"
+                }
+            ]
+        },
+        {
+            "name": "progress",
+            "type": "registry:ui",
+            "title": "Progress",
+            "description": "The rail without the interaction. Determinate and indeterminate; the indeterminate animation respects prefers-reduced-motion. Fills from the inline start and inverts under RTL (logical properties from the primitive). Tone arrives as a palette class from outside (palette-orange), not a prop. Uses the track family (rail + fill).",
+            "dependencies": ["@base-ui/react", "tailwind-variants"],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/track",
+                "@fragiola/text"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/progress.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/progress.tsx"
+                }
+            ]
+        },
+        {
+            "name": "slider",
+            "type": "registry:ui",
+            "title": "Slider",
+            "description": "A field control — the thesis test of the control/body rule for a non-text control. Carries no border, background, height, focus ring or invalid state of its own; all of that arrives from field.row. The Control carries the field-control marker so the row's outline fires on focus. The thumb's own focus ring uses palette-ring. Range sliders work with the same component. Uses the track family (rail + fill). Installing after progress writes exactly one file.",
+            "dependencies": ["@base-ui/react", "tailwind-variants"],
+            "registryDependencies": [
+                "@fragiola/theme",
+                "@fragiola/cn",
+                "@fragiola/track",
+                "@fragiola/text",
+                "@fragiola/field"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/slider.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/slider.tsx"
+                }
+            ]
+        },
+        {
+            "name": "tabs",
+            "type": "registry:ui",
+            "title": "Tabs",
+            "description": "A strip of triggers where one is current, with an animated indicator. The indicator uses the primitive's CSS variables (--active-tab-*), not React measurement — it tracks on resize and under RTL automatically. Orientation is behaviour from the primitive. Focus ring is palette-ring; the active state is a role (bg-palette-soft), not a colour. No navigation family — tabs and navigation-menu share state normalisation (highlighted) but not enough structural style. The negative result is in the port report.",
+            "dependencies": ["@base-ui/react", "tailwind-variants"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/tabs.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/tabs.tsx"
+                }
+            ]
+        },
+        {
+            "name": "navigation-menu",
+            "type": "registry:ui",
+            "title": "Navigation Menu",
+            "description": "A strip of triggers where each opens a morphing popup with a viewport that resizes between items. The popup is popup.content (the second consumer outside menus). The viewport morphs via the primitive's --popup-width/--popup-height CSS variables — no new popup member, no !important. Link renders Text.Link through render. The trigger's chevron rotates on open and sits on the inline end (ms-auto).",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/popup",
+                "@fragiola/text",
+                "@fragiola/clickable"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/navigation-menu.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/navigation-menu.tsx"
+                }
+            ]
+        },
+        {
+            "name": "pagination",
+            "type": "registry:ui",
+            "title": "Pagination",
+            "description": "A strip of links where one is the current page. Every clickable part is Clickable — Link for pages, Previous/Next as Clickable.Link with an icon. No button style in this file. The current page carries aria-current=page and is distinguished by a fill strategy (variant=outline), never by a colour. Previous/next chevrons invert under RTL via rtl:rotate-180. Ships no page-computation logic.",
+            "dependencies": ["lucide-react"],
+            "registryDependencies": [
+                "@fragiola/clickable",
+                "@fragiola/theme",
+                "@fragiola/cn"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/pagination.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/pagination.tsx"
+                }
+            ]
+        },
+        {
+            "name": "combobox",
+            "type": "registry:ui",
+            "title": "Combobox",
+            "description": "The second recombination test. This component is field + popup + menu, and it declares no new style. The input is a field control (field.row + field-control marker); the trigger and clear buttons are Clickable.Button; the content is popup.content; items are menu.selectableItem; the item indicator is menu.itemIndicator; group labels are menu.label; separators are menu.separator. If this file contains a class that does not come from a family, the recombination claim is wrong. It does not. Supports single and multiple selection (with chips).",
+            "dependencies": ["@base-ui/react", "lucide-react"],
+            "registryDependencies": [
+                "@fragiola/field",
+                "@fragiola/popup",
+                "@fragiola/menu",
+                "@fragiola/clickable",
+                "@fragiola/text"
+            ],
+            "files": [
+                {
+                    "path": "registry/ui/combobox.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/combobox.tsx"
+                }
+            ]
+        },
+        {
+            "name": "table",
+            "type": "registry:ui",
+            "title": "Table",
+            "description": "Semantic HTML with palette roles. No primitive, no family. border-palette-line for the grid, bg-palette-soft for the header and hover, text-palette-contrast for header text, text-palette-accent/85 for body text. The wrapper handles horizontal scroll on small screens.",
+            "dependencies": [],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/table.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/table.tsx"
+                }
+            ]
+        },
+        {
+            "name": "avatar",
+            "type": "registry:ui",
+            "title": "Avatar",
+            "description": "A profile picture with a fallback. Uses Base UI primitive for the loading-status state machine. No family — just palette roles and layout. Size is controlled by the consumer via className (default size-10).",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/avatar.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/avatar.tsx"
+                }
+            ]
+        },
+        {
+            "name": "skeleton",
+            "type": "registry:ui",
+            "title": "Skeleton",
+            "description": "A placeholder for loading content. No primitive, no family. bg-palette-soft (a role) + animate-pulse (Tailwind built-in, respects prefers-reduced-motion automatically). Shape controlled by consumer via className.",
+            "dependencies": [],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/skeleton.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/skeleton.tsx"
+                }
+            ]
+        },
+        {
+            "name": "separator",
+            "type": "registry:ui",
+            "title": "Separator",
+            "description": "A visual divider. Uses Base UI primitive for ARIA (role=separator, aria-orientation). No family — the menu family separator carries menu spacing. This separator is generic: bg-palette-line (a role) + orientation from primitive. Horizontal: h-px w-full. Vertical: h-full w-px.",
+            "dependencies": ["@base-ui/react"],
+            "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+            "files": [
+                {
+                    "path": "registry/ui/separator.tsx",
+                    "type": "registry:ui",
+                    "target": "~/components/ui/separator.tsx"
+                }
+            ]
+        }
+    ]
+}

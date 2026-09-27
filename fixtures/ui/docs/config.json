@@ -1,0 +1,23 @@
+{
+    "sections": [
+        {
+            "label": "Getting Started",
+            "pages": [
+                {
+                    "label": "Installation",
+                    "path": "getting-started/installation"
+                }
+            ]
+        },
+        {
+            "label": "Atoms",
+            "pages": [{ "label": "Clickable", "path": "atoms/clickable" }]
+        },
+        {
+            "label": "Menus",
+            "pages": [
+                { "label": "Dropdown Menu", "path": "menus/dropdown-menu" }
+            ]
+        }
+    ]
+}
