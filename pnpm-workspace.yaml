@@ -1,0 +1,8 @@
+# Dependencies allowed to run install scripts. pnpm 11 refuses an ignored
+# build script in CI (ERR_PNPM_IGNORED_BUILDS).
+allowBuilds:
+  esbuild: true
+  sharp: false
+# Only versions published at least 7 days ago (minutes).
+minimumReleaseAge: 10080
+verifyDepsBeforeRun: false

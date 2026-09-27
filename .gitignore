@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+
+# TypeScript build info
+*.tsbuildinfo
+next-env.d.ts
+
+# Env files (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+
+# Project exports (`pnpm sources:sync`) and everything generated from them
+# (`pnpm prepare:site`): the fumadocs index, the vendored theme, the examples
+# apps and the registry under public/.
+.sources/
+.source/
+styles/fragiola/
+public/*/examples/
+public/r/
