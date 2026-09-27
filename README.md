@@ -1,46 +1,68 @@
 # fragiola.com
 
-The single site for every Fragiola project: `/` (landing), `/ui`, `/dockable`, …
-Each project lives in its own repo and exposes a **site export**; this repo
-assembles the exports into one static Next.js + Fumadocs site, published on
+The single site for every Fragiola project: `/` (the organization), `/ui`, `/dockable`, …
+Each project lives in its own repo and exposes a **site export**; this repo checks the exports
+against the contract and assembles them into one static Next.js + Fumadocs site, published on
 GitHub Pages.
 
-> Status: proof of concept.
+- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1).
+- **How this repo works**, its rules and commands: [`AGENTS.md`](AGENTS.md).
 
-## The "site export" contract (v0)
-
-Every project implements, at its repo root:
+## Working on it
 
 ```sh
-pnpm site:export --base /<slug> --out <dir>
+pnpm install
+pnpm sources:sync        # run each project's site:export (projects.json → localPath) into .sources/
+pnpm dev                 # http://localhost:3000, the projects' pages and examples live
 ```
 
-It runs in the project's own repo, with its own install and lockfile. The
-output:
+`projects.json` lists `{ slug, repo, ref, localPath?, devUrl? }`. `localPath` is the project's
+checkout on your machine; with `devUrl`, `pnpm dev` starts the project's `site:dev` there and
+proxies `/<slug>/embed/**` to it, so an edited example hot-reloads inside the site. An edited page
+in the project's `site/docs` shows without a restart, checked against the contract on save.
 
-```
-<out>/
-  project.json        { slug, title, description, frameworks, defaultFramework }
-  docs/config.json    { sections: [{ label, framework?, pages: [{ label, path }] }] }
-  docs/**/*.mdx       the pages (`path` = file path without .mdx)
-  examples/<fw>/      static app built for <base>/examples/<fw>/, `?id=<id>` renders one example
-    manifest.json     [{ id, title, description?, height?, files: [{ path, lang, content }] }]
-  r/                  (optional) shadcn registry JSON
-```
+Without the projects' checkouts, `pnpm sources:fixtures` fills `.sources/` from `fixtures/`
+instead.
 
-MDX components: `<Example>`, `<Callout>`, `<Tabs>`/`<Tab>`, `<InstallCommand>`,
-`<Framework>` — nothing else.
-
-## How the site is built
-
-| command | does |
+| | |
 |---|---|
-| `pnpm sources:sync` | runs `site:export` in every project of `projects.json` into `.sources/<slug>/` and checks the output |
-| `pnpm prepare:site` | copies the examples apps to `public/<slug>/examples/`, merges the registries into `public/r/` (the same item from two projects fails), vendors the theme from `.sources/ui/r` into `styles/fragiola/` |
-| `pnpm build` | `prepare:site` + `next build` → `out/` |
-| `pnpm dev` | `prepare:site` + `next dev` |
-| `pnpm check` / `pnpm typecheck` | Biome / TypeScript |
+| `pnpm build` | the contract checks, then `out/` (a broken link fails here, with its file and line) |
+| `pnpm test` | unit tests (the contract checks) |
+| `pnpm e2e:build && pnpm e2e` | the browser suite, against `out/` built from the fixtures |
+| `pnpm serve` · `pnpm measure` | serve `out/` like Pages; weigh pages |
 
-`projects.json` lists `{ slug, repo, ref, localPath }`. Locally a project is
-read from `localPath`; in CI (`.github/workflows/deploy-pages.yml`) from a
-clone of `repo@ref` under `$FRAGIOLA_PROJECTS_DIR`.
+## Deploying
+
+`.github/workflows/deploy-pages.yml` tests (against the fixtures), clones every project at its
+`ref`, runs their exports, builds and publishes. It runs on a push to `main`, daily at 05:17 UTC,
+on demand, and when a project's CI dispatches `project-updated`. None of it is set up yet; in
+order:
+
+1. **The repository.** Create `fragiola/www` on GitHub (public, like the projects: the workflow
+   clones them without a token), add it as `origin` here and push `main`.
+2. **Pages.** Settings → Pages → Build and deployment → Source: **GitHub Actions**. Then run the
+   workflow once (Actions → "Deploy site to GitHub Pages" → Run workflow) and check the
+   `github-pages` environment it creates.
+3. **The domain.** Settings → Pages → Custom domain: `fragiola.com`, then **Enforce HTTPS** once
+   the certificate is issued. At the DNS provider:
+   - `fragiola.com`: `A` records to `185.199.108.153`, `185.199.109.153`, `185.199.110.153`,
+     `185.199.111.153` (and `AAAA` to `2606:50c0:8000::153`, `2606:50c0:8001::153`,
+     `2606:50c0:8002::153`, `2606:50c0:8003::153`);
+   - `www.fragiola.com`: `CNAME` to `fragiola.github.io`.
+
+   Verify the domain for the organization first (Organization settings → Pages → Add a domain),
+   so no other account can claim it. With an Actions deployment no `CNAME` file is needed.
+   The site is served from the domain root: every export is built for `/<slug>`, so it cannot be
+   served from `fragiola.github.io/www`.
+4. **The dispatch token.** The projects' CI sends `repository_dispatch` `project-updated` after
+   a push to `main` once a `WWW_DISPATCH_TOKEN` secret exists (dockable's `main` does; ui's does
+   on `feat/site-export-v1`, not merged yet). Create a **fine-grained personal access token** (or a
+   GitHub App token) with:
+   - resource owner: `fragiola`; repository access: only `fragiola/www`;
+   - repository permissions: **Contents: Read and write** (what `POST /repos/{owner}/{repo}/dispatches`
+     requires), Metadata: Read.
+
+   Store it as the **`WWW_DISPATCH_TOKEN`** Actions secret in each project repo (or once as an
+   organization secret shared with `ui` and `dockable`). Set an expiry and a reminder to rotate it.
+5. **The refs.** `projects.json` builds `main` of every project. A project's `main` must export
+   contract v1 (`project.json` → `"contract": 1`), or the build fails on it.
