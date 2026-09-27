@@ -8,19 +8,21 @@ export const metadata: Metadata = {
     description: "Fragiola: a component library, a layout manager, and more.",
 };
 
-// Theme: next-themes, key localStorage["theme"], emitted as both the .dark
-// class (Fumadocs UI) and data-theme (Fragiola's palettes). The examples
-// apps in the iframes read the same key and follow the `storage` event —
-// that is the "site export" contract's theme half.
+// Theme: next-themes, key localStorage["theme"], emitted as both the .dark class (Fumadocs UI)
+// and data-theme (Fragiola's palettes). The embeds never read it: the site resolves its theme
+// (including "system") and passes each embed an explicit example theme (CONTRACT.md §5.1).
 //
-// Search is static: app/api/search is exported as a file and queried in the
-// browser.
+// Search is static: app/api/search is exported as a file and queried in the browser.
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="palette-surface flex min-h-screen flex-col">
                 <RootProvider
-                    search={{ options: { type: "static", api: "/api/search" } }}
+                    search={{
+                        // the dialog (and Orama) load when it opens, not with every page
+                        preload: false,
+                        options: { type: "static", api: "/api/search" },
+                    }}
                     theme={{
                         attribute: ["class", "data-theme"],
                         defaultTheme: "light",

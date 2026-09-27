@@ -6,12 +6,14 @@ import {
     useContext,
     useSyncExternalStore,
 } from "react";
+import { frameworkName } from "@/lib/frameworks";
 
-// The chosen framework, one value for the whole site, persisted in
-// localStorage["framework"] and shared across tabs through `storage`. A
-// project that does not offer the stored framework shows its default one.
+// The chosen framework: one value for the whole site (§4), persisted in
+// localStorage["fragiola:framework"] and shared across tabs through `storage`. A project that
+// does not offer the stored framework shows its default one; the choice is kept for the next
+// project that does.
 
-const KEY = "framework";
+const KEY = "fragiola:framework";
 const listeners = new Set<() => void>();
 
 function read(): string | null {
@@ -37,7 +39,9 @@ function subscribe(listener: () => void) {
 export function setFramework(framework: string) {
     try {
         localStorage.setItem(KEY, framework);
-    } catch {}
+    } catch {
+        // storage unavailable: the choice lasts for this page
+    }
     for (const listener of listeners) listener();
 }
 
@@ -56,11 +60,11 @@ export function ProjectProvider({
     project: ProjectFrameworks;
     children: ReactNode;
 }) {
-    return (
-        <ProjectContext.Provider value={project}>
-            {children}
-        </ProjectContext.Provider>
-    );
+    return <ProjectContext value={project}>{children}</ProjectContext>;
+}
+
+export function useProjectFrameworks(): ProjectFrameworks | null {
+    return useContext(ProjectContext);
 }
 
 /** The framework to show for the current project. Before hydration: its default. */
@@ -79,13 +83,14 @@ export function FrameworkSelect({ frameworks }: { frameworks: string[] }) {
         <label className="flex items-center justify-between gap-2 rounded-md border border-fd-border px-2 py-1.5 text-sm">
             <span className="text-fd-muted-foreground">Framework</span>
             <select
+                data-testid="framework-select"
                 className="bg-transparent text-fd-foreground"
                 value={framework}
                 onChange={(event) => setFramework(event.target.value)}
             >
                 {frameworks.map((name) => (
                     <option key={name} value={name}>
-                        {name}
+                        {frameworkName(name)}
                     </option>
                 ))}
             </select>
@@ -102,14 +107,4 @@ export function Framework({
     children: ReactNode;
 }) {
     return useFramework() === name ? children : null;
-}
-
-/** Shows the child keyed by the current framework (server-rendered per framework). */
-export function FrameworkSwitch({
-    variants,
-}: {
-    variants: Record<string, ReactNode>;
-}) {
-    const framework = useFramework();
-    return variants[framework] ?? Object.values(variants)[0] ?? null;
 }

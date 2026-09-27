@@ -11,9 +11,9 @@ import {
     useFramework,
 } from "@/components/framework";
 
-// A project's docs layout. The sidebar is pre-built once per framework on
-// the server (a config.json section can be framework-specific); the
-// framework choice, which only the browser knows, picks one.
+// A project's docs layout. The sidebar is pre-built once per framework on the server (a
+// config.json section can be framework-specific); the framework choice, which only the browser
+// knows, picks one. The framework select shows only for a project with more than one.
 
 type Options = Pick<BaseLayoutProps, "nav" | "links" | "githubUrl">;
 
@@ -35,7 +35,11 @@ function Layout({
         <DocsLayout
             tree={tree}
             {...options}
-            sidebar={{ banner: <FrameworkSelect frameworks={frameworks} /> }}
+            sidebar={
+                frameworks.length > 1
+                    ? { banner: <FrameworkSelect frameworks={frameworks} /> }
+                    : {}
+            }
         >
             {children}
         </DocsLayout>

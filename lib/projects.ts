@@ -1,16 +1,22 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Root } from "fumadocs-core/page-tree";
+import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
 import type {
     DocsConfig,
-    ExampleEntry,
+    ExamplesConfig,
+    Manifest,
+    ManifestExample,
     ProjectEntry,
     ProjectInfo,
-} from "@/scripts/projects.ts";
+    RegistryIndex,
+} from "@/lib/contract/types";
 
-// Build-time reads of .sources/ (the project exports). Server only.
+// Build-time reads of .sources/ (the exports, already checked by scripts/prepare-site.ts).
+// Server only. What reaches the client is the small, serializable shapes at the bottom.
 
-const SOURCES = join(process.cwd(), ".sources");
+const ROOT = process.cwd();
+const SOURCES = join(ROOT, ".sources");
 
 function readJson<T>(file: string): T {
     return JSON.parse(readFileSync(file, "utf-8")) as T;
@@ -18,76 +24,265 @@ function readJson<T>(file: string): T {
 
 export interface Project extends ProjectInfo {
     docs: DocsConfig;
+    examples: ExamplesConfig;
+    manifests: Map<string, Manifest>;
+    repoUrl?: string;
 }
 
+// read once per build; in dev every request reads again, so an edited export shows on reload
+const CACHE = process.env.NODE_ENV === "production";
+let projects: Project[] | undefined;
+
 export function getProjects(): Project[] {
-    const entries = readJson<ProjectEntry[]>(
-        join(process.cwd(), "projects.json"),
+    if (projects && CACHE) return projects;
+    projects = readJson<ProjectEntry[]>(join(ROOT, "projects.json")).map(
+        (entry) => {
+            const dir = join(SOURCES, entry.slug);
+            const info = readJson<ProjectInfo>(join(dir, "project.json"));
+            return {
+                ...info,
+                docs: readJson<DocsConfig>(join(dir, "docs", "config.json")),
+                examples: readJson<ExamplesConfig>(join(dir, "examples.json")),
+                manifests: new Map(
+                    info.frameworks.map((framework) => [
+                        framework,
+                        readJson<Manifest>(
+                            join(dir, "embed", framework, "manifest.json"),
+                        ),
+                    ]),
+                ),
+                repoUrl: entry.repo.replace(/\.git$/, ""),
+            };
+        },
     );
-    return entries.map(({ slug }) => ({
-        ...readJson<ProjectInfo>(join(SOURCES, slug, "project.json")),
-        docs: readJson<DocsConfig>(join(SOURCES, slug, "docs", "config.json")),
-    }));
+    return projects;
 }
 
 export function getProject(slug: string): Project | undefined {
     return getProjects().find((project) => project.slug === slug);
 }
 
-export function docsUrl(slug: string, path: string): string {
-    return `/${slug}/docs/${path}/`;
-}
-
 /** The first page of the sidebar: where the project's "Docs" link goes. */
 export function firstPageUrl(project: Project): string {
-    const first = project.docs.sections[0]?.pages[0];
-    return first ? docsUrl(project.slug, first.path) : `/${project.slug}/`;
+    for (const section of project.docs.sections) {
+        for (const entry of section.pages) {
+            if ("path" in entry) return docsHref(project.slug, entry.path);
+        }
+    }
+    return `/${project.slug}/`;
 }
 
-/**
- * The sidebar for one framework: config.json's sections in order, a section
- * that names another framework left out.
- */
+/** The sidebar for one framework: config.json's sections in order, other frameworks' left out. */
 export function getPageTree(project: Project, framework: string): Root {
     return {
+        // Fumadocs memoizes the tree by $id: one per framework, or switching keeps the first
+        $id: `${project.slug}:${framework}`,
         name: project.title,
         children: project.docs.sections
             .filter((s) => !s.framework || s.framework === framework)
             .flatMap((section) => [
                 { type: "separator" as const, name: section.label },
-                ...section.pages.map((page) => ({
-                    type: "page" as const,
-                    name: page.label,
-                    url: docsUrl(project.slug, page.path),
-                })),
+                ...section.pages.map((entry) =>
+                    "path" in entry
+                        ? {
+                              type: "page" as const,
+                              name: entry.label,
+                              url: docsHref(project.slug, entry.path),
+                          }
+                        : {
+                              type: "page" as const,
+                              name: entry.label,
+                              url: entry.href,
+                              external: true,
+                          },
+                ),
             ]),
     };
 }
 
-const manifests = new Map<string, ExampleEntry[]>();
+// ─── registry (§7) ───────────────────────────────────────────────────────────
 
-export function getExample(
-    slug: string,
-    framework: string,
-    id: string,
-): ExampleEntry | undefined {
-    const key = `${slug}/${framework}`;
-    let manifest = manifests.get(key);
-    if (!manifest) {
-        manifest = readJson<ExampleEntry[]>(
-            join(SOURCES, slug, "examples", framework, "manifest.json"),
-        );
-        manifests.set(key, manifest);
+let namespaces: Map<string, string> | undefined;
+
+/** Every registry item of the site, with the namespace of the project that exports it. */
+export function registryNamespaces(): Map<string, string> {
+    if (!namespaces || !CACHE) {
+        namespaces = new Map();
+        for (const project of getProjects()) {
+            const namespace = project.registry?.namespace;
+            if (!namespace) continue;
+            const dir = join(SOURCES, project.slug, "r");
+            const index = readJson<RegistryIndex>(join(dir, "index.json"));
+            for (const item of index.items)
+                namespaces.set(item.name, namespace);
+        }
     }
-    return manifest.find((entry) => entry.id === id);
+    return namespaces;
 }
 
-/** The project's repository page, from projects.json. */
-export function readRepoUrl(slug: string): string | undefined {
-    const entries = readJson<ProjectEntry[]>(
-        join(process.cwd(), "projects.json"),
-    );
-    return entries
-        .find((entry) => entry.slug === slug)
-        ?.repo.replace(/\.git$/, "");
+export function installCommand(items: string[]): string {
+    const ns = registryNamespaces();
+    return `npx shadcn@latest add ${items.map((item) => `${ns.get(item) ?? "@fragiola"}/${item}`).join(" ")}`;
+}
+
+/** The gallery's setup command (§4): the packages, then the registry items, namespaced. */
+export function setupCommand(example: ManifestExample): string {
+    const lines: string[] = [];
+    if (example.packages.length > 0) {
+        lines.push(`npm install ${example.packages.join(" ")}`);
+    }
+    if (example.registry.length > 0)
+        lines.push(installCommand(example.registry));
+    return lines.join("\n");
+}
+
+// ─── what the client gets ────────────────────────────────────────────────────
+
+export interface ProjectSummary {
+    slug: string;
+    title: string;
+    frameworks: string[];
+    defaultFramework: string;
+    docsUrl: string;
+    repoUrl?: string;
+}
+
+export interface ThemeSummary {
+    name: string;
+    title: string;
+    description: string;
+    scheme: "light" | "dark";
+    swatch: string[];
+    hasFile: boolean;
+}
+
+/** One framework's take on an example (the ids are shared across frameworks, §5.3). */
+export interface ExampleVariant {
+    title: string;
+    description: string;
+    features: string[];
+    /** the docs page, as a site URL */
+    docs?: string;
+    layout: "fill" | "flow";
+    height: number;
+    setup: string;
+}
+
+export interface GalleryExample {
+    id: string;
+    level: string;
+    order: number;
+    variants: Record<string, ExampleVariant>;
+}
+
+export interface Gallery {
+    project: ProjectSummary;
+    levels: { id: string; title: string }[];
+    themes: ThemeSummary[];
+    /** in gallery order: by level (examples.json order), then `order` */
+    examples: GalleryExample[];
+}
+
+export function projectSummary(project: Project): ProjectSummary {
+    return {
+        slug: project.slug,
+        title: project.title,
+        frameworks: project.frameworks,
+        defaultFramework: project.defaultFramework,
+        docsUrl: firstPageUrl(project),
+        ...(project.repoUrl ? { repoUrl: project.repoUrl } : {}),
+    };
+}
+
+export function themeSummaries(project: Project): ThemeSummary[] {
+    return project.examples.themes.map((theme) => ({
+        name: theme.name,
+        title: theme.title,
+        description: theme.description,
+        scheme: theme.scheme,
+        swatch: theme.swatch,
+        hasFile: Boolean(theme.file),
+    }));
+}
+
+function variantOf(project: Project, example: ManifestExample): ExampleVariant {
+    return {
+        title: example.title,
+        description: example.description,
+        features: example.features,
+        ...(example.docs ? { docs: siteHref(project.slug, example.docs) } : {}),
+        layout: example.layout,
+        height: example.height,
+        setup: setupCommand(example),
+    };
+}
+
+/** An example across the project's frameworks, or undefined when no manifest has it. */
+export function getExample(
+    project: Project,
+    id: string,
+): GalleryExample | undefined {
+    let first: ManifestExample | undefined;
+    const variants: Record<string, ExampleVariant> = {};
+    // the default framework first: its level and order place the example
+    const frameworks = [
+        project.defaultFramework,
+        ...project.frameworks.filter((f) => f !== project.defaultFramework),
+    ];
+    for (const framework of frameworks) {
+        const example = project.manifests
+            .get(framework)
+            ?.examples.find((entry) => entry.id === id);
+        if (!example) continue;
+        first ??= example;
+        variants[framework] = variantOf(project, example);
+    }
+    return first
+        ? { id, level: first.level, order: first.order, variants }
+        : undefined;
+}
+
+export function getGallery(project: Project): Gallery {
+    const ids = new Set<string>();
+    for (const manifest of project.manifests.values()) {
+        for (const example of manifest.examples) ids.add(example.id);
+    }
+    const levels = project.examples.levels.map((level) => level.id);
+    const examples = [...ids]
+        .flatMap((id) => {
+            const example = getExample(project, id);
+            return example ? [example] : [];
+        })
+        .sort(
+            (a, b) =>
+                levels.indexOf(a.level) - levels.indexOf(b.level) ||
+                a.order - b.order ||
+                a.id.localeCompare(b.id),
+        );
+    return {
+        project: projectSummary(project),
+        levels: project.examples.levels,
+        themes: themeSummaries(project),
+        examples,
+    };
+}
+
+export function firstExampleUrl(project: Project): string | undefined {
+    const [first] = getGallery(project).examples;
+    return first ? exampleHref(project.slug, first.id) : undefined;
+}
+
+/** The pages of a project, for the static params: every `.mdx` path but the landing. */
+export function pagePaths(project: Project): string[] {
+    const docs = join(SOURCES, project.slug, "docs");
+    const walk = (dir: string, prefix: string): string[] =>
+        readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+            entry.isDirectory()
+                ? walk(join(dir, entry.name), `${prefix}${entry.name}/`)
+                : entry.name.endsWith(".mdx") &&
+                    `${prefix}${entry.name}` !== "index.mdx"
+                  ? [`${prefix}${entry.name.replace(/\.mdx$/, "")}`]
+                  : [],
+        );
+    return walk(docs, "");
 }

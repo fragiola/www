@@ -7,7 +7,12 @@ import {
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getMDXComponents } from "@/components/mdx";
-import { firstPageUrl, getProject, getProjects } from "@/lib/projects";
+import {
+    firstPageUrl,
+    getProject,
+    getProjects,
+    pagePaths,
+} from "@/lib/projects";
 import { source } from "@/lib/source";
 
 type Props = { params: Promise<{ project: string; slug?: string[] }> };
@@ -18,12 +23,10 @@ export function generateStaticParams() {
     return getProjects().flatMap((project) => [
         // /<slug>/docs/ has no page of its own: it redirects to the first one
         { project: project.slug, slug: [] },
-        ...project.docs.sections.flatMap((section) =>
-            section.pages.map((page) => ({
-                project: project.slug,
-                slug: page.path.split("/"),
-            })),
-        ),
+        ...pagePaths(project).map((path) => ({
+            project: project.slug,
+            slug: path.split("/"),
+        })),
     ]);
 }
 
@@ -52,8 +55,12 @@ export default async function Page({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { project, slug = [] } = await params;
-    const page = getPage(project, slug);
-    if (!page) return {};
-    return { title: page.data.title, description: page.data.description };
+    const { project: slug, slug: path = [] } = await params;
+    const project = getProject(slug);
+    const page = path.length > 0 ? getPage(slug, path) : undefined;
+    if (!project || !page) return {};
+    return {
+        title: `${page.data.title} · ${project.title}`,
+        description: page.data.description,
+    };
 }

@@ -1,29 +1,43 @@
 "use client";
 
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
-// <InstallCommand item />: the shadcn CLI command for a registry item of the
-// `@fragiola` namespace (served from /r/{name}.json).
+// <InstallCommand item> (§3.4, §7): the shadcn CLI command for a registry item, namespaced with
+// the project's registry (`npx shadcn@latest add @fragiola/<item>`), served from /r.
 
-export function InstallCommand({ item }: { item: string }) {
+export function InstallCommand({ command }: { command: string }) {
     const [copied, setCopied] = useState(false);
-    const command = `npx shadcn@latest add @fragiola/${item}`;
-
     return (
-        <div className="not-prose my-4 flex items-center gap-2 rounded-md border border-fd-border bg-fd-muted px-3 py-2">
-            <code className="flex-1 font-mono text-fd-foreground text-sm">
+        <div
+            data-testid="install-command"
+            className="not-prose my-4 flex items-center gap-2 rounded-md border border-fd-border bg-fd-muted px-3 py-2"
+        >
+            <code className="flex-1 overflow-x-auto whitespace-pre font-mono text-fd-foreground text-sm">
                 {command}
             </code>
             <button
                 type="button"
+                aria-label={copied ? "Copied" : "Copy the command"}
                 onClick={() => {
-                    navigator.clipboard.writeText(command);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
+                    navigator.clipboard.writeText(command).then(
+                        () => {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                        },
+                        () => {
+                            // clipboard unavailable: nothing to report
+                        },
+                    );
                 }}
-                className="text-fd-muted-foreground text-xs transition-colors hover:text-fd-foreground"
+                className="inline-flex items-center gap-1 text-fd-muted-foreground text-xs transition-colors hover:text-fd-foreground"
             >
-                {copied ? "Copied!" : "Copy"}
+                {copied ? (
+                    <Check aria-hidden className="size-3.5" />
+                ) : (
+                    <Copy aria-hidden className="size-3.5" />
+                )}
+                {copied ? "Copied" : "Copy"}
             </button>
         </div>
     );

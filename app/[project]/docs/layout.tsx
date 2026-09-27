@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ProjectDocsLayout } from "@/components/project-docs-layout";
-import { baseOptions } from "@/lib/layout.shared";
-import { getPageTree, getProject, readRepoUrl } from "@/lib/projects";
+import { baseOptions, projectLinks } from "@/lib/layout.shared";
+import { getPageTree, getProject } from "@/lib/projects";
 
 export default async function Layout({
     params,
@@ -16,6 +16,7 @@ export default async function Layout({
     const trees = Object.fromEntries(
         project.frameworks.map((fw) => [fw, getPageTree(project, fw)]),
     );
+    const base = baseOptions();
     return (
         <ProjectDocsLayout
             project={{
@@ -24,7 +25,15 @@ export default async function Layout({
                 defaultFramework: project.defaultFramework,
             }}
             trees={trees}
-            options={{ ...baseOptions(), githubUrl: readRepoUrl(project.slug) }}
+            options={{
+                nav: {
+                    ...base.nav,
+                    title: project.title,
+                    url: `/${project.slug}/`,
+                },
+                links: [...projectLinks(project), ...(base.links ?? [])],
+                githubUrl: project.repoUrl,
+            }}
         >
             {children}
         </ProjectDocsLayout>

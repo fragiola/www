@@ -1,42 +1,62 @@
+import { DocsBody } from "fumadocs-ui/layouts/docs/page";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { baseOptions } from "@/lib/layout.shared";
-import { firstPageUrl, getProject, getProjects } from "@/lib/projects";
+import { ProjectProvider } from "@/components/framework";
+import { getMDXComponents } from "@/components/mdx";
+import { baseOptions, projectLinks } from "@/lib/layout.shared";
+import { getProject } from "@/lib/projects";
+import { source } from "@/lib/source";
+
+// /<slug>: the project's landing (§3.5), its docs/index.mdx in the vocabulary (typically a
+// <Hero> and an <Example variant="bleed">). The project owns the content; the site the layout.
 
 type Props = { params: Promise<{ project: string }> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-    return getProjects().map((project) => ({ project: project.slug }));
+function getLanding(slug: string) {
+    return source.getPage([slug, "docs"]);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const project = getProject((await params).project);
-    return project
-        ? { title: project.title, description: project.description }
-        : {};
+    const { project: slug } = await params;
+    const project = getProject(slug);
+    const page = getLanding(slug);
+    if (!project) return {};
+    return {
+        title: { absolute: `${project.title} · Fragiola` },
+        description: page?.data.description ?? project.description,
+    };
 }
 
-export default async function ProjectHome({ params }: Props) {
-    const project = getProject((await params).project);
-    if (!project) notFound();
+export default async function ProjectLanding({ params }: Props) {
+    const { project: slug } = await params;
+    const project = getProject(slug);
+    const page = getLanding(slug);
+    if (!project || !page) notFound();
+    const MDX = page.data.body;
+    const base = baseOptions();
     return (
-        <HomeLayout {...baseOptions()}>
-            <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-16">
-                <h1 className="font-semibold text-4xl">{project.title}</h1>
-                <p className="text-fd-muted-foreground text-lg">
-                    {project.description}
-                </p>
-                <Link
-                    href={firstPageUrl(project)}
-                    className="self-start rounded-md bg-fd-primary px-4 py-2 font-medium text-fd-primary-foreground text-sm"
+        <HomeLayout
+            {...base}
+            links={[...projectLinks(project), ...(base.links ?? [])]}
+            githubUrl={project.repoUrl}
+        >
+            <ProjectProvider
+                project={{
+                    slug: project.slug,
+                    frameworks: project.frameworks,
+                    defaultFramework: project.defaultFramework,
+                }}
+            >
+                <main
+                    data-testid="landing"
+                    className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6"
                 >
-                    Read the docs
-                </Link>
-            </main>
+                    <DocsBody className="max-w-none">
+                        <MDX components={getMDXComponents(slug)} />
+                    </DocsBody>
+                </main>
+            </ProjectProvider>
         </HomeLayout>
     );
 }
