@@ -3,7 +3,7 @@
         "slug": "ui",
         "repo": "https://github.com/fragiola/ui.git",
         "ref": "main",
-        "localPath": "../ui/.worktrees/site-export-v1",
+        "localPath": "../ui",
         "devUrl": "http://localhost:5174"
     },
     {

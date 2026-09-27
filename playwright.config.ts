@@ -1,11 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const CI = Boolean(process.env.CI);
-const PORT = Number(process.env.WWW_E2E_PORT ?? 4400);
 
-// The browser suite runs against the static export (out/), served the way GitHub Pages serves it
-// (scripts/serve.ts): what gets deployed, not `next dev`. It needs out/ built from the fixtures:
-// `pnpm e2e:build` (sources:fixtures + build) first; e2e/global-setup.ts checks.
+/**
+ * What serves out/:
+ *   pages   scripts/serve.ts, the way GitHub Pages serves it (the default)
+ *   serve   `serve out` (vercel/serve, what `npx serve out` runs): "clean URLs", so /x/index.html
+ *           redirects to /x/index and loses its query string — the site must never depend on
+ *           such a URL (§5.1). `pnpm e2e:serve`.
+ */
+const SERVER = process.env.WWW_E2E_SERVER === "serve" ? "serve" : "pages";
+const PORT = Number(
+    process.env.WWW_E2E_PORT ?? (SERVER === "serve" ? 4401 : 4400),
+);
+
+// The browser suite runs against the static export (out/), served like a static host serves it:
+// what gets deployed, not `next dev`. It needs out/ built from the fixtures: `pnpm e2e:build`
+// (sources:fixtures + build --fixtures) first; e2e/global-setup.ts checks.
 export default defineConfig({
     testDir: "e2e",
     globalSetup: "./e2e/global-setup.ts",
@@ -20,7 +31,10 @@ export default defineConfig({
     },
     projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
     webServer: {
-        command: `node scripts/serve.ts ${PORT}`,
+        command:
+            SERVER === "serve"
+                ? `pnpm exec serve out --listen ${PORT} --no-clipboard --no-request-logging`
+                : `node scripts/serve.ts ${PORT}`,
         url: `http://localhost:${PORT}/`,
         reuseExistingServer: !CI,
     },

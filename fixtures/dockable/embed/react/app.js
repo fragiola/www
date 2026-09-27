@@ -1,14 +1,15 @@
 // The fixture embed app (www/fixtures): a stand-in for a project's real embed app, with no build
-// and no framework, that follows the site export contract v1 §5 to the letter, so the site's
+// and no framework, that follows the site export contract v1.1 §5 to the letter, so the site's
 // tests can drive every part of it:
 //
-//   index.html?id=<id>&theme=<name>   one example on the whole viewport, no chrome; the theme is
+//   ?id=<id>&theme=<name>             one example on the whole viewport, no chrome; the theme is
 //                                     applied before the first paint (the inline script in
 //                                     index.html), a missing or unknown one is the first light
 //   fragiola:example:ready            once, after the first render (`readyDelay` holds it back)
 //   fragiola:example:resize           after ready, on every content height change (flow only)
 //   fragiola:example:theme            applied without a reload; an unknown theme is ignored
-//   popout.html                       opened by the "Pop out" button, under the same base
+//   popout/                           opened by the "Pop out" button, under the same base (by its
+//                                     directory too: `serve` drops the query of popout.html?…)
 //
 // Each example renders a counter (reset tests), a textarea, and for a flow example rows that
 // "Add a row" grows (resize tests). The configuration is the JSON block in index.html.
@@ -119,7 +120,7 @@ function renderExample(example) {
                 onclick: () => {
                     const theme = document.documentElement.dataset.exampleTheme;
                     window.open(
-                        `${base}popout.html?${new URLSearchParams({ id, theme })}`,
+                        `${base}popout/?${new URLSearchParams({ id, theme })}`,
                         "_blank",
                         "popup,width=640,height=420",
                     );

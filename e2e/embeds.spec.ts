@@ -123,7 +123,7 @@ test("a theme set by the page is kept whatever the site's theme", async ({
     await setSiteTheme(page, "light");
     await page.goto("dockable/");
     const bleed = page.locator(
-        '[data-example="hello-layout"][data-variant="bleed"]',
+        '[data-example="hello-layout"][data-variant="showcase"]',
     );
     await expectReady(bleed);
     await expect(embed(bleed).locator("html")).toHaveAttribute(
@@ -166,7 +166,7 @@ test("a popout opened from inside the frame lives under the embed's base", async
     ]);
     await popout.waitForLoadState();
     const url = new URL(popout.url());
-    expect(url.pathname).toBe("/dockable/embed/react/popout.html");
+    expect(url.pathname).toBe("/dockable/embed/react/popout/");
     expect(url.searchParams.get("theme")).toBe("terminal");
     await expect(popout.getByTestId("popped")).toHaveText("Popped out: popout");
     await expect(popout.locator("body")).toHaveAttribute(

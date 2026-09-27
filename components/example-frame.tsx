@@ -6,7 +6,8 @@ import { embedHref } from "@/lib/contract/links";
 
 // A project's embed app in an iframe (contract v1, §5), the only way the site shows an example.
 //
-// - src: `/<slug>/embed/<fw>/index.html?id=<id>&theme=<theme>`, fixed when the frame mounts. A
+// - src: `/<slug>/embed/<fw>/?id=<id>&theme=<theme>` (the directory, never index.html?…: §5.1),
+//   fixed when the frame mounts. A
 //   later theme is a `fragiola:example:theme` message, never a reload; a new src (Reset, another
 //   example) is a new frame, which the parent asks for with a React key.
 // - The frame stays invisible until the embed says `fragiola:example:ready`: by then its theme

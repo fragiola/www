@@ -1,13 +1,20 @@
 // `pnpm sources:fixtures`
 //
-// Fills .sources/ from fixtures/ instead of running the projects' exports: one minimal v1
-// export per project of projects.json (fixtures/README.md). The tests build the site from them,
-// so they run without the projects' repos and against content they control.
+// Fills .sources-fixtures/ from fixtures/: one minimal v1.1 export per project of projects.json
+// (fixtures/README.md). The tests build the site from them (`pnpm e2e:build`), so they run
+// without the projects' repos and against content they control. A folder of its own: the
+// projects' exports in .sources/ are never overwritten, and `pnpm build` never publishes these.
 
-import { cpSync, existsSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { validateAll } from "../lib/contract/validate.ts";
-import { label, ORIGIN_FILE, ROOT, readProjects, SOURCES } from "./projects.ts";
+import {
+    FIXTURE_SOURCES,
+    label,
+    ROOT,
+    readProjects,
+    writeOrigin,
+} from "./projects.ts";
 
 const FIXTURES = join(ROOT, "fixtures");
 
@@ -21,17 +28,19 @@ if (missing.length > 0) {
     );
     process.exit(1);
 }
-rmSync(SOURCES, { recursive: true, force: true });
+rmSync(FIXTURE_SOURCES, { recursive: true, force: true });
 for (const { slug } of projects) {
-    cpSync(join(FIXTURES, slug), join(SOURCES, slug), { recursive: true });
+    cpSync(join(FIXTURES, slug), join(FIXTURE_SOURCES, slug), {
+        recursive: true,
+    });
 }
-writeFileSync(join(SOURCES, ORIGIN_FILE), "fixtures\n");
+writeOrigin(FIXTURE_SOURCES, { origin: "fixtures", projects: {} });
 
 const reads = validateAll(
-    projects.map(({ slug }) => ({ slug, dir: join(SOURCES, slug) })),
+    projects.map(({ slug }) => ({ slug, dir: join(FIXTURE_SOURCES, slug) })),
     label,
 );
 if (!reads) process.exit(1);
 console.log(
-    `sources:fixtures — ${projects.map((p) => p.slug).join(", ")} → ${label(SOURCES)} (valid against contract v1)`,
+    `sources:fixtures — ${projects.map((p) => p.slug).join(", ")} → ${label(FIXTURE_SOURCES)} (valid against contract v1.1)`,
 );

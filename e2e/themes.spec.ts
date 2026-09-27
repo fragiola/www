@@ -36,12 +36,9 @@ test("the theme is applied before the embed's first paint", async ({
     page,
 }) => {
     // the pre-paint script ran if the attribute is there when the document is parsed
-    await page.goto(
-        "dockable/embed/react/index.html?id=hello-layout&theme=paper",
-        {
-            waitUntil: "commit",
-        },
-    );
+    await page.goto("dockable/embed/react/?id=hello-layout&theme=paper", {
+        waitUntil: "commit",
+    });
     await page.waitForFunction(() => document.body !== null);
     expect(
         await page.evaluate(

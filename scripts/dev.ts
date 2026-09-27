@@ -1,4 +1,5 @@
-// `pnpm dev` — the site in dev, over the exports in .sources/ (`pnpm sources:sync` first), with
+// `pnpm dev` — the site in dev, over the exports in .sources/ (`pnpm sources:sync` first; or
+// FRAGIOLA_SOURCES=.sources-fixtures after `pnpm sources:fixtures`), with
 // the projects' checkouts live (`localPath` in projects.json, or $FRAGIOLA_PROJECTS_DIR/<slug>
 // as for sources:sync):
 //
@@ -34,7 +35,14 @@ import { dirname, join, resolve } from "node:path";
 import type { Duplex } from "node:stream";
 import { parseArgs } from "node:util";
 import { formatProblem, validateExport } from "../lib/contract/validate.ts";
-import { childEnv, label, ROOT, readProjects, SOURCES } from "./projects.ts";
+import {
+    childEnv,
+    label,
+    PROJECT_SOURCES,
+    ROOT,
+    readProjects,
+    SOURCES,
+} from "./projects.ts";
 
 const { values: options } = parseArgs({
     options: { port: { type: "string", default: "3000" } },
@@ -121,7 +129,7 @@ const proxy: Record<string, string> = {};
 for (const project of readProjects()) {
     if (!existsSync(join(SOURCES, project.slug, "project.json"))) {
         console.error(
-            `✗ ${project.slug}: no export in ${label(SOURCES)} — run \`pnpm sources:sync\` (or \`pnpm sources:fixtures\`) first`,
+            `✗ ${project.slug}: no export in ${label(SOURCES)} — run \`pnpm sources:sync\` first (or \`pnpm sources:fixtures\` and FRAGIOLA_SOURCES=.sources-fixtures)`,
         );
         process.exit(1);
     }
@@ -130,6 +138,8 @@ for (const project of readProjects()) {
         ? resolve(process.env.FRAGIOLA_PROJECTS_DIR, project.slug)
         : project.localPath && resolve(ROOT, project.localPath);
     if (!checkout || !existsSync(checkout)) continue;
+    // the fixtures (FRAGIOLA_SOURCES=.sources-fixtures) are never overwritten by a checkout
+    if (SOURCES !== PROJECT_SOURCES) continue;
     const docs = join(checkout, DOCS_IN_REPO);
     if (existsSync(docs) && readdirSync(docs).length > 0) {
         mirrorDocs(project.slug, docs);
@@ -167,7 +177,7 @@ for (const project of readProjects()) {
 }
 
 try {
-    execFileSync("node", [join(ROOT, "scripts", "prepare-site.ts")], {
+    execFileSync("node", [join(ROOT, "scripts", "prepare-site.ts"), "--dev"], {
         stdio: "inherit",
     });
 } catch {

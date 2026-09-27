@@ -114,7 +114,11 @@ export function exampleHref(slug: string, id: string): string {
     return `/${slug}/examples/${id}/`;
 }
 
-/** The URL of a project's embed app for one example (§5.1). */
+/**
+ * The URL of a project's embed app for one example (§5.1): its directory, never `index.html?…`.
+ * A static server with "clean URLs" (`serve`) redirects `…/index.html?id=…` to `…/index` and drops
+ * the query string, and the embed never says ready.
+ */
 export function embedHref(
     slug: string,
     framework: string,
@@ -122,5 +126,5 @@ export function embedHref(
     theme: string,
 ): string {
     const query = new URLSearchParams({ id, theme });
-    return `/${slug}/embed/${framework}/index.html?${query}`;
+    return `/${slug}/embed/${framework}/?${query}`;
 }

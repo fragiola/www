@@ -11,17 +11,25 @@
 //                                       installed the way a consumer installs it)
 //
 // Everything under public/<slug>/ is generated (marked with public/<slug>/.generated).
+//
+// What it accepts to build from (SOURCES: .sources/, or $FRAGIOLA_SOURCES):
+//   (default)    the projects' exports only, as `pnpm sources:sync` left them: it fails on an
+//                empty folder, on the fixtures, and on an export its checkout has moved away
+//                from (scripts/projects.ts, unpublishable). This is `pnpm build`.
+//   --fixtures   the fixtures only (`pnpm e2e:build`, from .sources-fixtures/)
+//   --dev        whatever is there (`pnpm dev` mirrors the pages over the export as they change)
+//   --check      with any of the above: the checks only, nothing written
 
 import {
     cpSync,
     existsSync,
     mkdirSync,
     readdirSync,
-    readFileSync,
     rmSync,
     writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
+import { parseArgs } from "node:util";
 import { bundledLanguages, createHighlighter } from "shiki";
 import type { CodeFile, ExampleCode } from "../lib/code.ts";
 import type {
@@ -32,11 +40,12 @@ import type {
 import { validateAll } from "../lib/contract/validate.ts";
 import {
     label,
-    ORIGIN_FILE,
     ROOT,
     readJson,
+    readOrigin,
     readProjects,
     SOURCES,
+    unpublishable,
 } from "./projects.ts";
 
 /** The project whose registry paints the site. */
@@ -45,14 +54,36 @@ const PUBLIC = join(ROOT, "public");
 const STYLES = join(ROOT, "styles", "fragiola");
 const GENERATED = ".generated";
 
+const { values: mode } = parseArgs({
+    options: {
+        fixtures: { type: "boolean", default: false },
+        dev: { type: "boolean", default: false },
+        check: { type: "boolean", default: false },
+    },
+});
+
 const started = performance.now();
 const projects = readProjects();
+const origin = readOrigin(SOURCES);
+if (mode.fixtures && origin?.origin !== "fixtures") {
+    console.error(
+        `prepare:site --fixtures — ${label(SOURCES)} does not hold the fixtures: run \`pnpm sources:fixtures\` first`,
+    );
+    process.exit(1);
+}
+if (!mode.fixtures && !mode.dev) {
+    const why = unpublishable(SOURCES);
+    if (why) {
+        console.error(`prepare:site — not building: ${why}`);
+        process.exit(1);
+    }
+}
 const missing = projects.filter(
     ({ slug }) => !existsSync(join(SOURCES, slug, "project.json")),
 );
 if (missing.length > 0) {
     console.error(
-        `prepare:site — no export for ${missing.map((p) => p.slug).join(", ")} in ${label(SOURCES)}: run \`pnpm sources:sync\` (the projects) or \`pnpm sources:fixtures\` first`,
+        `prepare:site — no export for ${missing.map((p) => p.slug).join(", ")} in ${label(SOURCES)}: run \`pnpm sources:sync\` first`,
     );
     process.exit(1);
 }
@@ -63,6 +94,10 @@ const reads = validateAll(
     label,
 );
 if (!reads) process.exit(1);
+if (mode.check) {
+    console.log(`prepare:site --check — ${label(SOURCES)} can be built`);
+    process.exit(0);
+}
 
 const write = (file: string, content: string) => {
     mkdirSync(dirname(file), { recursive: true });
@@ -218,14 +253,16 @@ write(
 );
 
 // ─── what the site was built from ────────────────────────────────────────────
-const originFile = join(SOURCES, ORIGIN_FILE);
 write(
     join(PUBLIC, "_sources.json"),
     `${JSON.stringify({
-        origin: existsSync(originFile)
-            ? readFileSync(originFile, "utf-8").trim()
-            : "unknown",
-        projects: reads.map((read) => read.slug),
+        origin: origin?.origin ?? "unknown",
+        projects: Object.fromEntries(
+            reads.map((read) => [
+                read.slug,
+                origin?.projects[read.slug]?.commit ?? null,
+            ]),
+        ),
     })}\n`,
 );
 

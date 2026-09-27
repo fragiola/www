@@ -10,11 +10,13 @@
 #
 # What it does:
 #   1. test — Biome, TypeScript, the unit tests, and the Playwright suite against the site built
-#      from fixtures/ (it needs no project repo);
+#      from fixtures/ (.sources-fixtures/: it needs no project repo), served twice: the way Pages
+#      serves it, and by `serve` (clean URLs, what `npx serve out` runs);
 #   2. build — clones every project of projects.json at its `ref` (or the dispatched sha) into
 #      $RUNNER_TEMP/projects/<slug>, then `pnpm sources:sync --install` (in each clone: `pnpm
 #      install --frozen-lockfile` with the project's own lockfile, `pnpm site:export --base /<slug>
-#      --out .sources/<slug>`, and the contract checks), then `pnpm build` → out/;
+#      --out .sources/<slug>`, and the contract checks), then `pnpm build` → out/ (which refuses
+#      anything but those fresh exports);
 #   3. deploy — publishes out/ to Pages.
 #
 # One-time setup: README.md, "Deploying".
@@ -46,6 +48,9 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # the whole job works on the fixtures: typecheck (fumadocs-mdx) reads them too
+      FRAGIOLA_SOURCES: .sources-fixtures
     steps:
       - uses: actions/checkout@v4
 
@@ -71,6 +76,10 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
 
       - run: pnpm e2e
+        env:
+          CI: true
+
+      - run: pnpm e2e:serve
         env:
           CI: true
 

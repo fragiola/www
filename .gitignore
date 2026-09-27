@@ -21,10 +21,11 @@ Thumbs.db
 # Editor
 .idea/
 
-# Project exports (`pnpm sources:sync` / `pnpm sources:fixtures`) and everything generated from
-# them (`pnpm prepare:site`): the fumadocs index, the vendored theme, the embed apps, the code
-# panel's files, the registry and the build's origin under public/.
+# Project exports (`pnpm sources:sync`), the fixtures' (`pnpm sources:fixtures`), and everything
+# generated from them (`pnpm prepare:site`): the fumadocs index, the vendored theme, the embed
+# apps, the code panel's files, the registry and the build's origin under public/.
 .sources/
+.sources-fixtures/
 .source/
 styles/fragiola/
 public/*/embed/

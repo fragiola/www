@@ -5,14 +5,14 @@ Each project lives in its own repo and exposes a **site export**; this repo chec
 against the contract and assembles them into one static Next.js + Fumadocs site, published on
 GitHub Pages.
 
-- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1).
+- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.1).
 - **How this repo works**, its rules and commands: [`AGENTS.md`](AGENTS.md).
 
 ## Working on it
 
 ```sh
 pnpm install
-pnpm sources:sync        # run each project's site:export (projects.json → localPath) into .sources/
+pnpm sources:sync        # install and run each project's site:export (projects.json → localPath) into .sources/
 pnpm dev                 # http://localhost:3000, the projects' pages and examples live
 ```
 
@@ -21,14 +21,16 @@ checkout on your machine; with `devUrl`, `pnpm dev` starts the project's `site:d
 proxies `/<slug>/embed/**` to it, so an edited example hot-reloads inside the site. An edited page
 in the project's `site/docs` shows without a restart, checked against the contract on save.
 
-Without the projects' checkouts, `pnpm sources:fixtures` fills `.sources/` from `fixtures/`
-instead.
+Without the projects' checkouts, `pnpm sources:fixtures` fills `.sources-fixtures/` from
+`fixtures/`, and `FRAGIOLA_SOURCES=.sources-fixtures pnpm dev` runs the site on them. `pnpm build`
+never publishes them: it takes `.sources/` only, as the last `pnpm sources:sync` left it, and
+refuses it when a project's checkout has changed since.
 
 | | |
 |---|---|
 | `pnpm build` | the contract checks, then `out/` (a broken link fails here, with its file and line) |
-| `pnpm test` | unit tests (the contract checks) |
-| `pnpm e2e:build && pnpm e2e` | the browser suite, against `out/` built from the fixtures |
+| `pnpm test` | unit tests (the contract checks, the build refusing what it must) |
+| `pnpm e2e:build && pnpm e2e` | the browser suite, against `out/` built from the fixtures (`pnpm e2e:serve`: served by `serve`) |
 | `pnpm serve` · `pnpm measure` | serve `out/` like Pages; weigh pages |
 
 ## Deploying
