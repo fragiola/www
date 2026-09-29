@@ -191,3 +191,22 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
         "https://github.com/fragiola",
     );
 });
+
+for (const width of [375, 768]) {
+    test(`no page scrolls sideways at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        for (const path of [
+            "",
+            "ui/",
+            "dockable/",
+            "ui/docs/atoms/clickable/",
+            "dockable/examples/hello-layout/",
+        ]) {
+            await page.goto(path);
+            const scrollWidth = await page.evaluate(
+                () => document.documentElement.scrollWidth,
+            );
+            expect(scrollWidth, path).toBeLessThanOrEqual(width);
+        }
+    });
+}
