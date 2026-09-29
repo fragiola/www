@@ -102,21 +102,29 @@ function NavigationMenuContent({
     className,
     ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Content>) {
-    // Content is moved into the viewport by the primitive. The transition
-    // uses data-starting-style / data-ending-style (the primitive's
-    // transition markers). No `!important` — the viewport morphs via the
-    // primitive's CSS variables, not by overriding anything here.
+    // Content is moved into the viewport by the primitive. The outgoing
+    // content stays mounted (absolutely positioned over the incoming one)
+    // until its exit transition finishes, so an exit effect on switch would
+    // overlay the new content. Switching items (`data-activation-direction`
+    // is only set while the menu stays open) hides the outgoing content at
+    // once; only the incoming content transitions in, from the side of the
+    // trigger that activated it. Closing the menu (no direction) fades the
+    // content with the popup.
+    //
+    // `data-starting-style` / `data-ending-style` are TRANSITION markers (the
+    // attribute lives one frame on entry), so they drive a transition, never
+    // a keyframe class. `activation-direction` is physical in the primitive
+    // (measured left/right), so the translate is physical too.
     return (
         <NavigationMenuPrimitive.Content
             data-slot="navigation-menu-content"
             className={cn(
                 "flex flex-col gap-2 p-2 outline-none",
-                "data-[starting-style]:animate-in data-[starting-style]:fade-in-0",
-                "data-[ending-style]:animate-out data-[ending-style]:fade-out-0",
-                "data-[activation-direction=left]:data-[starting-style]:slide-in-from-right-2",
-                "data-[activation-direction=right]:data-[starting-style]:slide-in-from-left-2",
-                "data-[activation-direction=left]:data-[ending-style]:slide-out-to-right-2",
-                "data-[activation-direction=right]:data-[ending-style]:slide-out-to-left-2",
+                "transition-[opacity,translate] duration-200 ease-out motion-reduce:transition-none",
+                "data-starting-style:opacity-0 data-ending-style:opacity-0",
+                "data-starting-style:data-[activation-direction=left]:-translate-x-8",
+                "data-starting-style:data-[activation-direction=right]:translate-x-8",
+                "data-ending-style:data-activation-direction:hidden",
                 className as string,
             )}
             {...props}
@@ -201,8 +209,6 @@ function NavigationMenuViewport({
             data-slot="navigation-menu-viewport"
             className={cn(
                 "flex w-full origin-(--transform-origin) transition-[width,height] duration-200",
-                "data-[starting-style]:animate-in data-[starting-style]:fade-in-0",
-                "data-[ending-style]:animate-out data-[ending-style]:fade-out-0",
                 className as string,
             )}
             {...props}
@@ -239,8 +245,8 @@ function NavigationMenuBackdrop({
             data-slot="navigation-menu-backdrop"
             className={cn(
                 "fixed inset-0 z-40 bg-scrim",
-                "data-[starting-style]:animate-in data-[starting-style]:fade-in-0",
-                "data-[ending-style]:animate-out data-[ending-style]:fade-out-0",
+                "data-open:animate-in data-open:fade-in-0",
+                "data-closed:animate-out data-closed:fade-out-0",
                 className as string,
             )}
             {...props}
