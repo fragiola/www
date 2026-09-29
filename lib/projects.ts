@@ -177,11 +177,8 @@ export function setupCommand(example: ManifestExample): string {
 
 export interface ProjectSummary {
     slug: string;
-    title: string;
     frameworks: string[];
     defaultFramework: string;
-    docsUrl: string;
-    repoUrl?: string;
 }
 
 export interface ThemeSummary {
@@ -223,11 +220,8 @@ export interface Gallery {
 export function projectSummary(project: Project): ProjectSummary {
     return {
         slug: project.slug,
-        title: project.title,
         frameworks: project.frameworks,
         defaultFramework: project.defaultFramework,
-        docsUrl: firstPageUrl(project),
-        ...(project.repoUrl ? { repoUrl: project.repoUrl } : {}),
     };
 }
 

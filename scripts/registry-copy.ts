@@ -43,14 +43,20 @@ function target(path: string): string {
 }
 
 // ITEMS and their registry dependencies, the theme and the palettes left to prepare:site
-const files = new Map<string, string>();
+const files = new Map<string, { item: string; content: string }>();
 const seen = new Set<string>();
 const copied: string[] = [];
 const queue = [...ITEMS];
 for (let name = queue.shift(); name; name = queue.shift()) {
     if (seen.has(name)) continue;
     seen.add(name);
-    const item = readJson<RegistryItem>(join(registry, `${name}.json`));
+    const file = join(registry, `${name}.json`);
+    if (!existsSync(file)) {
+        throw new Error(
+            `registry:copy — no item "${name}" in ${label(registry)}`,
+        );
+    }
+    const item = readJson<RegistryItem>(file);
     if (item.type === "registry:theme" || item.type === "registry:style") {
         continue;
     }
@@ -58,10 +64,17 @@ for (let name = queue.shift(); name; name = queue.shift()) {
     for (const file of item.files ?? []) {
         if (!file.target || file.content === undefined) {
             throw new Error(
-                `registry:copy — ${name}: ${file.path} has no target`,
+                `registry:copy — ${name}: ${file.path} has no ${file.target ? "content" : "target"}`,
             );
         }
-        files.set(target(file.target), file.content);
+        const path = target(file.target);
+        const other = files.get(path);
+        if (other && other.content !== file.content) {
+            throw new Error(
+                `registry:copy — ${name} and ${other.item} both write ${path}`,
+            );
+        }
+        files.set(path, { item: name, content: file.content });
     }
     for (const dependency of item.registryDependencies ?? []) {
         queue.push(dependency.replace(/^@[^/]+\//, ""));
@@ -69,7 +82,7 @@ for (let name = queue.shift(); name; name = queue.shift()) {
 }
 
 const stale: string[] = [];
-for (const [path, content] of [...files].sort(([a], [b]) =>
+for (const [path, { content }] of [...files].sort(([a], [b]) =>
     a.localeCompare(b),
 )) {
     const file = join(ROOT, path);

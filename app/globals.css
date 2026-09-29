@@ -138,6 +138,12 @@
     --fd-banner-height: var(--site-header-height);
 }
 
+/* A heading scrolled to (a #hash, the table of contents) clears the bars
+   stacked above it: Fumadocs' own margin (scroll-m-28) plus the header. */
+.site-docs :where(h1, h2, h3, h4, h5, h6)[id] {
+    scroll-margin-top: calc(7rem + var(--fd-banner-height));
+}
+
 /* ─── Landings (§3.4, §3.5) ──────────────────────────────────────────────
    The pieces of a project's landing (components/landing/), ported from Fragiola
    UI's own landing (ui/apps/www): the same look for every project. */

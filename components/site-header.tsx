@@ -5,7 +5,7 @@ import { Menu, Moon, Search, Sun, X } from "lucide-react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/cn";
 
@@ -87,14 +87,25 @@ function Wordmark() {
 }
 
 function SearchButton() {
-    const { enabled, hotKey, setOpenSearch } = useSearchContext();
+    const { enabled, open, hotKey, setOpenSearch } = useSearchContext();
+    // the dialog gives focus back to nothing when it closes: back to the button that opened it
+    const opener = useRef<HTMLButtonElement | null>(null);
+    useEffect(() => {
+        if (open || !opener.current) return;
+        opener.current.focus();
+        opener.current = null;
+    }, [open]);
     if (!enabled) return null;
+    const openFrom = (event: { currentTarget: HTMLButtonElement }) => {
+        opener.current = event.currentTarget;
+        setOpenSearch(true);
+    };
     return (
         <>
             <button
                 type="button"
                 data-search-full=""
-                onClick={() => setOpenSearch(true)}
+                onClick={openFrom}
                 className="hidden h-8 w-52 items-center gap-2 rounded-md border border-palette-line bg-palette-soft/50 ps-2.5 pe-1.5 text-palette-accent/85 text-sm transition-colors hover:bg-palette-soft hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-palette-ring lg:inline-flex"
             >
                 <Search aria-hidden className="size-4" />
@@ -115,7 +126,7 @@ function SearchButton() {
                 type="button"
                 data-search=""
                 aria-label="Open search"
-                onClick={() => setOpenSearch(true)}
+                onClick={openFrom}
                 className={cn(iconButton, "lg:hidden")}
             >
                 <Search aria-hidden />
@@ -137,7 +148,16 @@ function ThemeToggle() {
             onClick={() => setTheme(dark ? "light" : "dark")}
             className={iconButton}
         >
-            {dark ? <Moon aria-hidden /> : <Sun aria-hidden />}
+            {/* the theme is known once mounted: no icon flips from the server's guess */}
+            {mounted ? (
+                dark ? (
+                    <Moon aria-hidden />
+                ) : (
+                    <Sun aria-hidden />
+                )
+            ) : (
+                <span aria-hidden className="size-4" />
+            )}
         </button>
     );
 }
@@ -169,7 +189,7 @@ function ProjectCard({
                     </span>
                 ) : null}
             </span>
-            <span className="line-clamp-2 text-palette-accent/85 text-xs leading-relaxed">
+            <span className="text-palette-accent/85 text-xs leading-relaxed">
                 {project.description}
             </span>
         </NavigationMenu.Link>
@@ -395,19 +415,56 @@ export function SiteHeader({
     current,
     repoUrl,
     leading,
+    onMenuOpen,
     className,
-}: SiteHeaderProps & { leading?: ReactNode; className?: string }) {
+}: SiteHeaderProps & {
+    leading?: ReactNode;
+    /** the small-screen menu opened: the gallery closes its examples list */
+    onMenuOpen?: () => void;
+    className?: string;
+}) {
     const pathname = usePathname();
     const section = sectionOf(pathname, current);
     const [open, setOpen] = useState(false);
     const menuId = useId();
+    const header = useRef<HTMLElement>(null);
+    const toggle = useRef<HTMLButtonElement>(null);
 
     // a navigation closes the small-screen menu
     // biome-ignore lint/correctness/useExhaustiveDependencies: the pathname is the trigger
     useEffect(() => setOpen(false), [pathname]);
 
+    // open: focus goes into the menu; Escape closes it (focus back on its button), and so does a
+    // press anywhere outside the header, an example's iframe included
+    useEffect(() => {
+        if (!open) return;
+        header.current
+            ?.querySelector<HTMLElement>(`[id="${menuId}"] a`)
+            ?.focus();
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== "Escape") return;
+            setOpen(false);
+            toggle.current?.focus();
+        };
+        const onPointer = (event: PointerEvent) => {
+            if (!header.current?.contains(event.target as Node)) setOpen(false);
+        };
+        // a press inside an example's iframe never reaches this document, but it takes the
+        // focus away from this window
+        const onBlur = () => setOpen(false);
+        document.addEventListener("keydown", onKey);
+        document.addEventListener("pointerdown", onPointer);
+        window.addEventListener("blur", onBlur);
+        return () => {
+            document.removeEventListener("keydown", onKey);
+            document.removeEventListener("pointerdown", onPointer);
+            window.removeEventListener("blur", onBlur);
+        };
+    }, [open, menuId]);
+
     return (
         <header
+            ref={header}
             data-testid="site-header"
             className={cn(
                 "palette-surface sticky top-0 z-40 h-(--site-header-height) shrink-0 border-palette-line border-b bg-palette-base/80 text-palette-contrast backdrop-blur-md",
@@ -415,7 +472,15 @@ export function SiteHeader({
             )}
         >
             <div className="flex h-full w-full items-center gap-2 px-4 sm:px-6">
-                {leading}
+                {leading ? (
+                    // the leading control (the gallery's list) closes the menu
+                    <span
+                        className="contents"
+                        onClickCapture={() => setOpen(false)}
+                    >
+                        {leading}
+                    </span>
+                ) : null}
                 <Wordmark />
                 {current ? (
                     <NextLink
@@ -444,12 +509,16 @@ export function SiteHeader({
                         <GitHubIcon />
                     </a>
                     <button
+                        ref={toggle}
                         type="button"
                         aria-label="Menu"
                         aria-expanded={open}
-                        aria-controls={menuId}
+                        aria-controls={open ? menuId : undefined}
                         className={cn(iconButton, "md:hidden")}
-                        onClick={() => setOpen((value) => !value)}
+                        onClick={() => {
+                            if (!open) onMenuOpen?.();
+                            setOpen(!open);
+                        }}
                     >
                         {open ? <X aria-hidden /> : <Menu aria-hidden />}
                     </button>

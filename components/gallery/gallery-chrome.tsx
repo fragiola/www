@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Search, X } from "lucide-react";
+import { PanelLeft, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import {
@@ -283,6 +283,7 @@ function Chrome({
             <div className="flex h-dvh flex-col bg-palette-base text-palette-contrast">
                 <SiteHeader
                     {...header}
+                    onMenuOpen={() => setNavOpen(false)}
                     leading={
                         <button
                             type="button"
@@ -291,7 +292,7 @@ function Chrome({
                             className={cn(iconButton, "md:hidden")}
                             onClick={() => setNavOpen((open) => !open)}
                         >
-                            <Menu aria-hidden className="size-4" />
+                            <PanelLeft aria-hidden className="size-4" />
                         </button>
                     }
                 />

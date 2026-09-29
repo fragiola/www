@@ -11,7 +11,7 @@ import {
 // its gallery and its repository). The header is the same on every page: the organization's
 // landing, a project's landing, its docs and its gallery.
 
-export const ORGANIZATION_URL = "https://github.com/fragiola";
+const ORGANIZATION_URL = "https://github.com/fragiola";
 
 export function siteHeader(slug?: string): SiteHeaderProps {
     const projects = getProjects().map((project) => ({

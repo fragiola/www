@@ -178,3 +178,86 @@ test("small screens: the docs keep the page's full width", async ({ page }) => {
     expect(article?.width ?? 0).toBeGreaterThan(330);
     expect(box?.x ?? 0).toBeLessThan(40);
 });
+
+test("small screens: Escape or a press outside closes the menu", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 740 });
+    await page.goto("ui/docs/atoms/clickable/");
+    const button = header(page).getByRole("button", { name: "Menu" });
+    await button.click();
+    await expect(site(page)).toBeVisible();
+    // focus went into the menu
+    await expect(site(page).getByRole("link").first()).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(site(page)).toBeHidden();
+    await expect(button).toBeFocused();
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+
+    // a press on the page, then one inside an example's iframe
+    await button.click();
+    await expect(site(page)).toBeVisible();
+    await page.getByRole("heading", { level: 1 }).click({ force: true });
+    await expect(site(page)).toBeHidden();
+    await page.reload();
+    await button.click();
+    await expect(site(page)).toBeVisible();
+    // below the open menu, the page's first example
+    expect(
+        await page.evaluate(
+            () => document.elementFromPoint(200, 700)?.tagName ?? "",
+        ),
+    ).toBe("IFRAME");
+    await page.mouse.click(200, 700);
+    await expect(site(page)).toBeHidden();
+});
+
+test("small screens: the gallery's list and the site menu never open together", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 740 });
+    await page.goto("dockable/examples/hello-layout/");
+    const list = page.getByRole("navigation", { name: "Examples" });
+    const menu = header(page).getByRole("button", { name: "Menu" });
+    await menu.click();
+    await expect(site(page)).toBeVisible();
+    await header(page).getByRole("button", { name: "Examples list" }).click();
+    await expect(list).toBeVisible();
+    await expect(site(page)).toBeHidden();
+    await menu.click();
+    await expect(site(page)).toBeVisible();
+    await expect(list).toBeHidden();
+});
+
+test("closing search gives focus back to the button that opened it", async ({
+    page,
+}) => {
+    await page.goto("dockable/docs/getting-started/installation/");
+    const button = header(page).locator("[data-search-full]");
+    await button.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(button).toBeFocused();
+});
+
+test("small screens: a heading opened by its hash clears the bars above it", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 740 });
+    await page.goto(
+        "dockable/docs/getting-started/installation/#what-to-import-from-where",
+    );
+    const heading = page.locator("#what-to-import-from-where");
+    await expect(heading).toBeInViewport();
+    // the lowest sticky bar: the table of contents' popover under the docs' own bar
+    const bars = await page.evaluate(() =>
+        Math.max(
+            ...[...document.querySelectorAll("header, [class*='toc-popover']")]
+                .filter((el) => getComputedStyle(el).position === "sticky")
+                .map((el) => el.getBoundingClientRect().bottom),
+        ),
+    );
+    const box = await heading.boundingBox();
+    expect(box?.y ?? 0).toBeGreaterThanOrEqual(bars);
+});
