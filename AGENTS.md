@@ -112,5 +112,3 @@ e2e/                        Playwright
 - Pin dependencies to exact versions published at least 7 days ago (`minimumReleaseAge`).
 - Commits are gitmoji-conventional: `✨ feat: …`, `🐛 fix: …`, `✅ test: …`, `🔧 chore: …`,
   `👷 ci: …`, `📝 docs: …`.
-- Nothing is pushed and no remote is created by an agent: the GitHub repo, its secrets and Pages
-  are set up by a maintainer (README.md, "Deploying").
