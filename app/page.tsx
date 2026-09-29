@@ -1,7 +1,7 @@
-import { HomeLayout } from "fumadocs-ui/layouts/home";
 import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 import { frameworkName } from "@/lib/frameworks";
-import { baseOptions } from "@/lib/layout.shared";
+import { siteHeader } from "@/lib/layout.shared";
 import { firstExampleUrl, firstPageUrl, getProjects } from "@/lib/projects";
 
 // The organization's landing: every project of projects.json, from its own project.json.
@@ -9,7 +9,8 @@ import { firstExampleUrl, firstPageUrl, getProjects } from "@/lib/projects";
 export default function Home() {
     const projects = getProjects();
     return (
-        <HomeLayout {...baseOptions()}>
+        <>
+            <SiteHeader {...siteHeader()} />
             <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-16">
                 <header className="flex flex-col gap-3">
                     <h1 className="font-semibold text-4xl tracking-tight">
@@ -65,6 +66,6 @@ export default function Home() {
                     })}
                 </ul>
             </main>
-        </HomeLayout>
+        </>
     );
 }

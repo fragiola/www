@@ -45,10 +45,14 @@ test("moving between projects never reloads the page", async ({ page }) => {
     await expect(page).toHaveURL(
         /\/ui\/docs\/getting-started\/installation\/$/,
     );
-    // the header's project links: from ui's docs to dockable's landing, then its gallery
+    // the header's Projects menu: from ui's docs to dockable's landing, then its gallery
     await page
-        .getByRole("link", { name: "Dockable", exact: true })
-        .first()
+        .getByTestId("site-header")
+        .getByRole("button", { name: "Projects" })
+        .click();
+    await page
+        .locator('[data-slot="navigation-menu-popup"]')
+        .getByRole("link", { name: /^Dockable/ })
         .click();
     await expect(page).toHaveURL(/\/dockable\/$/);
     await page.getByRole("link", { name: "Browse the 13 examples" }).click();

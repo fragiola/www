@@ -16,12 +16,15 @@ import {
     setFramework,
     useFramework,
 } from "@/components/framework";
+import { SiteHeader, type SiteHeaderProps } from "@/components/site-header";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, Gallery, GalleryExample } from "@/lib/projects";
 
 // The example gallery's chrome (§4), ported from dockable's docs (components/site/
-// examples-chrome.tsx) and made generic: the header and the list on the left, by level. It is
+// examples-chrome.tsx) and made generic: the list on the left, by level, under the site header
+// (components/site-header.tsx, the same as on every page, its leading slot the list's toggle
+// on small screens). It is
 // the gallery's layout, so it stays mounted while you move between examples: the list keeps its
 // scroll and its filter, and the theme, the framework and the code panel their state. Plain
 // markup and Fragiola palettes: no project's package is used to draw it.
@@ -214,9 +217,11 @@ function ExampleList({
 
 function Chrome({
     gallery,
+    header,
     children,
 }: {
     gallery: Gallery;
+    header: SiteHeaderProps;
     children: ReactNode;
 }) {
     const { project } = gallery;
@@ -276,43 +281,20 @@ function Chrome({
     return (
         <ShellContext value={context}>
             <div className="flex h-dvh flex-col bg-palette-base text-palette-contrast">
-                <header className="flex h-12 shrink-0 items-center gap-2 border-palette-line border-b px-3">
-                    <button
-                        type="button"
-                        aria-label="Examples list"
-                        aria-expanded={navOpen}
-                        className={cn(iconButton, "md:hidden")}
-                        onClick={() => setNavOpen((open) => !open)}
-                    >
-                        <Menu aria-hidden className="size-4" />
-                    </button>
-                    <Link href={`/${project.slug}/`} className="font-semibold">
-                        {project.title}
-                    </Link>
-                    <nav
-                        aria-label="Site"
-                        className="flex items-center gap-1 ps-3 text-sm"
-                    >
-                        <Link href={project.docsUrl} className={iconButton}>
-                            Docs
-                        </Link>
-                        <Link
-                            href={`/${project.slug}/examples/`}
-                            aria-current="page"
-                            className={cn(iconButton, "text-palette-contrast")}
+                <SiteHeader
+                    {...header}
+                    leading={
+                        <button
+                            type="button"
+                            aria-label="Examples list"
+                            aria-expanded={navOpen}
+                            className={cn(iconButton, "md:hidden")}
+                            onClick={() => setNavOpen((open) => !open)}
                         >
-                            Examples
-                        </Link>
-                    </nav>
-                    {project.repoUrl ? (
-                        <a
-                            href={project.repoUrl}
-                            className={cn(iconButton, "ms-auto")}
-                        >
-                            GitHub
-                        </a>
-                    ) : null}
-                </header>
+                            <Menu aria-hidden className="size-4" />
+                        </button>
+                    }
+                />
 
                 <div className="relative flex min-h-0 flex-1">
                     <nav
@@ -349,9 +331,11 @@ function Chrome({
 
 export function GalleryChrome({
     gallery,
+    header,
     children,
 }: {
     gallery: Gallery;
+    header: SiteHeaderProps;
     children: ReactNode;
 }) {
     return (
@@ -362,7 +346,9 @@ export function GalleryChrome({
                 defaultFramework: gallery.project.defaultFramework,
             }}
         >
-            <Chrome gallery={gallery}>{children}</Chrome>
+            <Chrome gallery={gallery} header={header}>
+                {children}
+            </Chrome>
         </ProjectProvider>
     );
 }

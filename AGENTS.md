@@ -25,10 +25,14 @@ Do not "fix" these.
 2. **One module per rule.** Links are classified and rewritten only by `lib/contract/links.ts`
    (the checks, the MDX components and the gallery all use it). Pages are read only by
    `lib/contract/mdx.ts` (a real MDX parse with positions, never regexes over the source).
-3. **A project's code never runs in the site's page.** Examples are the project's embed app in
+3. **A project's examples never run in the site's page.** Examples are the project's embed app in
    an `<iframe>` (§5): hidden until `fragiola:example:ready`, sized by `layout`/`height`/`resize`,
    themed by `?theme=` and the `theme` message. The iframe is created only after hydration
    (a frame loaded before hydration could say ready before anyone listens). Reset remounts it.
+   This is about examples only: the Fragiola UI components the site itself is built with (the
+   header's navigation menu) are copied from ui's registry into this repo, the way a consumer
+   installs them (`pnpm registry:copy`), and are the site's own code from then on, like the
+   theme `prepare:site` vendors. Never edit the copies: a fix belongs in `../ui`, then re-copy.
 4. **The site resolves the theme.** The embeds never read the site's `localStorage`: the site
    resolves its own theme (including `system`) and always passes an explicit example theme — the
    chosen one, else the first theme of the site's scheme.
@@ -38,13 +42,21 @@ Do not "fix" these.
    is a dynamic import. Do not pass file contents through props or RSC payloads.
 6. **The gallery is dockable's gallery, made generic.** `components/gallery/` is a port of
    `../dockable/apps/docs/components/site/` (examples-chrome, examples-shell, code-panel): the
-   persistent layout (list scroll and filter kept), the header, the toolbar (themes with swatches,
+   persistent layout (list scroll and filter kept), the toolbar (themes with swatches,
    Reset, Fullscreen, Code), the URL state, the remembered theme, the setup command, the mobile
    overlay. Behaviour changes go through its specs (`e2e/shell.spec.ts`), which are ported too.
+   Its header is not its own: it is the site header, as on every page (rule 9).
 7. **The framework choice is site-wide** (`localStorage["fragiola:framework"]`, `?framework=` in
    the gallery). An example missing in the chosen framework says so; it never disappears.
 8. **This repo never installs a project's dependencies.** `site:export` and `site:dev` run in the
    project's own checkout with its own lockfile.
+9. **One header, the same on every page.** `components/site-header.tsx` is the header of the
+   organization's landing, a project's landing, its docs and its gallery: the wordmark, the
+   Projects menu (every project of `projects.json`), then under `/<slug>/**` the project's title,
+   Docs and Examples; search, the theme and GitHub on the right. What it shows is computed at
+   build time (`siteHeader()`, `lib/layout.shared.tsx`). In the docs it sits above Fumadocs'
+   grid, which `--fd-banner-height` pushes down (`.site-docs`, `app/globals.css`); the docs
+   sidebar carries no title, links, search or theme of its own. Its specs: `e2e/header.spec.ts`.
 
 ## Commands
 
@@ -54,6 +66,7 @@ Do not "fix" these.
 | `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
+| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu` and its registry dependencies) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
@@ -71,14 +84,18 @@ projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the checks (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
+lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
+lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
 app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
+components/site-header.tsx  the one header of every page (rule 9)
+components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's registry; never edited
 components/gallery/         the gallery: chrome (layout), example view (page)
 components/example-frame.tsx  the iframe side of §5
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
 components/mdx.tsx          the v1.1 vocabulary
-scripts/                    sources-sync, sources-fixtures, prepare-site, build, dev, serve, measure
+scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, build, dev, serve, measure
 fixtures/<slug>/            a minimal v1.1 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright

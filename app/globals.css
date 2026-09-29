@@ -78,6 +78,19 @@
     --color-fd-diff-add-symbol: rgb(10, 200, 100);
 }
 
+/* ─── The site header (components/site-header.tsx) ──────────────────────
+   One header on every page. In the docs it sits above Fumadocs' docs grid,
+   which offsets everything that sticks (the sidebar, the table of contents,
+   the small-screen bar) by --fd-banner-height: the lever of Fumadocs' own
+   <Banner>, so nothing of Fumadocs' chrome is overridden. */
+:root {
+    --site-header-height: 3.5rem;
+}
+
+.site-docs {
+    --fd-banner-height: var(--site-header-height);
+}
+
 /* ─── Landings (§3.4, §3.5) ──────────────────────────────────────────────
    The pieces of a project's landing (components/landing/), ported from Fragiola
    UI's own landing (ui/apps/www): the same look for every project. */

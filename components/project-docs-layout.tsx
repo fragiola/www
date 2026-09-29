@@ -2,7 +2,6 @@
 
 import type { Root } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import type { ReactNode } from "react";
 import {
     FrameworkSelect,
@@ -14,17 +13,19 @@ import {
 // A project's docs layout. The sidebar is pre-built once per framework on the server (a
 // config.json section can be framework-specific); the framework choice, which only the browser
 // knows, picks one. The framework select shows only for a project with more than one.
+//
+// The site header (components/site-header.tsx, above this layout) carries the project's title,
+// its links, search, the theme and GitHub, so the sidebar carries none of them: no title, no
+// links, no search field, no theme switch. Below `md` Fumadocs' bar keeps the sidebar's toggle.
 
-type Options = Pick<BaseLayoutProps, "nav" | "links" | "githubUrl">;
+const NoTitle = () => null;
 
 function Layout({
     trees,
-    options,
     frameworks,
     children,
 }: {
     trees: Record<string, Root>;
-    options: Options;
     frameworks: string[];
     children: ReactNode;
 }) {
@@ -34,7 +35,16 @@ function Layout({
     return (
         <DocsLayout
             tree={tree}
-            {...options}
+            nav={{
+                children: (
+                    <span className="font-medium text-palette-accent/85 text-sm">
+                        Documentation
+                    </span>
+                ),
+            }}
+            slots={{ navTitle: NoTitle }}
+            searchToggle={{ enabled: false }}
+            themeSwitch={{ enabled: false }}
             sidebar={
                 frameworks.length > 1
                     ? { banner: <FrameworkSelect frameworks={frameworks} /> }
@@ -49,21 +59,15 @@ function Layout({
 export function ProjectDocsLayout({
     project,
     trees,
-    options,
     children,
 }: {
     project: ProjectFrameworks;
     trees: Record<string, Root>;
-    options: Options;
     children: ReactNode;
 }) {
     return (
         <ProjectProvider project={project}>
-            <Layout
-                trees={trees}
-                options={options}
-                frameworks={project.frameworks}
-            >
+            <Layout trees={trees} frameworks={project.frameworks}>
                 {children}
             </Layout>
         </ProjectProvider>
