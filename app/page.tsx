@@ -39,22 +39,24 @@ function ProjectCard({ project }: { project: Project }) {
     return (
         <li
             data-project={project.slug}
-            className="landing-reveal landing-card palette-raised group relative flex flex-col gap-4 overflow-hidden rounded-lg border border-palette-line bg-palette-base p-6 transition-[border-color,translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-palette-ring/50 hover:shadow-xl"
+            className="landing-reveal landing-card palette-raised group relative flex flex-col gap-4 overflow-hidden rounded-lg border border-palette-line bg-palette-base p-6 transition-[border-color,translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-palette-ring/50 hover:shadow-xl motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
             <div
                 aria-hidden
                 className="palette-purple absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-palette-base to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             />
             <div className="flex items-start justify-between gap-4">
-                <Link
-                    href={`/${project.slug}/`}
-                    className="rounded-sm font-semibold text-palette-contrast text-xl tracking-tight after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-palette-ring"
-                >
-                    {project.title}
-                </Link>
+                <h3 className="m-0 font-semibold text-palette-contrast text-xl tracking-tight">
+                    <Link
+                        href={`/${project.slug}/`}
+                        className="rounded-sm after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-palette-ring"
+                    >
+                        {project.title}
+                    </Link>
+                </h3>
                 <ArrowRight
                     aria-hidden
-                    className="size-5 text-palette-accent/85 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+                    className="size-5 text-palette-accent/85 transition-transform group-hover:translate-x-1 motion-reduce:transition-none rtl:rotate-180 rtl:group-hover:-translate-x-1 motion-reduce:group-hover:translate-x-0"
                 />
             </div>
             <p className="text-palette-accent/85 text-sm leading-relaxed">
@@ -95,7 +97,7 @@ export default function Home() {
                 className="landing flex flex-1 flex-col pb-24"
             >
                 <Hero
-                    eyebrow="Headless components · an optional design system"
+                    eyebrow="Headless · design system optional"
                     title="Headless components, and a design system when you want one."
                     description={POSITIONING}
                     background="grid"
@@ -121,8 +123,8 @@ export default function Home() {
 
                 <Section
                     eyebrow="The idea"
-                    title="Two layers, and the second one is yours to choose"
-                    description="Every Fragiola component is split the same way: what it does in one layer, how it looks in another. You always get the first. The second is a choice."
+                    title="The behaviour from us, the look from wherever you like"
+                    description="A Fragiola primitive ships what a component does — its state, its keyboard, its accessibility — and nothing of how it looks. The look is yours: a design system of ours, one you already use, or your own CSS."
                 >
                     <Features columns={2} numbered>
                         <Feature title="Headless primitives">
@@ -133,11 +135,11 @@ export default function Home() {
                             styling solution can paint it.
                         </Feature>
                         <Feature title="An optional design system">
-                            Fragiola UI gives the primitives one visual
-                            identity, and it bends: six colour roles, any number
-                            of palettes, each scoped by a class to a page, a
-                            card or a single button. Use it when you want it;
-                            nothing depends on it.
+                            Fragiola UI is the ecosystem's design system, and it
+                            bends: six colour roles, any number of palettes,
+                            each scoped by a class to a page, a card or a single
+                            button. Take it when you want one visual identity;
+                            nothing requires it.
                         </Feature>
                     </Features>
                 </Section>

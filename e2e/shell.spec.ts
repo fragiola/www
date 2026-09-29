@@ -127,17 +127,18 @@ test("the chosen theme is remembered per project", async ({ page }) => {
 test("without a chosen theme, the example follows the site's scheme", async ({
     page,
 }) => {
-    await setSiteTheme(page, "dark");
+    // the site opens in dark: its light scheme shows the example following it
+    await setSiteTheme(page, "light");
     const stage = await openExample(page, "dockable", first.id);
-    // the first dark theme of examples.json, passed explicitly to the embed
-    await expect(stage).toHaveAttribute("data-example-theme", "dark");
+    // the first light theme of examples.json, passed explicitly to the embed
+    await expect(stage).toHaveAttribute("data-example-theme", "light");
     await expect(embed(stage).locator("html")).toHaveAttribute(
         "data-example-theme",
-        "dark",
+        "light",
     );
     await expect(stage.locator("iframe")).toHaveAttribute(
         "src",
-        /[?&]theme=dark(&|$)/,
+        /[?&]theme=light(&|$)/,
     );
     await expect(page).not.toHaveURL(/theme=/);
 });

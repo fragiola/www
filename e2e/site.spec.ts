@@ -140,8 +140,9 @@ test("the organization's landing says what Fragiola is, first thing", async ({
     await page.goto("");
     const hero = page.getByTestId("hero");
     await expect(hero.getByRole("heading", { level: 1 })).toBeInViewport();
-    await expect(hero).toContainText("headless components");
-    await expect(hero).toContainText("optional");
+    const lead = hero.locator("p").filter({ hasText: /ecosystem/ });
+    await expect(lead).toContainText("headless components");
+    await expect(lead).toContainText("optional");
     const explore = hero.getByRole("link", { name: "Explore the projects" });
     await expect(explore).toBeInViewport();
     await expect(explore).toHaveAttribute("href", "#projects");
@@ -162,14 +163,18 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
     await expect(titles).toHaveText([
-        "Two layers, and the second one is yours to choose",
+        "The behaviour from us, the look from wherever you like",
         "Paint it with what you already use",
         UI.project.title,
         "What Fragiola ships today",
     ]);
-    const spotlight = page
-        .getByTestId("landing-section")
-        .filter({ has: page.getByRole("heading", { name: UI.project.title }) });
+    const spotlight = page.getByTestId("landing-section").filter({
+        has: page.getByRole("heading", {
+            level: 2,
+            name: UI.project.title,
+            exact: true,
+        }),
+    });
     await expect(spotlight).toContainText(UI.project.description);
     await expect(
         spotlight.getByRole("link", { name: `Explore ${UI.project.title}` }),
@@ -177,8 +182,12 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
     await expect(
         spotlight.getByRole("link", { name: "Read the docs" }),
     ).toHaveAttribute("href", /^\/ui\/docs\/.+\/$/);
-    // only what exists: no project that is not published is named
-    await expect(page.locator("main")).not.toContainText(/\bGrid\b|Scheduler/);
+    // only what exists: no project that is not published is named, anywhere
+    await expect(page.locator("body")).not.toContainText(/\bGrid\b|Scheduler/);
+    expect(await page.title()).not.toMatch(/\bGrid\b|Scheduler/);
+    expect(
+        await page.locator('meta[name="description"]').getAttribute("content"),
+    ).not.toMatch(/\bGrid\b|Scheduler/);
     // the footer lists every project and the organization
     const footer = page.getByTestId("site-footer");
     for (const { project } of [UI, DOCKABLE]) {

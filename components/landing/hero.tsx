@@ -27,7 +27,6 @@ export function Hero({
     background = "none",
     actions = [],
     backdrop,
-    children,
 }: {
     title: string;
     description?: string;
@@ -35,7 +34,6 @@ export function Hero({
     background?: "none" | "grid";
     actions?: HeroAction[];
     backdrop?: ReactNode;
-    children?: ReactNode;
 }) {
     const grid = background === "grid";
     return (
@@ -104,7 +102,6 @@ export function Hero({
                             ))}
                         </div>
                     ) : null}
-                    {children}
                 </Reveal>
             </div>
         </header>

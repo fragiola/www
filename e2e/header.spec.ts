@@ -1,5 +1,12 @@
 import { expect, type Page, test } from "@playwright/test";
-import { collectErrors, DOCKABLE, mark, marked, UI } from "./helpers";
+import {
+    collectErrors,
+    DOCKABLE,
+    expectReady,
+    mark,
+    marked,
+    UI,
+} from "./helpers";
 
 // The site header (components/site-header.tsx): the same on every page — the wordmark, the
 // Projects menu (Fragiola UI's navigation-menu), the project's own context under /<slug>/**,
@@ -199,16 +206,25 @@ test("small screens: Escape or a press outside closes the menu", async ({
     await expect(site(page)).toBeVisible();
     await page.getByRole("heading", { level: 1 }).click({ force: true });
     await expect(site(page)).toBeHidden();
-    await page.reload();
+    await page.goto("ui/docs/atoms/clickable/");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const example = await expectReady(page.locator("[data-example]").first());
     await button.click();
     await expect(site(page)).toBeVisible();
-    // below the open menu, the page's first example
+    // a point of the page's first example, below the open menu
+    const frame = await example.locator("iframe").boundingBox();
+    const menu = await site(page).boundingBox();
+    if (!frame || !menu) throw new Error("no example, or no menu");
+    const y = Math.max(frame.y + 10, menu.y + menu.height + 10);
+    expect(y).toBeLessThan(Math.min(frame.y + frame.height, 740));
+    const x = frame.x + frame.width / 2;
     expect(
         await page.evaluate(
-            () => document.elementFromPoint(200, 700)?.tagName ?? "",
+            ([px, py]) => document.elementFromPoint(px ?? 0, py ?? 0)?.tagName,
+            [x, y],
         ),
     ).toBe("IFRAME");
-    await page.mouse.click(200, 700);
+    await page.mouse.click(x, y);
     await expect(site(page)).toBeHidden();
 });
 

@@ -103,6 +103,10 @@
     --color-fd-secondary-foreground: var(--palette-contrast);
     --color-fd-border: var(--palette-line);
     --color-fd-primary: var(--palette-accent);
+}
+
+/* the diff symbols are fixed colours, outside the roles: declared once */
+:root {
     --color-fd-diff-remove-symbol: rgb(230, 10, 100);
     --color-fd-diff-add-symbol: rgb(10, 200, 100);
 }
@@ -195,14 +199,22 @@
    bottom. The text stays text (selectable, readable by assistive tech). */
 .landing-title {
     color: var(--palette-contrast);
-    background-image: linear-gradient(
-        to bottom,
-        var(--palette-contrast) 45%,
-        color-mix(in oklch, var(--palette-contrast) 60%, transparent)
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+}
+/* only where text can clip a background, and never in forced colours: a
+   transparent fill without its gradient would be invisible text */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+    @media not (forced-colors: active) {
+        .landing-title {
+            background-image: linear-gradient(
+                to bottom,
+                var(--palette-contrast) 45%,
+                color-mix(in oklch, var(--palette-contrast) 60%, transparent)
+            );
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    }
 }
 
 /* A landing card's inner light: the soft role at its top edge, fading out. */

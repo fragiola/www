@@ -6,7 +6,7 @@ import { expect, test } from "vitest";
 // text-palette-accent/85, …), under a palette-* class when it must be chromatic. The theme resets
 // --color-*, so a Tailwind default colour (bg-slate-900) renders nothing, silently, and a hex
 // value ignores the theme. This walks the site's own code (not the components copied from ui's
-// registry, which are ui's) for either.
+// registry, which are ui's) for either, and for arbitrary colours in utilities (bg-[#…]).
 
 const ROOT = join(import.meta.dirname, "..");
 const COPIED = ["components/ui", "components/atoms", "components/families"];
@@ -24,8 +24,15 @@ function files(dir: string): string[] {
 
 const DEFAULT_COLOURS =
     "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white";
+const COLOUR_UTILITIES =
+    "bg|text|border(?:-[xytrblse])?|ring(?:-offset)?|outline|from|via|to|fill|stroke|(?:inset-|text-|drop-)?shadow|decoration|divide|placeholder|caret|accent";
 const DEFAULT_UTILITY = new RegExp(
-    `(?<![\\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|outline|from|via|to|fill|stroke|shadow|decoration|divide|placeholder|caret|accent)-(?:${DEFAULT_COLOURS})(?:-\\d{2,3})?(?![\\w-])`,
+    `(?<![\\w-])(?:[a-z-]+:)*(?:${COLOUR_UTILITIES})-(?:${DEFAULT_COLOURS})(?:-\\d{2,3})?(?![\\w-])`,
+    "g",
+);
+/** an arbitrary colour in a utility: bg-[#…], text-[rgb(…)], border-[oklch(…)] */
+const ARBITRARY = new RegExp(
+    `(?<![\\w-])(?:[a-z-]+:)*(?:${COLOUR_UTILITIES})-\\[(?:#|rgba?\\(|hsla?\\(|oklch\\(|oklab\\(|lab\\(|lch\\(|color\\()`,
     "g",
 );
 const HEX = /(?<![\w&])#[0-9a-fA-F]{3,8}(?![\w-])/g;
@@ -37,6 +44,7 @@ test("the site's own code paints with palette roles only", () => {
         lines.forEach((line, index) => {
             for (const match of [
                 ...line.matchAll(DEFAULT_UTILITY),
+                ...line.matchAll(ARBITRARY),
                 ...(file.endsWith(".css") ? [] : line.matchAll(HEX)),
             ]) {
                 found.push(

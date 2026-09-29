@@ -45,7 +45,7 @@ export function Feature({
 }) {
     return (
         <li className="flex">
-            <div className="landing-reveal landing-card palette-raised group relative flex flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-palette-line bg-palette-base p-6 text-palette-contrast transition-[border-color,translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-palette-ring/50 hover:shadow-xl">
+            <div className="landing-reveal landing-card palette-raised group relative flex flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-palette-line bg-palette-base p-6 text-palette-contrast transition-[border-color,translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-palette-ring/50 hover:shadow-xl motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                 <div
                     aria-hidden
                     className="palette-purple absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-palette-base to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
