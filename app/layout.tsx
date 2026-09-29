@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     }}
                     theme={{
                         attribute: ["class", "data-theme"],
-                        defaultTheme: "light",
+                        defaultTheme: "dark",
                         enableSystem: true,
                     }}
                 >

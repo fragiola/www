@@ -3,7 +3,8 @@ import { DOCKABLE, embed, openExample, setSiteTheme } from "./helpers";
 
 // The example themes (§4, §5.1), ported from dockable's docs e2e/themes.spec.ts: every theme of
 // examples.json reaches the embed before its first paint and paints a different floor, whatever
-// the site's own theme; a missing or unknown theme is the first light one.
+// the site's own theme; a missing or unknown theme is the first theme of the site's scheme (dark
+// by default).
 
 const floor = (page: import("@playwright/test").Page) =>
     embed(page.getByTestId("stage"))
@@ -50,8 +51,21 @@ test("the theme is applied before the embed's first paint", async ({
 test("an unknown ?theme= in the URL is ignored", async ({ page }) => {
     await openExample(page, "dockable", "hello-layout", {});
     await page.goto("dockable/examples/hello-layout/?theme=sepia");
+    // the site opens in dark: the first dark theme of examples.json
     await expect(page.getByTestId("stage")).toHaveAttribute(
         "data-example-theme",
-        "light",
+        "dark",
     );
+});
+
+test("with no stored preference the site opens in dark, and so do the embeds", async ({
+    page,
+}) => {
+    await page.goto("dockable/docs/getting-started/first-layout/");
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    const block = page.locator(
+        '[data-example="hello-layout"][data-variant="inline"]',
+    );
+    await expect(block.locator("iframe")).toHaveAttribute("src", /theme=dark/);
 });

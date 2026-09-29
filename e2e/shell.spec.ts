@@ -78,6 +78,8 @@ test("the header shows the level, the description, the features and the guide", 
 test("the theme switcher changes the example's theme and the URL, without a reload", async ({
     page,
 }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     const stage = await openExample(page, "dockable", first.id);
     await expect(stage).toHaveAttribute("data-example-theme", "light");
     await mark(page);
@@ -106,6 +108,8 @@ test("the theme switcher changes the example's theme and the URL, without a relo
 });
 
 test("the chosen theme is remembered per project", async ({ page }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await openExample(page, "dockable", first.id, { theme: "paper" });
     await page.goto(`dockable/examples/${last.id}/`);
     await expect(page.getByTestId("stage")).toHaveAttribute(
@@ -142,6 +146,8 @@ test("the code panel shows every file and the theme's CSS, and copies one or all
     page,
     context,
 }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await openExample(page, "dockable", first.id);
     await page.getByTestId("toggle-code").click();

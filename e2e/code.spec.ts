@@ -1,7 +1,13 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
-import { DOCKABLE, embed, expectReady, openExample } from "./helpers";
+import {
+    DOCKABLE,
+    embed,
+    expectReady,
+    openExample,
+    setSiteTheme,
+} from "./helpers";
 
 // The code panel on demand: a page carries no code; an example's files are fetched when its
 // panel opens, and the shared files once per project and framework (lib/code.ts).
@@ -83,6 +89,8 @@ test("an inline example fetches its code when asked, not before", async ({
 });
 
 test("the highlighted code follows the site's scheme", async ({ page }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await openExample(page, "ui", "clickable", { code: true });
     const code = page.getByTestId("code-file").locator("code span").first();
     await expect(code).toBeVisible();

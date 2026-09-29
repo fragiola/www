@@ -17,7 +17,7 @@ export function Pills({
             {items.map((item) => (
                 <li
                     key={item}
-                    className="rounded-full border border-palette-line px-3 py-1 text-palette-accent/85 text-sm"
+                    className="rounded-full border border-palette-line bg-palette-soft/40 px-3 py-1 font-mono text-palette-accent/85 text-xs"
                 >
                     {strike ? (
                         <s className="decoration-palette-line">{item}</s>
