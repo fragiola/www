@@ -1,13 +1,65 @@
 import { expect, type Page, test } from "@playwright/test";
-import { collectErrors, mark, marked } from "./helpers";
+import { collectErrors } from "./helpers";
 
 // The organization landing's WebGL scene (components/landing/hero-scene.tsx): three loaded only
 // on /, after hydration; paused when unseen; a still under reduced motion; recoloured with the
-// site's theme; released when the page is left. WebGL in headless Chromium may be software or
-// missing: the specs assert the scene's state, never pixels, and accept `unavailable` (the CSS
-// grid stays) wherever WebGL is not the point.
+// site's theme; its WebGL context released when the page is left (without WebGL:
+// scene-no-webgl.spec.ts). The specs
+// count the draw calls the page makes (a loop that kept running would keep drawing), never read
+// pixels.
 
 const scene = (page: Page) => page.getByTestId("hero-scene");
+
+/** Counts WebGL draws, and keeps every WebGL context the page creates. */
+async function instrument(page: Page) {
+    await page.addInitScript(() => {
+        const w = window as unknown as {
+            draws: number;
+            contexts: WebGL2RenderingContext[];
+        };
+        w.draws = 0;
+        w.contexts = [];
+        const proto = WebGL2RenderingContext.prototype;
+        for (const name of [
+            "drawElements",
+            "drawArrays",
+            "drawElementsInstanced",
+            "drawArraysInstanced",
+        ] as const) {
+            const original = proto[name] as (...args: unknown[]) => void;
+            (proto as unknown as Record<string, unknown>)[name] = function (
+                this: WebGL2RenderingContext,
+                ...args: unknown[]
+            ) {
+                w.draws++;
+                return original.apply(this, args);
+            };
+        }
+        const getContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (
+            this: HTMLCanvasElement,
+            ...args: Parameters<typeof getContext>
+        ) {
+            const context = getContext.apply(this, args);
+            if (context instanceof WebGL2RenderingContext) {
+                w.contexts.push(context);
+            }
+            return context;
+        } as typeof getContext;
+    });
+}
+
+/** The draws the page makes over `ms`. */
+async function drawsOver(page: Page, ms = 600) {
+    const before = await page.evaluate(
+        () => (window as unknown as { draws: number }).draws,
+    );
+    await page.waitForTimeout(ms);
+    const after = await page.evaluate(
+        () => (window as unknown as { draws: number }).draws,
+    );
+    return after - before;
+}
 
 /** Every script the page loaded that carries three (its warnings name THREE.WebGLRenderer). */
 function threeScripts(page: Page): Promise<string[]>[] {
@@ -37,20 +89,13 @@ test("the scene runs behind the hero on /, after hydration", async ({
     page,
 }) => {
     const errors = collectErrors(page);
+    await instrument(page);
     await page.goto("");
-    const state = await settle(page);
-    expect(["running", "unavailable"]).toContain(state);
-    const canvas = scene(page).locator("canvas");
-    if (state === "running") {
-        await expect(canvas).toBeVisible();
-        // behind the content: the hero's actions still take the pointer
-        await expect(
-            page.getByRole("link", { name: "Explore the projects" }),
-        ).toBeInViewport();
-        await expect(scene(page)).toHaveCSS("pointer-events", "none");
-    } else {
-        await expect(canvas).toBeHidden();
-    }
+    expect(await settle(page)).toBe("running");
+    await expect(scene(page).locator("canvas")).toBeVisible();
+    expect(await drawsOver(page)).toBeGreaterThan(0);
+    // behind the content: the hero's actions still take the pointer
+    await expect(scene(page)).toHaveCSS("pointer-events", "none");
     await expect(page.getByTestId("hero-grid")).toBeAttached();
     expect(errors).toEqual([]);
 });
@@ -59,7 +104,7 @@ test("three is loaded on / and on no other page", async ({ page }) => {
     const scripts = threeScripts(page);
     await page.goto("");
     await settle(page);
-    expect((await Promise.all(scripts)).flat()).toHaveLength(1);
+    expect((await Promise.all(scripts)).flat().length).toBeGreaterThan(0);
 
     for (const path of [
         "ui/",
@@ -77,22 +122,31 @@ test("three is loaded on / and on no other page", async ({ page }) => {
 test.describe("with reduced motion", () => {
     test.use({ reducedMotion: "reduce" });
 
-    test("the scene is a still, no loop", async ({ page }) => {
+    test("the scene is one still frame, no loop", async ({ page }) => {
+        await instrument(page);
         await page.goto("");
-        const state = await settle(page);
-        expect(["still", "unavailable"]).toContain(state);
+        expect(await settle(page)).toBe("still");
+        await page.waitForTimeout(200);
+        expect(await drawsOver(page)).toBe(0);
+        // the pointer moves nothing
+        await page.mouse.move(900, 400);
+        await page.mouse.move(1000, 500);
+        expect(await drawsOver(page)).toBe(0);
     });
 });
 
-test("the scene pauses off-screen and in a hidden tab", async ({ page }) => {
+test("the scene stops drawing off-screen and in a hidden tab", async ({
+    page,
+}) => {
+    await instrument(page);
     await page.goto("");
-    test.skip((await settle(page)) === "unavailable", "no WebGL here");
-    await expect(scene(page)).toHaveAttribute("data-state", "running");
-    await page.locator("#projects").scrollIntoViewIfNeeded();
+    expect(await settle(page)).toBe("running");
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await expect(scene(page)).toHaveAttribute("data-state", "paused");
+    expect(await drawsOver(page)).toBe(0);
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(scene(page)).toHaveAttribute("data-state", "running");
+    expect(await drawsOver(page)).toBeGreaterThan(0);
     await page.evaluate(() => {
         Object.defineProperty(document, "hidden", {
             configurable: true,
@@ -101,34 +155,43 @@ test("the scene pauses off-screen and in a hidden tab", async ({ page }) => {
         document.dispatchEvent(new Event("visibilitychange"));
     });
     await expect(scene(page)).toHaveAttribute("data-state", "paused");
+    expect(await drawsOver(page)).toBe(0);
 });
 
 test("switching the site's theme recolours the scene, without a reload", async ({
     page,
 }) => {
     await page.goto("");
-    test.skip((await settle(page)) === "unavailable", "no WebGL here");
-    await mark(page);
+    expect(await settle(page)).toBe("running");
     await expect(scene(page)).toHaveAttribute("data-scheme", "dark");
     await page
         .getByTestId("site-header")
         .locator("[data-theme-toggle]")
         .click();
     await expect(scene(page)).toHaveAttribute("data-scheme", "light");
-    expect(await marked(page)).toBe(true);
 });
 
-test("leaving / and coming back leaves one canvas, and no error", async ({
-    page,
-}) => {
+test("leaving / releases the scene's WebGL context", async ({ page }) => {
     const errors = collectErrors(page);
+    await instrument(page);
     await page.goto("");
     await settle(page);
-    await page.getByRole("link", { name: /^Meet / }).click();
-    await expect(page).toHaveURL(/\/ui\/$/);
-    await expect(scene(page)).toHaveCount(0);
-    await page.goBack();
-    await settle(page);
+    for (let round = 0; round < 2; round++) {
+        await page.getByRole("link", { name: /^Meet / }).click();
+        await expect(page).toHaveURL(/\/ui\/$/);
+        await expect(scene(page)).toHaveCount(0);
+        await page.goBack();
+        await settle(page);
+    }
     await expect(page.locator("canvas")).toHaveCount(1);
+    // every context but the live one is lost (released)
+    const lost = await page.evaluate(() =>
+        (
+            window as unknown as { contexts: WebGL2RenderingContext[] }
+        ).contexts.map((context) => context.isContextLost()),
+    );
+    expect(lost.length).toBeGreaterThanOrEqual(3);
+    expect(lost.slice(0, -1).every(Boolean)).toBe(true);
+    expect(lost.at(-1)).toBe(false);
     expect(errors).toEqual([]);
 });

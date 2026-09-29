@@ -23,8 +23,11 @@ import {
 // chromatic palette — the design system painting the primitives. Every colour is read from the
 // palette variables on the host, so the scene follows the site's theme and never hard-codes one.
 
-const COLUMNS = 34;
-const ROWS = 20;
+/** the field's size: fewer blocks on a small screen, where the scene is shown faded */
+const FIELD = {
+    large: { columns: 34, rows: 20 },
+    small: { columns: 20, rows: 14 },
+};
 const GAP = 1.15;
 /** the share of blocks a chromatic palette paints */
 const PAINTED = 0.14;
@@ -48,11 +51,15 @@ function reader() {
     canvas.width = 1;
     canvas.height = 1;
     const context = canvas.getContext("2d", { willReadFrequently: true });
+    // a colour the browser cannot parse leaves fillStyle as it was: the sentinel, then
+    const sentinel = "rgba(1, 2, 3, 0.5)";
     return (css: string, fallback: Color): Color => {
         if (!context || !css.trim()) return fallback.clone();
         context.clearRect(0, 0, 1, 1);
-        context.fillStyle = "black";
+        context.fillStyle = sentinel;
+        const unset = context.fillStyle;
         context.fillStyle = css.trim();
+        if (context.fillStyle === unset) return fallback.clone();
         context.fillRect(0, 0, 1, 1);
         const [r = 0, g = 0, b = 0] = context.getImageData(0, 0, 1, 1).data;
         return new Color().setRGB(r / 255, g / 255, b / 255, SRGBColorSpace);
@@ -89,12 +96,16 @@ export function createHeroScene(
     host: HTMLElement,
     canvas: HTMLCanvasElement,
 ): HeroScene {
-    const renderer = new WebGLRenderer({
-        canvas,
-        antialias: true,
+    const small = host.clientWidth < 640;
+    // the context first: without one, three logs errors before it throws, and a page without
+    // WebGL must stay quiet (three needs WebGL 2)
+    const context = canvas.getContext("webgl2", {
+        antialias: !small,
         alpha: true,
         powerPreference: "low-power",
     });
+    if (!context) throw new Error("hero scene: no WebGL 2");
+    const renderer = new WebGLRenderer({ canvas, context });
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.setClearColor(0x000000, 0);
 
@@ -109,6 +120,7 @@ export function createHeroScene(
     scene.add(ambient, key);
     scene.fog = new Fog(0x000000, 18, 42);
 
+    const { columns: COLUMNS, rows: ROWS } = small ? FIELD.small : FIELD.large;
     const count = COLUMNS * ROWS;
     const geometry = new BoxGeometry(0.92, 1, 0.92);
     const material = new MeshStandardMaterial({
@@ -151,28 +163,37 @@ export function createHeroScene(
         if (blocks.instanceColor) blocks.instanceColor.needsUpdate = true;
     }
 
-    // the pointer, projected onto the field's plane
+    // the pointer, projected onto the field's plane, only while the scene runs; leaving the
+    // window lets the field settle
+    let running = false;
+    const away = new Vector3(999, 0, 999);
     const pointer = new Vector2(10, 10);
-    const target = new Vector3(999, 0, 999);
-    const focus = new Vector3(999, 0, 999);
+    const target = away.clone();
+    const focus = away.clone();
     const plane = new Plane(new Vector3(0, 1, 0), 0);
     const raycaster = new Raycaster();
+    const onLeave = () => target.copy(away);
     const onPointer = (event: PointerEvent) => {
+        if (!running) return;
         const box = canvas.getBoundingClientRect();
         pointer.set(
             ((event.clientX - box.left) / box.width) * 2 - 1,
             -((event.clientY - box.top) / box.height) * 2 + 1,
         );
         raycaster.setFromCamera(pointer, camera);
-        if (!raycaster.ray.intersectPlane(plane, target))
-            target.set(999, 0, 999);
+        if (!raycaster.ray.intersectPlane(plane, target)) target.copy(away);
     };
     window.addEventListener("pointermove", onPointer, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
 
     const matrix = new Matrix4();
     const start = performance.now();
+    let last = 0;
     function layout(time: number) {
-        focus.lerp(target, 0.08);
+        // the same lean at any refresh rate: 8% of the way per 60th of a second
+        const elapsed = Math.min(0.1, Math.max(0, time - last));
+        last = time;
+        focus.lerp(target, 1 - 0.92 ** (elapsed * 60));
         for (let index = 0; index < count; index++) {
             const { x, z } = positions[index] ?? { x: 0, z: 0 };
             const wave =
@@ -207,13 +228,35 @@ export function createHeroScene(
         camera.updateProjectionMatrix();
     }
 
+    // a new pixel ratio with no new size (the window moved to another screen)
+    let resolution: MediaQueryList | undefined;
+    const onResolution = () => {
+        resize();
+        renderer.render(scene, camera);
+        watchResolution();
+    };
+    function watchResolution() {
+        resolution?.removeEventListener("change", onResolution);
+        resolution = window.matchMedia(
+            `(resolution: ${window.devicePixelRatio}dppx)`,
+        );
+        resolution.addEventListener("change", onResolution);
+    }
+
     recolour();
     resize();
+    watchResolution();
 
     return {
         frame,
-        start: () => renderer.setAnimationLoop(frame),
-        stop: () => renderer.setAnimationLoop(null),
+        start: () => {
+            running = true;
+            renderer.setAnimationLoop(frame);
+        },
+        stop: () => {
+            running = false;
+            renderer.setAnimationLoop(null);
+        },
         recolour: () => {
             recolour();
             renderer.render(scene, camera);
@@ -222,6 +265,11 @@ export function createHeroScene(
         dispose() {
             renderer.setAnimationLoop(null);
             window.removeEventListener("pointermove", onPointer);
+            document.documentElement.removeEventListener(
+                "pointerleave",
+                onLeave,
+            );
+            resolution?.removeEventListener("change", onResolution);
             blocks.dispose();
             geometry.dispose();
             material.dispose();

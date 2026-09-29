@@ -117,7 +117,7 @@ export function HeroScene() {
                 className={
                     state === "loading"
                         ? "size-full opacity-0"
-                        : "size-full opacity-100 transition-opacity duration-1000"
+                        : "size-full opacity-100 transition-opacity duration-1000 motion-reduce:transition-none"
                 }
             />
         </div>
