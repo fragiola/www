@@ -176,6 +176,21 @@
     );
 }
 
+/* The organization landing's scene (components/landing/hero-scene.tsx): faded
+   out where the hero's text sits (the start of the line, then the bottom), so
+   the words stay on a quiet floor and the field lives on the other side. The
+   horizontal fade follows the writing direction. */
+.hero-scene {
+    --hero-scene-side: to right;
+    mask-image:
+        linear-gradient(to bottom, black 45%, transparent 92%),
+        linear-gradient(var(--hero-scene-side), transparent 18%, black 80%);
+    mask-composite: intersect;
+}
+[dir="rtl"] .hero-scene {
+    --hero-scene-side: to left;
+}
+
 /* Landing headings: the contrast role, fading into itself towards the
    bottom. The text stays text (selectable, readable by assistive tech). */
 .landing-title {

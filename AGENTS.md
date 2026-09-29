@@ -93,6 +93,8 @@ components/gallery/         the gallery: chrome (layout), example view (page)
 components/example-frame.tsx  the iframe side of §5
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
+                            + hero-scene: the organization landing's WebGL scene (three, on / only,
+                              loaded after hydration; e2e/scene.spec.ts)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
 components/mdx.tsx          the v1.1 vocabulary
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, build, dev, serve, measure

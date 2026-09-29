@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ActionLink } from "@/components/landing/action";
 import { Feature, Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
+import { HeroScene } from "@/components/landing/hero-scene";
 import { Pills } from "@/components/landing/pills";
 import { Section } from "@/components/landing/section";
 import { SiteHeader } from "@/components/site-header";
@@ -98,6 +99,7 @@ export default function Home() {
                     title="Headless components, and a design system when you want one."
                     description={POSITIONING}
                     background="grid"
+                    backdrop={<HeroScene />}
                     actions={[
                         {
                             label: "Explore the projects",
