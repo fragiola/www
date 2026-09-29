@@ -78,6 +78,53 @@
     --color-fd-diff-add-symbol: rgb(10, 200, 100);
 }
 
+/* ─── What the theme's resets take from Fumadocs' chrome ────────────────
+   `@theme inline` inlines the bridge into utilities and emits no
+   --color-fd-* variable, yet Fumadocs' own CSS reads some of them raw (its
+   base border colour, the body's background, the prose's inline code, …):
+   they fell back to nothing, and every border without a colour class was
+   currentColor, a harsh line on cards, code and the sidebar. These are the
+   ones its CSS reads, declared on every palette scope (the selector the
+   theme's own chart derivation uses) so they resolve against that scope's
+   roles, as the utilities do. The theme also resets --radius-* to
+   sm/md/lg/full, and Fumadocs' cards and code blocks are rounded-xl/2xl:
+   without these two radii they render square. */
+[class*="palette-"] {
+    --color-fd-background: var(--palette-base);
+    --color-fd-card: var(--palette-base);
+    --color-fd-foreground: var(--palette-contrast);
+    --color-fd-muted: var(--palette-soft);
+    --color-fd-muted-foreground: color-mix(
+        in oklch,
+        var(--palette-accent) 85%,
+        transparent
+    );
+    --color-fd-secondary: var(--palette-soft);
+    --color-fd-secondary-foreground: var(--palette-contrast);
+    --color-fd-border: var(--palette-line);
+    --color-fd-primary: var(--palette-accent);
+    --color-fd-diff-remove-symbol: rgb(230, 10, 100);
+    --color-fd-diff-add-symbol: rgb(10, 200, 100);
+}
+
+@theme {
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+}
+
+/* Fumadocs' default border colour (its base.css), restated: the theme
+   imports Tailwind a second time, and that second preflight resets every
+   border to currentColor after Fumadocs set it. */
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-fd-border, currentColor);
+    }
+}
+
 /* ─── The site header (components/site-header.tsx) ──────────────────────
    One header on every page. In the docs it sits above Fumadocs' docs grid,
    which offsets everything that sticks (the sidebar, the table of contents,
@@ -111,6 +158,39 @@
         linear-gradient(to right, var(--palette-line) 1px, transparent 1px),
         linear-gradient(to bottom, var(--palette-line) 1px, transparent 1px);
     background-size: 3.5rem 3.5rem;
+}
+
+/* The grid fades out towards the edges and the bottom: a mask (alpha), not a
+   colour, so it follows every palette. */
+.landing-grid-fade {
+    mask-image: radial-gradient(
+        ellipse 70% 60% at 50% 0%,
+        black 30%,
+        transparent 100%
+    );
+}
+
+/* Landing headings: the contrast role, fading into itself towards the
+   bottom. The text stays text (selectable, readable by assistive tech). */
+.landing-title {
+    color: var(--palette-contrast);
+    background-image: linear-gradient(
+        to bottom,
+        var(--palette-contrast) 45%,
+        color-mix(in oklch, var(--palette-contrast) 60%, transparent)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* A landing card's inner light: the soft role at its top edge, fading out. */
+.landing-card {
+    background-image: linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--palette-soft) 55%, transparent),
+        transparent 65%
+    );
 }
 
 /* Scroll reveal — additive by construction. The default state is fully
