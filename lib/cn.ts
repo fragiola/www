@@ -1,9 +1,14 @@
-import { type ClassValue, clsx } from "clsx";
+import type { ClassValue } from "clsx";
+import { clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
-// clsx + tailwind-merge, with Fragiola's palette classes as one group (the last palette wins),
-// the same as the `cn` of the Fragiola UI registry that paints the site.
-const merge = extendTailwindMerge<"palette">({
+// NOTE: the palette list is hardcoded on purpose. tailwind-merge needs to know
+// which classes form a single "palette" group so that `cn("palette-blue",
+// "palette-danger")` resolves to one (the last) rather than both. The cost of
+// correct merge behaviour is that adding a palette means adding it here too.
+// A test asserts this list agrees with the palettes directory — see
+// tests/palette-contract.test.ts.
+const customTwMerge = extendTailwindMerge<"palette">({
     extend: {
         classGroups: {
             palette: [
@@ -17,6 +22,11 @@ const merge = extendTailwindMerge<"palette">({
                         "orange",
                         "purple",
                         "rose",
+                        "surface-blue",
+                        "surface-purple",
+                        "surface-green",
+                        "surface-orange",
+                        "surface-rose",
                     ],
                 },
             ],
@@ -25,5 +35,5 @@ const merge = extendTailwindMerge<"palette">({
 });
 
 export function cn(...inputs: ClassValue[]) {
-    return merge(clsx(inputs));
+    return customTwMerge(clsx(inputs));
 }
