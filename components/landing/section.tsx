@@ -7,11 +7,14 @@ import { Reveal } from "./reveal";
 // children keep the page's prose styles.
 
 export function Section({
+    id,
     title,
     eyebrow,
     description,
     children,
 }: {
+    /** the site's, not the vocabulary's: an anchor on the organization's landing */
+    id?: string;
     title: string;
     eyebrow?: string;
     description?: string;
@@ -19,6 +22,7 @@ export function Section({
 }) {
     return (
         <section
+            id={id}
             data-testid="landing-section"
             className="landing-band relative py-20 sm:py-28"
         >
