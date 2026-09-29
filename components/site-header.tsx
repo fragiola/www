@@ -73,14 +73,8 @@ function Wordmark() {
     return (
         <NextLink
             href="/"
-            className="inline-flex items-center gap-2 rounded-md font-semibold text-base text-palette-contrast tracking-tight focus-visible:outline-2 focus-visible:outline-palette-ring"
+            className="rounded-md font-semibold text-base text-palette-contrast tracking-tight focus-visible:outline-2 focus-visible:outline-palette-ring"
         >
-            <span
-                aria-hidden
-                className="palette-purple grid size-5 place-items-center rounded-sm bg-palette-base"
-            >
-                <span className="size-2 rounded-[2px] bg-palette-contrast" />
-            </span>
             Fragiola
         </NextLink>
     );
@@ -212,7 +206,12 @@ function DesktopNav({
         >
             <NavigationMenu.List>
                 <NavigationMenu.Item value="projects">
-                    <NavigationMenu.Trigger>Projects</NavigationMenu.Trigger>
+                    {/* the copied trigger's `outline-none` sets the outline style to none, which
+                        its focus-visible width alone does not undo: the style, restated here
+                        (the fix belongs in ../ui's navigation-menu) */}
+                    <NavigationMenu.Trigger className="focus-visible:outline-solid">
+                        Projects
+                    </NavigationMenu.Trigger>
                     <NavigationMenu.Content>
                         <p className="px-3 pt-1 font-mono text-[0.6875rem] text-palette-accent/85 uppercase tracking-widest">
                             Projects

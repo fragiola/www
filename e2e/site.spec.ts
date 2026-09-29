@@ -201,7 +201,7 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
     );
 });
 
-for (const width of [375, 768]) {
+for (const width of [375, 768, 1440]) {
     test(`no page scrolls sideways at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 800 });
         for (const path of [

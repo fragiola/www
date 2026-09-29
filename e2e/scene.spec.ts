@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { collectErrors } from "./helpers";
+import { collectErrors, mark, marked } from "./helpers";
 
 // The organization landing's WebGL scene (components/landing/hero-scene.tsx): three loaded only
 // on /, after hydration; paused when unseen; a still under reduced motion; recoloured with the
@@ -163,12 +163,14 @@ test("switching the site's theme recolours the scene, without a reload", async (
 }) => {
     await page.goto("");
     expect(await settle(page)).toBe("running");
+    await mark(page);
     await expect(scene(page)).toHaveAttribute("data-scheme", "dark");
     await page
         .getByTestId("site-header")
         .locator("[data-theme-toggle]")
         .click();
     await expect(scene(page)).toHaveAttribute("data-scheme", "light");
+    expect(await marked(page)).toBe(true);
 });
 
 test("leaving / releases the scene's WebGL context", async ({ page }) => {

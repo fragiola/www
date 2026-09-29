@@ -72,7 +72,7 @@ Do not "fix" these.
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
 | `pnpm check` / `pnpm check:fix` | Biome |
 | `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
-| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing |
+| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`) |
 | `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`), served like Pages / by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
@@ -94,7 +94,7 @@ components/example-frame.tsx  the iframe side of §5
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
-                              loaded after hydration; e2e/scene.spec.ts)
+                              loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
 components/mdx.tsx          the v1.1 vocabulary
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, build, dev, serve, measure

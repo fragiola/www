@@ -133,6 +133,19 @@ test("the Projects menu works from the keyboard", async ({ page }) => {
     await page.keyboard.press("Escape");
     await expect(list).toBeHidden();
     await expect(trigger).toBeFocused();
+    // a visible focus ring, in the ring role
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveCSS("outline-style", "solid");
+    // Space opens it too, and the arrows move into it
+    await page.keyboard.press("Space");
+    await expect(list).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+    await page.keyboard.press("ArrowDown");
+    await expect(list).toBeVisible();
+    await page.keyboard.press("Escape");
 });
 
 test("the Projects menu moves between projects without a reload", async ({

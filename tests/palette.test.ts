@@ -35,7 +35,10 @@ const ARBITRARY = new RegExp(
     `(?<![\\w-])(?:[a-z-]+:)*(?:${COLOUR_UTILITIES})-\\[(?:#|rgba?\\(|hsla?\\(|oklch\\(|oklab\\(|lab\\(|lch\\(|color\\()`,
     "g",
 );
-const HEX = /(?<![\w&])#[0-9a-fA-F]{3,8}(?![\w-])/g;
+// `_` may precede a colour inside an arbitrary value (shadow-[0_0_4px_#fff])
+const HEX = /(?<![A-Za-z0-9&-])#[0-9a-fA-F]{3,8}(?![\w-])/g;
+/** a colour function anywhere inside an arbitrary value: shadow-[0_8px_rgb(0,0,0)] */
+const IN_ARBITRARY = /\[[^\]\s"]*?[_[(](?:rgba?|hsla?|oklch|oklab|lab|lch)\(/g;
 
 test("the site's own code paints with palette roles only", () => {
     const found: string[] = [];
@@ -45,6 +48,7 @@ test("the site's own code paints with palette roles only", () => {
             for (const match of [
                 ...line.matchAll(DEFAULT_UTILITY),
                 ...line.matchAll(ARBITRARY),
+                ...(file.endsWith(".css") ? [] : line.matchAll(IN_ARBITRARY)),
                 ...(file.endsWith(".css") ? [] : line.matchAll(HEX)),
             ]) {
                 found.push(
