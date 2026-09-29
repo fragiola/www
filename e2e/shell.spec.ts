@@ -78,6 +78,8 @@ test("the header shows the level, the description, the features and the guide", 
 test("the theme switcher changes the example's theme and the URL, without a reload", async ({
     page,
 }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     const stage = await openExample(page, "dockable", first.id);
     await expect(stage).toHaveAttribute("data-example-theme", "light");
     await mark(page);
@@ -106,6 +108,8 @@ test("the theme switcher changes the example's theme and the URL, without a relo
 });
 
 test("the chosen theme is remembered per project", async ({ page }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await openExample(page, "dockable", first.id, { theme: "paper" });
     await page.goto(`dockable/examples/${last.id}/`);
     await expect(page.getByTestId("stage")).toHaveAttribute(
@@ -123,17 +127,18 @@ test("the chosen theme is remembered per project", async ({ page }) => {
 test("without a chosen theme, the example follows the site's scheme", async ({
     page,
 }) => {
-    await setSiteTheme(page, "dark");
+    // the site opens in dark: its light scheme shows the example following it
+    await setSiteTheme(page, "light");
     const stage = await openExample(page, "dockable", first.id);
-    // the first dark theme of examples.json, passed explicitly to the embed
-    await expect(stage).toHaveAttribute("data-example-theme", "dark");
+    // the first light theme of examples.json, passed explicitly to the embed
+    await expect(stage).toHaveAttribute("data-example-theme", "light");
     await expect(embed(stage).locator("html")).toHaveAttribute(
         "data-example-theme",
-        "dark",
+        "light",
     );
     await expect(stage.locator("iframe")).toHaveAttribute(
         "src",
-        /[?&]theme=dark(&|$)/,
+        /[?&]theme=light(&|$)/,
     );
     await expect(page).not.toHaveURL(/theme=/);
 });
@@ -142,6 +147,8 @@ test("the code panel shows every file and the theme's CSS, and copies one or all
     page,
     context,
 }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await openExample(page, "dockable", first.id);
     await page.getByTestId("toggle-code").click();

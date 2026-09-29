@@ -84,6 +84,8 @@ test("the page's height is a floor on a flow example", async ({ page }) => {
 test("the embed gets the site's theme, and follows it without a reload", async ({
     page,
 }) => {
+    // the site opens in dark: start from its light scheme
+    await setSiteTheme(page, "light");
     await page.goto("dockable/docs/getting-started/first-layout/");
     const block = page.locator(
         '[data-example="hello-layout"][data-variant="inline"]',

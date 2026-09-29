@@ -1,40 +1,36 @@
-import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import type { SiteHeaderProps } from "@/components/site-header";
 import {
     firstExampleUrl,
     firstPageUrl,
+    getProject,
     getProjects,
-    type Project,
 } from "@/lib/projects";
 
-// The header every layout shares: the wordmark (the organization's landing) and one link per
-// project (its landing). Next links: moving between projects is client-side.
+// What the site header (components/site-header.tsx) shows, computed at build time: every project
+// for the Projects menu and, under /<slug>/**, the project's own context (its landing, its docs,
+// its gallery and its repository). The header is the same on every page: the organization's
+// landing, a project's landing, its docs and its gallery.
 
-export function baseOptions(): Pick<BaseLayoutProps, "nav" | "links"> {
+export const ORGANIZATION_URL = "https://github.com/fragiola";
+
+export function siteHeader(slug?: string): SiteHeaderProps {
+    const projects = getProjects().map((project) => ({
+        slug: project.slug,
+        title: project.title,
+        description: project.description,
+    }));
+    const project = slug ? getProject(slug) : undefined;
+    if (!project) return { projects, repoUrl: ORGANIZATION_URL };
+    // the gallery's first example, not /<slug>/examples/: that is only a redirect to it
+    const examplesUrl = firstExampleUrl(project);
     return {
-        nav: { title: "Fragiola", url: "/" },
-        links: getProjects().map((project) => ({
-            text: project.title,
-            url: `/${project.slug}/`,
-            active: "nested-url" as const,
-        })),
+        projects,
+        current: {
+            slug: project.slug,
+            title: project.title,
+            docsUrl: firstPageUrl(project),
+            ...(examplesUrl ? { examplesUrl } : {}),
+        },
+        repoUrl: project.repoUrl ?? ORGANIZATION_URL,
     };
-}
-
-/** A project's own links: its docs and its gallery. */
-export function projectLinks(
-    project: Project,
-): NonNullable<BaseLayoutProps["links"]> {
-    const examples = firstExampleUrl(project);
-    return [
-        { text: "Docs", url: firstPageUrl(project), active: "none" as const },
-        ...(examples
-            ? [
-                  {
-                      text: "Examples",
-                      url: `/${project.slug}/examples/`,
-                      active: "none" as const,
-                  },
-              ]
-            : []),
-    ];
 }

@@ -5,7 +5,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
     title: { default: "Fragiola", template: "%s · Fragiola" },
-    description: "Fragiola: a component library, a layout manager, and more.",
+    description:
+        "Fragiola: headless components, and Fragiola UI, an optional design system.",
 };
 
 // Theme: next-themes, key localStorage["theme"], emitted as both the .dark class (Fumadocs UI)
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     }}
                     theme={{
                         attribute: ["class", "data-theme"],
-                        defaultTheme: "light",
+                        defaultTheme: "dark",
                         enableSystem: true,
                     }}
                 >

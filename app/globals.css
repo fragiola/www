@@ -78,6 +78,76 @@
     --color-fd-diff-add-symbol: rgb(10, 200, 100);
 }
 
+/* ─── What the theme's resets take from Fumadocs' chrome ────────────────
+   `@theme inline` inlines the bridge into utilities and emits no
+   --color-fd-* variable, yet Fumadocs' own CSS reads some of them raw (its
+   base border colour, the body's background, the prose's inline code, …):
+   they fell back to nothing, and every border without a colour class was
+   currentColor, a harsh line on cards, code and the sidebar. These are the
+   ones its CSS reads, declared on every palette scope (the selector the
+   theme's own chart derivation uses) so they resolve against that scope's
+   roles, as the utilities do. The theme also resets --radius-* to
+   sm/md/lg/full, and Fumadocs' cards and code blocks are rounded-xl/2xl:
+   without these two radii they render square. */
+[class*="palette-"] {
+    --color-fd-background: var(--palette-base);
+    --color-fd-card: var(--palette-base);
+    --color-fd-foreground: var(--palette-contrast);
+    --color-fd-muted: var(--palette-soft);
+    --color-fd-muted-foreground: color-mix(
+        in oklch,
+        var(--palette-accent) 85%,
+        transparent
+    );
+    --color-fd-secondary: var(--palette-soft);
+    --color-fd-secondary-foreground: var(--palette-contrast);
+    --color-fd-border: var(--palette-line);
+    --color-fd-primary: var(--palette-accent);
+}
+
+/* the diff symbols are fixed colours, outside the roles: declared once */
+:root {
+    --color-fd-diff-remove-symbol: rgb(230, 10, 100);
+    --color-fd-diff-add-symbol: rgb(10, 200, 100);
+}
+
+@theme {
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+}
+
+/* Fumadocs' default border colour (its base.css), restated: the theme
+   imports Tailwind a second time, and that second preflight resets every
+   border to currentColor after Fumadocs set it. */
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-fd-border, currentColor);
+    }
+}
+
+/* ─── The site header (components/site-header.tsx) ──────────────────────
+   One header on every page. In the docs it sits above Fumadocs' docs grid,
+   which offsets everything that sticks (the sidebar, the table of contents,
+   the small-screen bar) by --fd-banner-height: the lever of Fumadocs' own
+   <Banner>, so nothing of Fumadocs' chrome is overridden. */
+:root {
+    --site-header-height: 3.5rem;
+}
+
+.site-docs {
+    --fd-banner-height: var(--site-header-height);
+}
+
+/* A heading scrolled to (a #hash, the table of contents) clears the bars
+   stacked above it: Fumadocs' own margin (scroll-m-28) plus the header. */
+.site-docs :where(h1, h2, h3, h4, h5, h6)[id] {
+    scroll-margin-top: calc(7rem + var(--fd-banner-height));
+}
+
 /* ─── Landings (§3.4, §3.5) ──────────────────────────────────────────────
    The pieces of a project's landing (components/landing/), ported from Fragiola
    UI's own landing (ui/apps/www): the same look for every project. */
@@ -98,6 +168,62 @@
         linear-gradient(to right, var(--palette-line) 1px, transparent 1px),
         linear-gradient(to bottom, var(--palette-line) 1px, transparent 1px);
     background-size: 3.5rem 3.5rem;
+}
+
+/* The grid fades out towards the edges and the bottom: a mask (alpha), not a
+   colour, so it follows every palette. */
+.landing-grid-fade {
+    mask-image: radial-gradient(
+        ellipse 70% 60% at 50% 0%,
+        black 30%,
+        transparent 100%
+    );
+}
+
+/* The organization landing's scene (components/landing/hero-scene.tsx): faded
+   out where the hero's text sits (the start of the line, then the bottom), so
+   the words stay on a quiet floor and the field lives on the other side. The
+   horizontal fade follows the writing direction. */
+.hero-scene {
+    --hero-scene-side: to right;
+    mask-image:
+        linear-gradient(to bottom, black 45%, transparent 92%),
+        linear-gradient(var(--hero-scene-side), transparent 18%, black 80%);
+    mask-composite: intersect;
+}
+[dir="rtl"] .hero-scene {
+    --hero-scene-side: to left;
+}
+
+/* Landing headings: the contrast role, fading into itself towards the
+   bottom. The text stays text (selectable, readable by assistive tech). */
+.landing-title {
+    color: var(--palette-contrast);
+}
+/* only where text can clip a background, and never in forced colours: a
+   transparent fill without its gradient would be invisible text */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+    @media not (forced-colors: active) {
+        .landing-title {
+            background-image: linear-gradient(
+                to bottom,
+                var(--palette-contrast) 45%,
+                color-mix(in oklch, var(--palette-contrast) 60%, transparent)
+            );
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    }
+}
+
+/* A landing card's inner light: the soft role at its top edge, fading out. */
+.landing-card {
+    background-image: linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--palette-soft) 55%, transparent),
+        transparent 65%
+    );
 }
 
 /* Scroll reveal — additive by construction. The default state is fully

@@ -18,6 +18,13 @@ const nextConfig = {
     images: { unoptimized: true },
     // AGENTS.md is this repo's own: `next dev` must not write one
     agentRules: false,
+    experimental: {
+        // Next inlines a small segment's prefetch data into its child's and writes no file for
+        // it, but decides once per route, not per project: a gallery layout small enough to be
+        // inlined for one project (ui's in the fixtures) is still requested as a file by the
+        // client, a 404 on every prefetch of that project's gallery. One file per segment.
+        prefetchInlining: false,
+    },
 };
 
 const withMDX = createMDX();

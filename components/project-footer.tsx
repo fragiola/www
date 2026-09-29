@@ -44,7 +44,7 @@ function FooterColumn({
 }) {
     return (
         <nav aria-label={title} className="flex flex-col gap-3">
-            <span className="font-semibold text-palette-contrast text-xs uppercase tracking-wide">
+            <span className="font-mono text-palette-contrast text-xs uppercase tracking-widest">
                 {title}
             </span>
             <ul className="flex list-none flex-col gap-2 p-0 text-sm">
@@ -67,15 +67,19 @@ export function ProjectFooter({
         <footer
             data-testid="project-footer"
             className={cn(
-                "not-prose border-palette-line border-t bg-palette-base",
+                "not-prose relative border-palette-line border-t bg-palette-base",
                 className,
             )}
         >
-            <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12 sm:flex-row sm:items-start sm:justify-between">
+            <div
+                aria-hidden
+                className="palette-purple absolute inset-x-0 -top-px mx-auto h-px w-[min(40rem,100%)] bg-linear-to-r from-transparent via-palette-base to-transparent opacity-60"
+            />
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-14 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex max-w-xs flex-col gap-2">
                     <Link
                         href={`/${project.slug}/`}
-                        className="font-semibold text-palette-contrast text-sm tracking-tight"
+                        className="font-semibold text-base text-palette-contrast tracking-tight"
                     >
                         {project.title}
                     </Link>

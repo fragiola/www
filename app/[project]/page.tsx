@@ -1,11 +1,11 @@
 import { DocsBody } from "fumadocs-ui/layouts/docs/page";
-import { HomeLayout } from "fumadocs-ui/layouts/home";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectProvider } from "@/components/framework";
 import { getMDXComponents } from "@/components/mdx";
 import { ProjectFooter } from "@/components/project-footer";
-import { baseOptions, projectLinks } from "@/lib/layout.shared";
+import { SiteHeader } from "@/components/site-header";
+import { siteHeader } from "@/lib/layout.shared";
 import { getProject } from "@/lib/projects";
 import { source } from "@/lib/source";
 
@@ -38,13 +38,9 @@ export default async function ProjectLanding({ params }: Props) {
     const page = getLanding(slug);
     if (!project || !page) notFound();
     const MDX = page.data.body;
-    const base = baseOptions();
     return (
-        <HomeLayout
-            {...base}
-            links={[...projectLinks(project), ...(base.links ?? [])]}
-            githubUrl={project.repoUrl}
-        >
+        <>
+            <SiteHeader {...siteHeader(slug)} />
             <ProjectProvider
                 project={{
                     slug: project.slug,
@@ -52,14 +48,13 @@ export default async function ProjectLanding({ params }: Props) {
                     defaultFramework: project.defaultFramework,
                 }}
             >
-                {/* a div, not a <main>: HomeLayout renders the page's <main> */}
-                <div data-testid="landing" className="flex flex-1 flex-col">
+                <main data-testid="landing" className="flex flex-1 flex-col">
                     <DocsBody className="landing max-w-none pb-24">
                         <MDX components={getMDXComponents(slug)} />
                     </DocsBody>
-                </div>
+                </main>
                 <ProjectFooter project={project} />
             </ProjectProvider>
-        </HomeLayout>
+        </>
     );
 }

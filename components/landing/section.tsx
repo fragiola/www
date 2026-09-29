@@ -1,16 +1,20 @@
 import type { ReactNode } from "react";
 import { Reveal } from "./reveal";
 
-// <Section title eyebrow? description?> (§3.4): a landing section as on the ui landing — a rule
-// above, an eyebrow, a heading, a lead, then its children (prose, <Features>, <Example>, code…).
-// The header enters on scroll; the children keep the page's prose styles.
+// <Section title eyebrow? description?> (§3.4): a landing section — a hairline above that fades
+// out at both ends, an eyebrow (a monospace label in a chromatic palette), a heading, a lead,
+// then its children (prose, <Features>, <Example>, code…). The header enters on scroll; the
+// children keep the page's prose styles.
 
 export function Section({
+    id,
     title,
     eyebrow,
     description,
     children,
 }: {
+    /** the site's, not the vocabulary's: an anchor on the organization's landing */
+    id?: string;
     title: string;
     eyebrow?: string;
     description?: string;
@@ -18,24 +22,33 @@ export function Section({
 }) {
     return (
         <section
+            id={id}
             data-testid="landing-section"
-            className="landing-band border-palette-line border-t py-20 sm:py-28"
+            className="landing-band relative py-20 sm:py-28"
         >
+            <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-palette-line to-transparent"
+            />
             <div className="mx-auto w-full max-w-5xl px-6">
                 <Reveal className="not-prose flex max-w-2xl flex-col gap-4">
                     {eyebrow ? (
                         <p
                             data-testid="eyebrow"
-                            className="font-semibold text-palette-accent/85 text-xs uppercase tracking-wide"
+                            className="palette-purple flex items-center gap-3 font-mono text-palette-accent text-xs uppercase tracking-widest"
                         >
+                            <span
+                                aria-hidden
+                                className="h-px w-6 bg-palette-base"
+                            />
                             {eyebrow}
                         </p>
                     ) : null}
-                    <h2 className="text-balance font-semibold text-2xl text-palette-contrast tracking-tight sm:text-3xl">
+                    <h2 className="landing-title text-balance font-semibold text-3xl tracking-tight sm:text-4xl">
                         {title}
                     </h2>
                     {description ? (
-                        <p className="text-pretty text-base text-palette-accent/85">
+                        <p className="text-pretty text-base text-palette-accent/85 leading-relaxed sm:text-lg">
                             {description}
                         </p>
                     ) : null}
