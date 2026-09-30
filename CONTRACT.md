@@ -189,7 +189,8 @@ not repeat it anywhere.
   (`Tabs · Fragiola UI`, `Splitter · Dockable · Fragiola`). A suffix is left out when the whole
   would pass 60 characters. So a project never writes its own name into a page's title.
 - **Descriptions.** The page's frontmatter `description`; an example's, its manifest
-  `description`.
+  `description`, cut to 160 characters at its last sentence (or word) that fits when it is
+  longer. As plain text: `code` marks are dropped. The page still shows it whole.
 - **Canonical URLs.** Absolute, with a trailing slash and no query string:
   `https://fragiola.com/<slug>/docs/<path>/`. The gallery's `?theme=`, `?code=` and
   `?framework=` are the same page.

@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/json-ld";
 import { ActionLink } from "@/components/landing/action";
 import { Feature, Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
@@ -17,6 +18,12 @@ import {
     getProjects,
     type Project,
 } from "@/lib/projects";
+import {
+    organizationJsonLd,
+    pageMetadata,
+    SITE_DESCRIPTION,
+    SITE_TITLE,
+} from "@/lib/seo";
 
 // The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
 // optional design system), bringing your own styles, Fragiola UI itself, then every project of
@@ -29,10 +36,12 @@ import {
 const POSITIONING =
     "Fragiola is an ecosystem of headless components: primitives that own behaviour, state and accessibility, and ship no styles. Fragiola UI, an optional and malleable design system, gives them one visual identity — or paint them with whatever you already use.";
 
-export const metadata: Metadata = {
-    title: { absolute: "Fragiola — headless components, and a design system" },
-    description: POSITIONING,
-};
+// the search result is a sentence of its own (lib/seo.ts), not the hero's paragraph
+export const metadata: Metadata = pageMetadata({
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    path: "/",
+});
 
 function ProjectCard({ project }: { project: Project }) {
     const examples = firstExampleUrl(project);
@@ -91,6 +100,7 @@ export default function Home() {
     const ui = getProject("ui");
     return (
         <>
+            <JsonLd items={organizationJsonLd()} />
             <SiteHeader {...siteHeader()} />
             <main
                 data-testid="landing"
@@ -98,7 +108,7 @@ export default function Home() {
             >
                 <Hero
                     eyebrow="Headless · design system optional"
-                    title="Headless components, and a design system when you want one."
+                    title="Headless React components, and a design system when you want one."
                     description={POSITIONING}
                     background="grid"
                     backdrop={<HeroScene />}
