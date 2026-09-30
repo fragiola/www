@@ -91,7 +91,9 @@ test("a project's landing: the hero, its actions, a live showcase", async ({
     await expect(embed(showcase).getByRole("heading")).toHaveText(
         "Hello layout",
     );
-    await expect(page).toHaveTitle("Dockable · Fragiola");
+    await expect(page).toHaveTitle(
+        "Dockable — headless dockable panel layouts for React",
+    );
     expect(errors).toEqual([]);
 });
 
