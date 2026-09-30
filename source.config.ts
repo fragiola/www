@@ -1,4 +1,5 @@
 import { defineConfig, defineDocs } from "fumadocs-mdx/config";
+import { remarkFeatureHeadings } from "./lib/feature-headings.ts";
 
 // One collection over every project's export: .sources/<slug>/docs/**/*.mdx (or
 // $FRAGIOLA_SOURCES/<slug>/…: .sources-fixtures/ for the tests' build, scripts/build.ts).
@@ -16,5 +17,6 @@ export const docs = defineDocs({
 export default defineConfig({
     mdxOptions: {
         providerImportSource: "@/components/mdx",
+        remarkPlugins: [remarkFeatureHeadings],
     },
 });

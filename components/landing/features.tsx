@@ -38,11 +38,15 @@ export function Features({
 
 export function Feature({
     title,
+    level = "3",
     children,
 }: {
     title: string;
+    /** "2" outside a <Section>, set by lib/feature-headings.ts; "3" under a section's h2 */
+    level?: "2" | "3";
     children?: ReactNode;
 }) {
+    const Heading = level === "2" ? "h2" : "h3";
     return (
         <li className="flex">
             <div className="landing-reveal landing-card palette-raised group relative flex flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-palette-line bg-palette-base p-6 text-palette-contrast transition-[border-color,translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-palette-ring/50 hover:shadow-xl motion-reduce:transition-none motion-reduce:hover:translate-y-0">
@@ -54,9 +58,9 @@ export function Feature({
                     data-feature-number
                     className="font-mono text-palette-accent/85 text-xs tracking-widest"
                 />
-                <h3 className="font-semibold text-base text-palette-contrast tracking-tight">
+                <Heading className="font-semibold text-base text-palette-contrast tracking-tight">
                     {title}
-                </h3>
+                </Heading>
                 <div className="text-palette-accent/85 text-sm [&_code]:rounded-sm [&_code]:bg-palette-soft [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.8125rem] [&_p]:m-0 [&_p+p]:mt-2">
                     {children}
                 </div>
