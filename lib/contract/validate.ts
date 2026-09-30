@@ -51,7 +51,15 @@ export interface ExportRead {
 }
 
 /** Slugs the site uses for itself. */
-const RESERVED_SLUGS = new Set(["r", "api", "_next", "docs", "examples"]);
+const RESERVED_SLUGS = new Set([
+    "r",
+    "api",
+    "_next",
+    "docs",
+    "examples",
+    // public/brand: the icons and the logo (pnpm brand:icons)
+    "brand",
+]);
 
 /**
  * The vocabulary (§3.4, v1.1): each component, the props it takes and the ones it needs, and

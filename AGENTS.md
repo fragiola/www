@@ -57,6 +57,15 @@ Do not "fix" these.
    build time (`siteHeader()`, `lib/layout.shared.tsx`). In the docs it sits above Fumadocs'
    grid, which `--fd-banner-height` pushes down (`.site-docs`, `app/globals.css`); the docs
    sidebar carries no title, links, search or theme of its own. Its specs: `e2e/header.spec.ts`.
+10. **Search and sharing is built by `lib/seo.ts` only.** Titles (the landing's own, then
+    `· <project>`, then `· Fragiola` while it fits in 60), meta descriptions (plain text, 50–160),
+    canonical URLs (absolute, trailing slash, no query), the Open Graph and Twitter cards (one
+    share image per project, `app/**/og.png/route.tsx`) and the JSON-LD (`components/json-ld.tsx`,
+    in the page's static HTML) come from its builders; a page never writes them by hand.
+    `robots.txt`, `sitemap.xml` and the manifest are static routes (`force-static`). Redirect
+    pages are `noindex`; the embeds say so themselves (CONTRACT.md §5.1). The brand's colours are
+    tokens of the vendored theme (`lib/brand.ts`, `tests/brand.test.ts`), and every icon is drawn
+    from the mark by `pnpm brand:icons`, never edited by hand. Its specs: `e2e/seo.spec.ts`.
 
 ## Commands
 
@@ -67,26 +76,33 @@ Do not "fix" these.
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
 | `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu` and its registry dependencies) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
+| `pnpm brand:icons` | draw every icon from the mark in `lib/brand.ts` with Playwright's Chromium: `public/brand/fragiola-mark.svg`, `app/icon.svg`, `app/favicon.ico` (16/32/48), `app/apple-icon.png`, the manifest's icons and the 512 px logo in `public/brand/`; the same machine gives the same bytes. Run it when the mark or the palette changes (`tests/brand.test.ts` fails then) |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
 | `pnpm check` / `pnpm check:fix` | Biome |
 | `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
-| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`) |
+| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`) |
 | `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`), served like Pages / by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.1)
+CONTRACT.md                 the site export contract (v1.2)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the checks (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
+lib/seo.ts                  titles, meta descriptions, canonical URLs, Open Graph/Twitter, JSON-LD (rule 10)
+lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
+lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
 app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
+                            + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
+                              og.png/ and [project]/og.png/ (the share images, next/og at build),
+                              icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)
 components/site-header.tsx  the one header of every page (rule 9)
 components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's registry; never edited
 components/gallery/         the gallery: chrome (layout), example view (page)
@@ -96,9 +112,12 @@ components/landing/         Hero, Action, Section, Features/Feature, Pills, the 
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
-components/mdx.tsx          the v1.1 vocabulary
-scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.1 export per project (fixtures/README.md)
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2)
+components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
+components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
+public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
+scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
+fixtures/<slug>/            a minimal v1.2 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```
