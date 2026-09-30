@@ -1,12 +1,13 @@
 // `pnpm sources:fixtures`
 //
-// Fills .sources-fixtures/ from fixtures/: one minimal v1.1 export per project of projects.json
+// Fills .sources-fixtures/ from fixtures/: one minimal v1.2 export per project of projects.json
 // (fixtures/README.md). The tests build the site from them (`pnpm e2e:build`), so they run
 // without the projects' repos and against content they control. A folder of its own: the
 // projects' exports in .sources/ are never overwritten, and `pnpm build` never publishes these.
 
 import { cpSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { CONTRACT_REVISION } from "../lib/contract/types.ts";
 import { validateAll } from "../lib/contract/validate.ts";
 import {
     FIXTURE_SOURCES,
@@ -42,5 +43,5 @@ const reads = validateAll(
 );
 if (!reads) process.exit(1);
 console.log(
-    `sources:fixtures — ${projects.map((p) => p.slug).join(", ")} → ${label(FIXTURE_SOURCES)} (valid against contract v1.1)`,
+    `sources:fixtures — ${projects.map((p) => p.slug).join(", ")} → ${label(FIXTURE_SOURCES)} (valid against contract v${CONTRACT_REVISION})`,
 );
