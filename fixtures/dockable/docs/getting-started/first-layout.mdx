@@ -7,7 +7,7 @@ This page builds the smallest complete layout: two tabsets side by side, a split
 them, tabs you can drag, and panels whose content survives every move. It ends where the
 [`hello-layout`](/examples/hello-layout) example starts.
 
-### 1. Describe the layout as JSON
+## 1. Describe the layout as JSON
 
 A layout is a tree: a **row** splits its space between its children, a **tabset** holds
 **tabs**. `weight` is a relative size. A row nested in a row takes the opposite orientation, so
@@ -41,7 +41,7 @@ export const json: IJsonModel = {
 
 Every attribute is listed in the JSON model reference.
 
-### 2. Create the model once
+## 2. Create the model once
 
 The model is the source of truth. Create it once (not on every render) and keep it:
 
@@ -53,7 +53,7 @@ A **new model identity** makes `Dockable.Root` create a new engine, which is wha
 [undo/redo](/examples/undo-redo) relies on. Recreating it on every render would reset the
 layout each time.
 
-### 3. Render the structure
+## 3. Render the structure
 
 You own the recursion. `Dockable.Row` calls its child function for every child of the row: a
 tabset or a nested row. A tabset renders its tab strip (`TabList` › `Tab`) and marks its content
@@ -84,7 +84,7 @@ export function renderNode(child: TabSetNode | RowNode): ReactNode {
 }
 ```
 
-### 4. Render the panels
+## 4. Render the panels
 
 Tab content does **not** live inside the tabset. `Dockable.Panels` (placed once, directly under
 the root) calls its child function for every tab whose content should render, and
@@ -116,7 +116,7 @@ export function TabContent({ tab }: { tab: TabNode }) {
 }
 ```
 
-### 5. Put it together, and give the root a size
+## 5. Put it together, and give the root a size
 
 ```tsx title="app.tsx"
 "use client";

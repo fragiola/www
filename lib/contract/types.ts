@@ -1,10 +1,10 @@
-// The site export contract, v1.1 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 is
-// additive: `project.json` still says `"contract": 1`.
+// The site export contract, v1.2 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 and v1.2
+// keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.1";
+export const CONTRACT_REVISION = "1.2";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -17,6 +17,8 @@ export interface ProjectInfo {
     registry?: { namespace: string };
     /** v1.1: the repository, linked from the header and the footer */
     repository?: string;
+    /** v1.2: 1–8 lowercase topics, for the project's structured data only (§2) */
+    keywords?: string[];
 }
 
 /** An entry of a sidebar section: a page of the export, or an external link. */
@@ -106,6 +108,21 @@ export interface RegistryIndex {
     homepage?: string;
     items: RegistryItem[];
 }
+
+/**
+ * A description as plain text: inline code marks dropped (`Button` → Button). Its length is
+ * what the contract limits (§2, §3.2), and it is what search engines are given (§3.6).
+ */
+export function plainText(text: string): string {
+    return text.replace(/`([^`]*)`/g, "$1");
+}
+
+/** v1.2 (§2, §3.2): lengths in characters (Unicode code points) */
+export const LIMITS = {
+    title: 60,
+    description: { min: 50, max: 160 },
+    keywords: { min: 1, max: 8, length: 40 },
+} as const;
 
 /** A landing call to action (§3.4): `<Hero actions>`. */
 export interface Action {

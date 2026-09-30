@@ -8,5 +8,13 @@
     "registry": {
         "namespace": "@fragiola"
     },
-    "repository": "https://github.com/fragiola/ui"
+    "repository": "https://github.com/fragiola/ui",
+    "keywords": [
+        "react components",
+        "design system",
+        "shadcn registry",
+        "base ui",
+        "tailwind css",
+        "theming"
+    ]
 }

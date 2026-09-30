@@ -1,6 +1,6 @@
 # Fixtures
 
-One minimal site export per project of `projects.json`, following the contract v1.1
+One minimal site export per project of `projects.json`, following the contract v1.2
 (`../CONTRACT.md`). `pnpm sources:fixtures` copies them into `.sources-fixtures/` (never
 `.sources/`, which holds the projects' exports), and the tests build the site from them
 (`pnpm e2e:build`), so the suite needs no project repo and runs against content it controls.
@@ -10,6 +10,12 @@ arrowed primary action, `Section`s with eyebrows, numbered `Features`, a `bleed`
 the `{examples}` token, a ghost external action, an `<Example variant="showcase">`, four
 `Features` across and struck-out `Pills`. Both `project.json` have a `repository`, and ui's
 sidebar has collapsible sections (Atoms open by default, Menus closed).
+
+For v1.2 (search and sharing) the landings' titles are search titles that name the project
+("Dockable — headless dockable panel layouts for React"), every description is 50–160
+characters, headings do not skip a level, ui's `project.json` has `keywords` (dockable's has
+none, so both cases are built), and every embed HTML file carries
+`<meta name="robots" content="noindex">`.
 
 They were generated once from the proof of concept's v0 exports (`site:export` of the `poc/www`
 branches of `ui` and `dockable`), then converted to v1: frontmatter on every page, links written

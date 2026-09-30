@@ -2,11 +2,13 @@ import { DocsBody } from "fumadocs-ui/layouts/docs/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectProvider } from "@/components/framework";
+import { JsonLd } from "@/components/json-ld";
 import { getMDXComponents } from "@/components/mdx";
 import { ProjectFooter } from "@/components/project-footer";
 import { SiteHeader } from "@/components/site-header";
 import { siteHeader } from "@/lib/layout.shared";
 import { getProject } from "@/lib/projects";
+import { pageMetadata, projectJsonLd } from "@/lib/seo";
 import { source } from "@/lib/source";
 
 // /<slug>: the project's landing (§3.5), its docs/index.mdx in the vocabulary (typically a
@@ -26,10 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const project = getProject(slug);
     const page = getLanding(slug);
     if (!project) return {};
-    return {
-        title: { absolute: `${project.title} · Fragiola` },
+    // the landing's frontmatter title, as is: its search title (CONTRACT.md §3.2)
+    return pageMetadata({
+        title: page?.data.title ?? project.title,
         description: page?.data.description ?? project.description,
-    };
+        path: `/${slug}/`,
+        project,
+    });
 }
 
 export default async function ProjectLanding({ params }: Props) {
@@ -40,6 +45,12 @@ export default async function ProjectLanding({ params }: Props) {
     const MDX = page.data.body;
     return (
         <>
+            <JsonLd
+                items={projectJsonLd(
+                    project,
+                    page.data.description ?? project.description,
+                )}
+            />
             <SiteHeader {...siteHeader(slug)} />
             <ProjectProvider
                 project={{

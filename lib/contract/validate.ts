@@ -4,7 +4,9 @@
 //
 //   validateExport(dir, slug)   one export: project.json, config ↔ files, frontmatter,
 //                               vocabulary, links, <Example>/<InstallCommand> and manifest
-//                               references, levels and themes, registry namespacing
+//                               references, levels and themes, registry namespacing, and
+//                               v1.2's search and sharing rules (lengths, keywords, the
+//                               landing's title, headings, images, noindex embeds)
 //   validateSite(exports)       across exports: slugs, registry duplicates, the registry items
 //                               the examples name
 //
@@ -22,8 +24,10 @@ import {
     type DocsConfig,
     type ExamplesConfig,
     LABEL_TOKEN,
+    LIMITS,
     type Manifest,
     type ProjectInfo,
+    plainText,
     type RegistryIndex,
     type RegistryItem,
 } from "./types.ts";
@@ -48,7 +52,15 @@ export interface ExportRead {
 }
 
 /** Slugs the site uses for itself. */
-const RESERVED_SLUGS = new Set(["r", "api", "_next", "docs", "examples"]);
+const RESERVED_SLUGS = new Set([
+    "r",
+    "api",
+    "_next",
+    "docs",
+    "examples",
+    // public/brand: the icons and the logo (pnpm brand:icons)
+    "brand",
+]);
 
 /**
  * The vocabulary (§3.4, v1.1): each component, the props it takes and the ones it needs, and
@@ -116,6 +128,21 @@ const isStringArray = (value: unknown): value is string[] =>
 
 const escapeRegExp = (text: string) =>
     text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** A length in characters: Unicode code points, as the contract counts them (v1.2). */
+const length = (text: string) => [...text].length;
+
+/**
+ * Why a description is not 50–160 characters long, or undefined when it is (§2, §3.2). It is
+ * counted as plain text, without its code marks: what a search result shows.
+ */
+function descriptionLength(text: string): string | undefined {
+    const { min, max } = LIMITS.description;
+    const n = length(plainText(text));
+    return n < min || n > max
+        ? `description is ${n} characters: ${min}–${max}`
+        : undefined;
+}
 
 /** A JSON file's text and value, or a problem at the line where it stopped parsing. */
 interface JsonFile<T> {
@@ -215,6 +242,17 @@ function checkProject(
             });
         }
     }
+    const tooShortOrLong = isString(info.description)
+        ? descriptionLength(info.description)
+        : undefined;
+    if (tooShortOrLong) {
+        problems.push({
+            file,
+            line: at("description"),
+            message: `${tooShortOrLong} (§2)`,
+        });
+    }
+    if (info.keywords !== undefined) checkKeywords(project, problems);
     if (!isStringArray(info.frameworks) || info.frameworks.length === 0) {
         problems.push({
             file,
@@ -261,6 +299,60 @@ function checkProject(
         });
     }
     return info;
+}
+
+/** `keywords` (v1.2, §2): 1–8 unique topics, lowercase, at most 40 characters each. */
+function checkKeywords(project: JsonFile<ProjectInfo>, problems: Problem[]) {
+    const file = "project.json";
+    const line = project.lineOf("keywords");
+    const { keywords } = project.value;
+    const { min, max } = LIMITS.keywords;
+    if (
+        !Array.isArray(keywords) ||
+        keywords.length < min ||
+        keywords.length > max
+    ) {
+        problems.push({
+            file,
+            line,
+            message: `keywords must list ${min}–${max} topics (§2)`,
+        });
+        return;
+    }
+    const seen = new Set<string>();
+    for (const keyword of keywords as unknown[]) {
+        if (!isString(keyword) || keyword.trim() !== keyword) {
+            problems.push({
+                file,
+                line,
+                message: `keywords: ${JSON.stringify(keyword)} is not a topic: a non-empty string, no surrounding spaces (§2)`,
+            });
+            continue;
+        }
+        const where = `keywords: "${keyword}"`;
+        if (keyword !== keyword.toLowerCase()) {
+            problems.push({
+                file,
+                line,
+                message: `${where} is not lowercase (§2)`,
+            });
+        }
+        if (length(keyword) > LIMITS.keywords.length) {
+            problems.push({
+                file,
+                line,
+                message: `${where} is ${length(keyword)} characters: at most ${LIMITS.keywords.length} (§2)`,
+            });
+        }
+        if (seen.has(keyword)) {
+            problems.push({
+                file,
+                line,
+                message: `${where} is listed twice (§2)`,
+            });
+        }
+        seen.add(keyword);
+    }
 }
 
 function checkExamplesConfig(
@@ -373,6 +465,7 @@ function checkEmbed(context: Context, framework: string) {
             }
         }
     }
+    checkNoindex(context, framework);
     const manifestFile = `embed/${framework}/manifest.json`;
     const manifest = readJsonFile<Manifest>(dir, manifestFile, problems);
     if (!manifest) return;
@@ -468,6 +561,44 @@ function checkEmbed(context: Context, framework: string) {
         }
     }
     context.manifests.set(framework, value);
+}
+
+/** `<meta name="robots" content="noindex">`, whatever the order and quoting of its attributes. */
+function isNoindex(tag: string): boolean {
+    return (
+        /\bname\s*=\s*(["']?)robots\1(?=[\s/>])/i.test(tag) &&
+        /\bcontent\s*=\s*(?:(["'])[^"']*\bnoindex\b[^"']*\1|noindex(?=[\s/>]))/i.test(
+            tag,
+        )
+    );
+}
+
+/** Every HTML file of an embed app is `noindex` (v1.2, §5.1). */
+function checkNoindex(context: Context, framework: string) {
+    const root = join(context.dir, "embed", framework);
+    if (!existsSync(root)) return;
+    for (const path of walk(root)) {
+        if (!path.endsWith(".html")) continue;
+        const html = readFileSync(path, "utf-8");
+        // a meta tag in a comment says nothing
+        const live = html.replace(/<!--[\s\S]*?-->/g, "");
+        if (
+            [...live.matchAll(/<meta\b[^>]*>/gi)].some(([tag]) =>
+                isNoindex(tag),
+            )
+        ) {
+            continue;
+        }
+        const head = /<head\b/i.exec(html);
+        context.problems.push({
+            file: posix(relative(context.dir, path)),
+            line: head
+                ? html.slice(0, head.index).split("\n").length
+                : undefined,
+            message:
+                'needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)',
+        });
+    }
 }
 
 function checkRegistry(context: Context) {
@@ -995,6 +1126,141 @@ function checkTag(context: Context, page: string, tag: Tag) {
     }
 }
 
+/** The frontmatter's lengths, and the landing's title (v1.2, §3.2). */
+function checkSearchFields(context: Context, page: string, scan: PageScan) {
+    const { problems, project } = context;
+    const file = `docs/${page}.mdx`;
+    const frontmatter = scan.frontmatter ?? {};
+    const place = (key: string) => scan.fields.get(key) ?? { line: 1 };
+    const { title, description } = frontmatter;
+    if (isString(title) && length(title) > LIMITS.title) {
+        problems.push({
+            file,
+            ...place("title"),
+            message: `frontmatter: title is ${length(title)} characters: at most ${LIMITS.title} (§3.2)`,
+        });
+    }
+    const wrong = isString(description)
+        ? descriptionLength(description)
+        : undefined;
+    if (wrong) {
+        problems.push({
+            file,
+            ...place("description"),
+            message: `frontmatter: ${wrong} (§3.2)`,
+        });
+    }
+    if (page !== "index" || !isString(title) || !isString(project.title)) {
+        return;
+    }
+    if (!title.includes(project.title)) {
+        problems.push({
+            file,
+            ...place("title"),
+            message: `frontmatter: the landing's title "${title}" is its <title>: it contains the project's title "${project.title}" (§3.2)`,
+        });
+    } else if (title.trim() === project.title) {
+        problems.push({
+            file,
+            ...place("title"),
+            message: `frontmatter: the landing's title is its <title>: say what ${project.title} is, not only its name ("${project.title} — …") (§3.2)`,
+        });
+    }
+}
+
+/**
+ * The heading level `www` renders for a component (§3.4): `<Hero>` the h1, a `<Section>`'s title
+ * an h2, a `<Feature>`'s title one level below its section (h3, or h2 outside one), a `<Card>`'s
+ * title an h3 (Fumadocs' card).
+ */
+function renderedLevel(tag: Tag): number | undefined {
+    switch (tag.name) {
+        case "Hero":
+            return 1;
+        case "Section":
+            return 2;
+        case "Feature":
+            return tag.ancestors.includes("Section") ? 3 : 2;
+        case "Card":
+            return 3;
+        default:
+            return undefined;
+    }
+}
+
+/** No `#`, no skipped level, one `<Hero>` on the landing, alt text on images (v1.2, §3.4). */
+function checkStructure(context: Context, page: string, scan: PageScan) {
+    const { problems } = context;
+    const file = `docs/${page}.mdx`;
+    const landing = page === "index";
+    const at = (place: { line: number; column?: number }, message: string) =>
+        problems.push({
+            file,
+            line: place.line,
+            column: place.column,
+            message,
+        });
+
+    const heroes = scan.tags.filter((tag) => tag.name === "Hero");
+    if (landing && heroes.length === 0) {
+        at(
+            { line: 1 },
+            "the landing has no <Hero>: its title is the landing's h1 (§3.4)",
+        );
+    }
+    if (landing) {
+        for (const hero of heroes.slice(1)) {
+            at(
+                hero,
+                "a second <Hero>: the landing has exactly one, its only h1 (§3.4)",
+            );
+        }
+    }
+
+    // the page's outline as www renders it, in document order; the page starts under its h1
+    const outline = [
+        ...scan.headings.map((heading) => ({
+            order: heading.order,
+            level: heading.depth,
+            heading,
+            tag: undefined,
+        })),
+        ...scan.tags.flatMap((tag) => {
+            const level = renderedLevel(tag);
+            return level === undefined
+                ? []
+                : [{ order: tag.order, level, heading: undefined, tag }];
+        }),
+    ].sort((a, b) => a.order - b.order);
+    let previous = 1;
+    for (const { level, heading, tag } of outline) {
+        if (heading && level === 1) {
+            at(
+                heading,
+                `a Markdown # heading: the page's h1 is ${landing ? "its <Hero>'s title" : "its frontmatter title"} (§3.4)`,
+            );
+        } else if (heading && level > previous + 1) {
+            at(
+                heading,
+                `a ${"#".repeat(level)} heading after an h${previous}: headings do not skip a level (§3.4)`,
+            );
+        } else if (tag?.name === "Card" && level > previous + 1) {
+            // the only component a project can place under a heading too high for it
+            at(
+                tag,
+                `a <Card> (an h3) after an h${previous}: headings do not skip a level (§3.4)`,
+            );
+        }
+        previous = level;
+    }
+
+    for (const image of scan.images) {
+        if (image.alt.trim() === "") {
+            at(image, "an image needs alt text: ![what it shows](…) (§3.4)");
+        }
+    }
+}
+
 function checkPages(context: Context) {
     const { problems } = context;
     if (!context.pages.has("index")) {
@@ -1024,6 +1290,7 @@ function checkPages(context: Context) {
                     });
                 }
             }
+            checkSearchFields(context, page, scan);
             const layout = scan.frontmatter.layout;
             if (page === "index" && layout !== "landing") {
                 problems.push({
@@ -1060,6 +1327,7 @@ function checkPages(context: Context) {
             }
         }
         for (const tag of scan.tags) checkTag(context, page, tag);
+        checkStructure(context, page, scan);
         for (const link of scan.links) {
             const broken = brokenLink(context, link.href, page);
             if (broken) {

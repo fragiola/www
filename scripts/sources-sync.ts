@@ -20,6 +20,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { CONTRACT_REVISION } from "../lib/contract/types.ts";
 import { validateAll } from "../lib/contract/validate.ts";
 import {
     checkoutOf,
@@ -117,5 +118,5 @@ const reads = validateAll(
 );
 if (!reads) process.exit(1);
 console.log(
-    `\nsources:sync — ${reads.length} exports valid against contract v1.1`,
+    `\nsources:sync — ${reads.length} exports valid against contract v${CONTRACT_REVISION}`,
 );

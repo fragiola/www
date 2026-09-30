@@ -133,6 +133,7 @@ describe("links (§3.3)", () => {
         );
         expect(problems()).toEqual([
             `${page}:${card + 1}:21: broken link (<Card href>) "/docs/nope": /docs/nope: no such page`,
+            `dockable/docs/index.mdx:${hero}:1: a second <Hero>: the landing has exactly one, its only h1 (§3.4)`,
             `dockable/docs/index.mdx:${hero + 1}:5: broken link (<Hero actions>) "/docs/also-nope": /docs/also-nope: no such page`,
         ]);
     });
@@ -306,6 +307,7 @@ describe("landing vocabulary (§3.4, §3.5, v1.1)", () => {
             `${landing}:${line}:35: <Hero actions>[1] takes no "target"`,
             `${landing}:${line}:35: <Hero actions>[1]: icon "star" (arrow, external)`,
             `${landing}:${line}:35: <Hero actions>[2]: "{pages}" is not a label token (only {examples})`,
+            `${landing}:${line}:1: a second <Hero>: the landing has exactly one, its only h1 (§3.4)`,
         ]);
     });
 
@@ -377,6 +379,215 @@ describe("landing vocabulary (§3.4, §3.5, v1.1)", () => {
     });
 });
 
+describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
+    const setField = (file: string, key: string, value: string) => {
+        const source = readFileSync(path(file), "utf-8");
+        const next = source.replace(
+            new RegExp(`^${key}: .*$`, "m"),
+            `${key}: ${value}`,
+        );
+        expect(next).not.toBe(source);
+        writeFileSync(path(file), next);
+    };
+
+    test("project.json: description length and keywords", () => {
+        editJson<Record<string, unknown>>(
+            "dockable/project.json",
+            (project) => {
+                project.description = "Too short.";
+                project.keywords = [
+                    "Tabs",
+                    "tabs",
+                    " splitter",
+                    "a".repeat(41),
+                ];
+            },
+        );
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.keywords = [];
+        });
+        expect(problems()).toEqual([
+            "ui/project.json:14: keywords must list 1–8 topics (§2)",
+            "dockable/project.json:5: description is 10 characters: 50–160 (§2)",
+            'dockable/project.json:12: keywords: "Tabs" is not lowercase (§2)',
+            'dockable/project.json:12: keywords: " splitter" is not a topic: a non-empty string, no surrounding spaces (§2)',
+            `dockable/project.json:12: keywords: "${"a".repeat(41)}" is 41 characters: at most 40 (§2)`,
+        ]);
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.keywords = ["theming", "theming"];
+        });
+        expect(problems()).toContain(
+            'ui/project.json:14: keywords: "theming" is listed twice (§2)',
+        );
+    });
+
+    test("frontmatter: title at most 60, description 50–160, counted in characters", () => {
+        const page = "dockable/docs/guides/popouts.mdx";
+        setField(page, "title", "P".repeat(61));
+        setField(page, "description", "Short.");
+        // 160 characters, some outside the Basic Multilingual Plane: code points, not UTF-16
+        setField(
+            "dockable/docs/guides/vue.mdx",
+            "description",
+            `${"😀".repeat(10)}${"x".repeat(150)}`,
+        );
+        expect(problems()).toEqual([
+            `${page}:2:1: frontmatter: title is 61 characters: at most 60 (§3.2)`,
+            `${page}:3:1: frontmatter: description is 6 characters: 50–160 (§3.2)`,
+        ]);
+    });
+
+    test("the landing's title contains the project's and says more than its name", () => {
+        setField("dockable/docs/index.mdx", "title", "Dockable");
+        setField(
+            "ui/docs/index.mdx",
+            "title",
+            '"Components on Base UI and Tailwind, for React"',
+        );
+        expect(problems()).toEqual([
+            'ui/docs/index.mdx:2:1: frontmatter: the landing\'s title "Components on Base UI and Tailwind, for React" is its <title>: it contains the project\'s title "Fragiola UI" (§3.2)',
+            'dockable/docs/index.mdx:2:1: frontmatter: the landing\'s title is its <title>: say what Dockable is, not only its name ("Dockable — …") (§3.2)',
+        ]);
+    });
+
+    test("no Markdown # heading, no skipped level", () => {
+        const page = "dockable/docs/guides/popouts.mdx";
+        const line = append(page, "# A second title\n\n#### Too deep");
+        expect(problems()).toEqual([
+            `${page}:${line}:1: a Markdown # heading: the page's h1 is its frontmatter title (§3.4)`,
+            `${page}:${line + 2}:1: a #### heading after an h1: headings do not skip a level (§3.4)`,
+        ]);
+    });
+
+    test("a page starts at ##; on the landing, a Section's title is the h2 its headings follow", () => {
+        const page = "dockable/docs/guides/vue.mdx";
+        const source = readFileSync(path(page), "utf-8");
+        writeFileSync(path(page), source.replace("## Install", "### Install"));
+        const landing = "ui/docs/index.mdx";
+        const line = append(
+            landing,
+            [
+                '<Section title="Fine">',
+                "    ### Under the section's h2",
+                "    #### And one more",
+                "</Section>",
+                "",
+                "### Outside any section, after an h4",
+                "",
+                "<Features>",
+                '    <Feature title="An h2 outside a section" />',
+                "</Features>",
+                "",
+                "#### After that h2",
+                "",
+                "# Not on a landing either",
+            ].join("\n"),
+        );
+        expect(problems()).toEqual([
+            `${landing}:${line + 11}:1: a #### heading after an h2: headings do not skip a level (§3.4)`,
+            `${landing}:${line + 13}:1: a Markdown # heading: the page's h1 is its <Hero>'s title (§3.4)`,
+            expect.stringMatching(
+                /^dockable\/docs\/guides\/vue\.mdx:\d+:1: a ### heading after an h1: headings do not skip a level \(§3\.4\)$/,
+            ),
+        ]);
+    });
+
+    test("a <Card>'s title is an h3: under a page's h1 it skips a level", () => {
+        const page = "dockable/docs/guides/vue.mdx";
+        const source = readFileSync(path(page), "utf-8");
+        const body = source.indexOf("<Framework");
+        writeFileSync(
+            path(page),
+            `${source.slice(0, body)}<Cards>\n    <Card title="Popouts" href="/docs/guides/popouts" />\n</Cards>\n\n#### After the card\n\n${source.slice(body)}`,
+        );
+        const line = source.slice(0, body).split("\n").length;
+        expect(problems()).toEqual([
+            `${page}:${line + 1}:5: a <Card> (an h3) after an h1: headings do not skip a level (§3.4)`,
+        ]);
+    });
+
+    test("a description is counted as plain text, without its code marks", () => {
+        const page = "dockable/docs/guides/popouts.mdx";
+        // 52 characters as written, 48 once `code` marks are dropped
+        const description =
+            "Popouts with `popoutURL` and `onPopout` in a window.";
+        expect([...description]).toHaveLength(52);
+        setField(page, "description", description);
+        expect(problems()).toEqual([
+            `${page}:3:1: frontmatter: description is 48 characters: 50–160 (§3.2)`,
+        ]);
+    });
+
+    test("the landing has exactly one <Hero>", () => {
+        const landing = "dockable/docs/index.mdx";
+        const source = readFileSync(path(landing), "utf-8");
+        writeFileSync(
+            path(landing),
+            source.replace(/<Hero[\s\S]*?\n\/>\n/, ""),
+        );
+        expect(problems()).toEqual([
+            `${landing}:1: the landing has no <Hero>: its title is the landing's h1 (§3.4)`,
+        ]);
+    });
+
+    test("an image needs alt text", () => {
+        const page = "ui/docs/atoms/clickable.mdx";
+        const line = append(
+            page,
+            "![](/button.png)\n\n![ ][shot]\n\n[shot]: https://example.com/shot.png\n\n![A button](/ok.png)",
+        );
+        expect(problems()).toEqual([
+            `${page}:${line}:1: an image needs alt text: ![what it shows](…) (§3.4)`,
+            `${page}:${line + 2}:1: an image needs alt text: ![what it shows](…) (§3.4)`,
+        ]);
+    });
+
+    test("every embed HTML file is noindex", () => {
+        const index = "dockable/embed/vue/index.html";
+        const popout = "dockable/embed/react/popout/index.html";
+        for (const file of [index, popout]) {
+            const html = readFileSync(path(file), "utf-8");
+            writeFileSync(
+                path(file),
+                html.replace(/ *<meta name="robots"[^>]*>\n/, ""),
+            );
+        }
+        // any attribute order and quoting passes
+        const ui = "ui/embed/react/index.html";
+        writeFileSync(
+            path(ui),
+            readFileSync(path(ui), "utf-8").replace(
+                /<meta name="robots"[^>]*>/,
+                "<meta content='noindex, nofollow' name=robots>",
+            ),
+        );
+        expect(problems()).toEqual([
+            `${popout}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
+            `${index}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
+        ]);
+    });
+
+    test("a noindex meta in a comment says nothing; an unquoted one counts", () => {
+        const index = "ui/embed/react/index.html";
+        const html = readFileSync(path(index), "utf-8");
+        writeFileSync(
+            path(index),
+            html.replace(/(<meta name="robots"[^>]*>)/, "<!-- $1 -->"),
+        );
+        const popout = "ui/embed/react/popout/index.html";
+        writeFileSync(
+            path(popout),
+            readFileSync(path(popout), "utf-8").replace(
+                /<meta name="robots"[^>]*>/,
+                "<meta name=robots content=noindex>",
+            ),
+        );
+        expect(problems()).toEqual([
+            `${index}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
+        ]);
+    });
+});
+
 describe("frontmatter and config ↔ files (§3.1, §3.2)", () => {
     test("title and description are required; only the landing takes a layout", () => {
         const page = "ui/docs/atoms/clickable.mdx";
@@ -433,7 +644,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.1)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.2)",
         ]);
     });
 

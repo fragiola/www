@@ -1,12 +1,24 @@
 import { RootProvider } from "fumadocs-ui/provider/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { BRAND } from "@/lib/brand";
+import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
+// No title template: every page's title is whole, built by lib/seo.ts (a template would double
+// a suffix, "Tabs · Fragiola UI · Fragiola"). The icons are Next's file conventions (favicon.ico,
+// icon.svg, apple-icon.png, manifest.ts), drawn by `pnpm brand:icons`.
 export const metadata: Metadata = {
-    title: { default: "Fragiola", template: "%s · Fragiola" },
-    description:
-        "Fragiola: headless components, and Fragiola UI, an optional design system.",
+    metadataBase: new URL(SITE_URL),
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+};
+
+export const viewport: Viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: BRAND.surface },
+        { media: "(prefers-color-scheme: dark)", color: BRAND.surfaceDark },
+    ],
 };
 
 // Theme: next-themes, key localStorage["theme"], emitted as both the .dark class (Fumadocs UI)

@@ -59,7 +59,7 @@ test("a broken link fails the build, naming the file and the line", () => {
         `dockable/docs/guides/popouts.mdx:${line}:5: broken link (markdown) "/docs/api/root#props": /docs/api/root: no such page`,
     );
     expect(run.stderr).toContain(
-        "1 problem(s) against the site export contract v1.1",
+        "1 problem(s) against the site export contract v1.2",
     );
 });
 

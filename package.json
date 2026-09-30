@@ -19,6 +19,7 @@
         "sources:fixtures": "node scripts/sources-fixtures.ts",
         "prepare:site": "node scripts/prepare-site.ts",
         "registry:copy": "node scripts/registry-copy.ts",
+        "brand:icons": "node scripts/brand-icons.ts",
         "dev": "node scripts/dev.ts",
         "build": "node scripts/build.ts",
         "serve": "node scripts/serve.ts",
