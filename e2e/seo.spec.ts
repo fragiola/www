@@ -47,11 +47,12 @@ function kindOf(path: string): "home" | "landing" | "docs" | "example" {
     return path.includes("/docs/") ? "docs" : "example";
 }
 
+// every page carries the organization it names as publisher: a page is read on its own
 const EXPECTED_TYPES = {
     home: ["Organization", "WebSite"],
-    landing: ["SoftwareSourceCode", "BreadcrumbList"],
-    docs: ["TechArticle", "BreadcrumbList"],
-    example: ["BreadcrumbList"],
+    landing: ["SoftwareSourceCode", "BreadcrumbList", "Organization"],
+    docs: ["TechArticle", "BreadcrumbList", "Organization"],
+    example: ["BreadcrumbList", "Organization"],
 };
 
 /** The fixtures' pages, as the sitemap must list them: every .mdx but the landing. */
@@ -220,7 +221,19 @@ function checkEntity(
     for (const key of required[item["@type"] as string] ?? []) {
         expect(item[key], `${where} ${item["@type"]}.${key}`).toBeTruthy();
     }
-    if (item["@type"] === "TechArticle") expect(item.url, where).toBe(url);
+    if (item["@type"] === "TechArticle") {
+        expect(item.url, where).toBe(url);
+        expect(item.isPartOf, where).toMatchObject({
+            "@type": "SoftwareSourceCode",
+            name: expect.any(String),
+            url: expect.stringMatching(/^https:\/\/fragiola\.com\/[^/]+\/$/),
+        });
+    }
+    for (const key of ["description", "headline", "name"]) {
+        if (typeof item[key] === "string") {
+            expect(item[key], `${where} ${key}: plain text`).not.toContain("`");
+        }
+    }
     if (item["@type"] === "BreadcrumbList") {
         const list = item.itemListElement as {
             position: number;
@@ -238,6 +251,9 @@ function checkEntity(
             );
         }
         expect(list.at(-1)?.item ?? url, where).toBe(url);
+        // no crumb leads to the page it is on but the last
+        const items = list.slice(0, -1).map((entry) => entry.item);
+        expect(items, where).not.toContain(url);
     }
 }
 

@@ -12,7 +12,12 @@ import {
     getProjects,
     type Project,
 } from "@/lib/projects";
-import { exampleJsonLd, exampleTitle, pageMetadata } from "@/lib/seo";
+import {
+    exampleDescription,
+    exampleJsonLd,
+    exampleTitle,
+    pageMetadata,
+} from "@/lib/seo";
 
 // One page per example, inside the gallery's layout (the list and the shell state, which stay
 // mounted between examples). The page carries nothing but the id and its structured data: the
@@ -69,7 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // one URL whatever ?theme=, ?code= or ?framework= say (the canonical has no query)
     return pageMetadata({
         title: exampleTitle(variant.title, project),
-        description: variant.description,
+        description: exampleDescription(variant.description, project),
         path: exampleHref(slug, id),
         project,
     });
