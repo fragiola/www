@@ -492,6 +492,32 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
         ]);
     });
 
+    test("a <Card>'s title is an h3: under a page's h1 it skips a level", () => {
+        const page = "dockable/docs/guides/vue.mdx";
+        const source = readFileSync(path(page), "utf-8");
+        const body = source.indexOf("<Framework");
+        writeFileSync(
+            path(page),
+            `${source.slice(0, body)}<Cards>\n    <Card title="Popouts" href="/docs/guides/popouts" />\n</Cards>\n\n#### After the card\n\n${source.slice(body)}`,
+        );
+        const line = source.slice(0, body).split("\n").length;
+        expect(problems()).toEqual([
+            `${page}:${line + 1}:5: a <Card> (an h3) after an h1: headings do not skip a level (§3.4)`,
+        ]);
+    });
+
+    test("a description is counted as plain text, without its code marks", () => {
+        const page = "dockable/docs/guides/popouts.mdx";
+        // 52 characters as written, 48 once `code` marks are dropped
+        const description =
+            "Popouts with `popoutURL` and `onPopout` in a window.";
+        expect([...description]).toHaveLength(52);
+        setField(page, "description", description);
+        expect(problems()).toEqual([
+            `${page}:3:1: frontmatter: description is 48 characters: 50–160 (§3.2)`,
+        ]);
+    });
+
     test("the landing has exactly one <Hero>", () => {
         const landing = "dockable/docs/index.mdx";
         const source = readFileSync(path(landing), "utf-8");
@@ -537,6 +563,26 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
         );
         expect(problems()).toEqual([
             `${popout}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
+            `${index}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
+        ]);
+    });
+
+    test("a noindex meta in a comment says nothing; an unquoted one counts", () => {
+        const index = "ui/embed/react/index.html";
+        const html = readFileSync(path(index), "utf-8");
+        writeFileSync(
+            path(index),
+            html.replace(/(<meta name="robots"[^>]*>)/, "<!-- $1 -->"),
+        );
+        const popout = "ui/embed/react/popout/index.html";
+        writeFileSync(
+            path(popout),
+            readFileSync(path(popout), "utf-8").replace(
+                /<meta name="robots"[^>]*>/,
+                "<meta name=robots content=noindex>",
+            ),
+        );
+        expect(problems()).toEqual([
             `${index}:4: needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)`,
         ]);
     });

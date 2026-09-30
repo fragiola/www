@@ -27,6 +27,7 @@ import {
     LIMITS,
     type Manifest,
     type ProjectInfo,
+    plainText,
     type RegistryIndex,
     type RegistryItem,
 } from "./types.ts";
@@ -131,10 +132,13 @@ const escapeRegExp = (text: string) =>
 /** A length in characters: Unicode code points, as the contract counts them (v1.2). */
 const length = (text: string) => [...text].length;
 
-/** Why a description is not 50–160 characters long, or undefined when it is (§2, §3.2). */
+/**
+ * Why a description is not 50–160 characters long, or undefined when it is (§2, §3.2). It is
+ * counted as plain text, without its code marks: what a search result shows.
+ */
 function descriptionLength(text: string): string | undefined {
     const { min, max } = LIMITS.description;
-    const n = length(text);
+    const n = length(plainText(text));
     return n < min || n > max
         ? `description is ${n} characters: ${min}–${max}`
         : undefined;
@@ -563,7 +567,9 @@ function checkEmbed(context: Context, framework: string) {
 function isNoindex(tag: string): boolean {
     return (
         /\bname\s*=\s*(["']?)robots\1(?=[\s/>])/i.test(tag) &&
-        /\bcontent\s*=\s*(["'])[^"']*\bnoindex\b[^"']*\1/i.test(tag)
+        /\bcontent\s*=\s*(?:(["'])[^"']*\bnoindex\b[^"']*\1|noindex(?=[\s/>]))/i.test(
+            tag,
+        )
     );
 }
 
@@ -574,8 +580,10 @@ function checkNoindex(context: Context, framework: string) {
     for (const path of walk(root)) {
         if (!path.endsWith(".html")) continue;
         const html = readFileSync(path, "utf-8");
+        // a meta tag in a comment says nothing
+        const live = html.replace(/<!--[\s\S]*?-->/g, "");
         if (
-            [...html.matchAll(/<meta\b[^>]*>/gi)].some(([tag]) =>
+            [...live.matchAll(/<meta\b[^>]*>/gi)].some(([tag]) =>
                 isNoindex(tag),
             )
         ) {
@@ -1162,7 +1170,8 @@ function checkSearchFields(context: Context, page: string, scan: PageScan) {
 
 /**
  * The heading level `www` renders for a component (§3.4): `<Hero>` the h1, a `<Section>`'s title
- * an h2, a `<Feature>`'s title one level below its section (h3, or h2 outside one).
+ * an h2, a `<Feature>`'s title one level below its section (h3, or h2 outside one), a `<Card>`'s
+ * title an h3 (Fumadocs' card).
  */
 function renderedLevel(tag: Tag): number | undefined {
     switch (tag.name) {
@@ -1172,6 +1181,8 @@ function renderedLevel(tag: Tag): number | undefined {
             return 2;
         case "Feature":
             return tag.ancestors.includes("Section") ? 3 : 2;
+        case "Card":
+            return 3;
         default:
             return undefined;
     }
@@ -1212,16 +1223,17 @@ function checkStructure(context: Context, page: string, scan: PageScan) {
             order: heading.order,
             level: heading.depth,
             heading,
+            tag: undefined,
         })),
         ...scan.tags.flatMap((tag) => {
             const level = renderedLevel(tag);
             return level === undefined
                 ? []
-                : [{ order: tag.order, level, heading: undefined }];
+                : [{ order: tag.order, level, heading: undefined, tag }];
         }),
     ].sort((a, b) => a.order - b.order);
     let previous = 1;
-    for (const { level, heading } of outline) {
+    for (const { level, heading, tag } of outline) {
         if (heading && level === 1) {
             at(
                 heading,
@@ -1231,6 +1243,12 @@ function checkStructure(context: Context, page: string, scan: PageScan) {
             at(
                 heading,
                 `a ${"#".repeat(level)} heading after an h${previous}: headings do not skip a level (§3.4)`,
+            );
+        } else if (tag?.name === "Card" && level > previous + 1) {
+            // the only component a project can place under a heading too high for it
+            at(
+                tag,
+                `a <Card> (an h3) after an h${previous}: headings do not skip a level (§3.4)`,
             );
         }
         previous = level;

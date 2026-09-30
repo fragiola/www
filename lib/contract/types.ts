@@ -109,6 +109,14 @@ export interface RegistryIndex {
     items: RegistryItem[];
 }
 
+/**
+ * A description as plain text: inline code marks dropped (`Button` → Button). Its length is
+ * what the contract limits (§2, §3.2), and it is what search engines are given (§3.6).
+ */
+export function plainText(text: string): string {
+    return text.replace(/`([^`]*)`/g, "$1");
+}
+
 /** v1.2 (§2, §3.2): lengths in characters (Unicode code points) */
 export const LIMITS = {
     title: 60,

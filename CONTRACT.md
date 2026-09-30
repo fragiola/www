@@ -66,8 +66,8 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
 }
 ```
 
-- `description` is 50–160 characters (v1.2). It is the project's card text, its header-menu text
-  and the fallback text of its share card (§3.6).
+- `description` is 50–160 characters (v1.2), counted as plain text like a page's (§3.2). It is
+  the project's card text, its header-menu text and the fallback text of its share card (§3.6).
 - `keywords` (v1.2, optional): 1–8 unique topics, lowercase, at most 40 characters each, true of
   the project. `www` uses them only in the project's structured data
   (`SoftwareSourceCode.keywords`): they are never rendered as `<meta name="keywords">` and never
@@ -107,8 +107,9 @@ Every `.mdx` except `index.mdx` appears in `config.json` exactly once, and every
 
 - `title`: at most 60 characters (v1.2). It is the page's `h1`, and `www` builds the page's
   `<title>` from it (§3.6).
-- `description`: 50–160 characters (v1.2). It is the page's meta description **and** its visible
-  lead, so write it for a reader first: what the page covers, in plain words, not a list of terms.
+- `description`: 50–160 characters (v1.2), counted as plain text: `code` marks are not counted.
+  It is the page's meta description **and** its visible lead, so write it for a reader first:
+  what the page covers, in plain words, not a list of terms.
 - On the landing (`index.mdx`), `title` is the `<title>` of `/<slug>`, used **as is** (v1.2). It
   contains the `project.json` `title` and says what the project is ("Dockable — headless
   dockable panel layouts for React"), so it is more than the name. Its `description` is the
@@ -158,9 +159,10 @@ and the build.
 - The landing has **exactly one `<Hero>`**.
 - Headings do not skip a level: a Markdown heading is at most one level below the heading before
   it, counting the ones `www` renders. The page's title is an `h1`; on the landing `<Hero>` is
-  the `h1`, a `<Section>`'s title an `h2`, and a `<Feature>`'s title one level below the section
-  it is in (`h3`, or `h2` outside a section). So a page starts at `##`, and a heading inside a
-  `<Section>` at `###`. `##` followed by `####` is an error.
+  the `h1`, a `<Section>`'s title an `h2`, a `<Feature>`'s title one level below the section it
+  is in (`h3`, or `h2` outside a section), and a `<Card>`'s title an `h3`. So a page's first
+  heading is a `##`, a heading inside a `<Section>` is at most a `###`, and a `<Card>` comes
+  after a `##` (or inside a `<Section>`). `##` followed by `####` is an error.
 - A Markdown image has non-empty alt text: `![Two tabsets side by side](…)`.
 
 `<Example>` gains a fourth variant in v1.1: **`showcase`** — the embed at full content width with
@@ -270,7 +272,7 @@ One static app per framework, built with base `<base>/embed/<framework>/`.
   `system`) and always passes an explicit example theme.
 - Anything the app opens (a popout window) lives under the same base.
 - Every `.html` file under `embed/<framework>/` carries `<meta name="robots" content="noindex">`
-  (v1.2). An example is a fragment of a page, not a page for search engines.
+  (v1.2), outside any HTML comment. An example is a fragment of a page, not a page for search engines.
 
 ### 5.2 Messages
 
