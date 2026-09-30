@@ -1,8 +1,9 @@
 // Reads one page of an export (§3) the way the site compiles it: MDX with GFM, parsed into a
 // syntax tree with positions, so every finding carries its line. Nothing is compiled or run.
-// What comes out is what the validation needs: the frontmatter, the JSX tags and their props, the
-// links, the heading anchors (the ids Fumadocs gives them), the fenced code blocks, and anything
-// the vocabulary does not allow (import/export, expressions).
+// What comes out is what the validation needs: the frontmatter (and the line of each field), the
+// JSX tags and their props, the links, the headings (their anchors, the ids Fumadocs gives them,
+// and their levels), the images, the fenced code blocks, and anything the vocabulary does not
+// allow (import/export, expressions).
 
 import { createProcessor } from "@mdx-js/mdx";
 import type * as Estree from "estree";
@@ -19,7 +20,7 @@ import type {
 import { toString as textOf } from "mdast-util-to-string";
 import remarkGfm from "remark-gfm";
 import { visit } from "unist-util-visit";
-import { parse as parseYaml } from "yaml";
+import { LineCounter, parseDocument, parse as parseYaml } from "yaml";
 
 export interface Place {
     line: number;
@@ -36,6 +37,10 @@ export interface Tag extends Place {
     name: string;
     /** the nearest enclosing component, if any (`Features` for a `<Feature>`) */
     within?: string;
+    /** every enclosing component, nearest first (`["Features", "Section"]`) */
+    ancestors: string[];
+    /** its place among the page's tags and headings, in document order */
+    order: number;
     props: Map<string, PropValue & Place>;
     /** `{...spread}` props, which the vocabulary does not take */
     spreads: Place[];
@@ -52,13 +57,29 @@ export interface Fence extends Place {
     meta: string | null;
 }
 
+/** A Markdown heading: `##` is depth 2. */
+export interface HeadingMark extends Place {
+    depth: number;
+    /** its place among the page's tags and headings, in document order */
+    order: number;
+}
+
+/** A Markdown image, with its alt text as written (empty when there is none). */
+export interface Image extends Place {
+    alt: string;
+}
+
 export interface PageScan {
     /** undefined when the page has no frontmatter block */
     frontmatter: Record<string, unknown> | undefined;
+    /** where each top-level frontmatter field is written */
+    fields: Map<string, Place>;
     problems: (Place & { message: string })[];
     tags: Tag[];
     links: Link[];
     anchors: Set<string>;
+    headings: HeadingMark[];
+    images: Image[];
     fences: Fence[];
 }
 
@@ -97,6 +118,25 @@ function splitFrontmatter(source: string): {
         yaml: match[1] ?? "",
         body: blank + source.slice(match[0].length),
     };
+}
+
+/** The line and column of each top-level key of the frontmatter, in the file (after `---`). */
+function fieldPlaces(yaml: string): Map<string, Place> {
+    const places = new Map<string, Place>();
+    const lineCounter = new LineCounter();
+    const document = parseDocument(yaml, { lineCounter });
+    const contents = document.contents as {
+        items?: { key?: { value?: unknown; range?: number[] } }[];
+    } | null;
+    for (const pair of contents?.items ?? []) {
+        const offset = pair.key?.range?.[0];
+        if (typeof pair.key?.value !== "string" || offset === undefined) {
+            continue;
+        }
+        const { line, col } = lineCounter.linePos(offset);
+        places.set(pair.key.value, { line: line + 1, column: col });
+    }
+    return places;
 }
 
 /** A static value from an estree expression (literals, arrays, objects), or `undefined` + false. */
@@ -255,14 +295,18 @@ function actionLinks(
 export function scanPage(source: string): PageScan {
     const scan: PageScan = {
         frontmatter: undefined,
+        fields: new Map(),
         problems: [],
         tags: [],
         links: [],
         anchors: new Set(),
+        headings: [],
+        images: [],
         fences: [],
     };
     const { yaml, body } = splitFrontmatter(source);
     if (yaml !== undefined) {
+        scan.fields = fieldPlaces(yaml);
         try {
             const data = parseYaml(yaml) as unknown;
             if (data === null || data === undefined) scan.frontmatter = {};
@@ -321,10 +365,40 @@ export function scanPage(source: string): PageScan {
             }
         }
     };
-    visit(tree, (node: Nodes) => {
+    // each node's parent, set as the visit (preorder) reaches it: a tag's enclosing components
+    const parents = new Map<Nodes, Nodes>();
+    const ancestorsOf = (node: Nodes): string[] => {
+        const names: string[] = [];
+        for (
+            let parent = parents.get(node);
+            parent;
+            parent = parents.get(parent)
+        ) {
+            if (
+                (parent.type === "mdxJsxFlowElement" ||
+                    parent.type === "mdxJsxTextElement") &&
+                parent.name
+            ) {
+                names.push(parent.name);
+            }
+        }
+        return names;
+    };
+    let order = 0;
+    visit(tree, (node: Nodes, _index, parent: Nodes | undefined) => {
+        if (parent) parents.set(node, parent);
         switch (node.type) {
             case "heading":
                 scan.anchors.add(headingId(node, slugger));
+                scan.headings.push({
+                    depth: node.depth,
+                    order: order++,
+                    ...placeOf(node),
+                });
+                break;
+            case "image":
+            case "imageReference":
+                scan.images.push({ alt: node.alt ?? "", ...placeOf(node) });
                 break;
             case "link":
                 scan.links.push({
@@ -375,10 +449,12 @@ export function scanPage(source: string): PageScan {
                     });
                     break;
                 }
-                const parent = within.get(node);
+                const enclosing = within.get(node);
                 scan.tags.push({
                     name: node.name,
-                    ...(parent ? { within: parent } : {}),
+                    ...(enclosing ? { within: enclosing } : {}),
+                    ancestors: ancestorsOf(node),
+                    order: order++,
                     ...place,
                     ...readProps(node),
                 });
