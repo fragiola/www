@@ -1,4 +1,4 @@
-# Site export contract, v1
+# Site export contract, v1.2
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes from v0 (the POC) are listed at the end.
+Changes in v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -57,13 +57,21 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
     "contract": 1,
     "slug": "dockable",
     "title": "Dockable",
-    "description": "One sentence.",
+    "description": "One sentence, 50–160 characters.",
     "frameworks": ["react"],          // every framework with an embed app
     "defaultFramework": "react",
     "registry": { "namespace": "@fragiola" },  // only when r/ is present
-    "repository": "https://github.com/fragiola/dockable"   // v1.1: header and footer links
+    "repository": "https://github.com/fragiola/dockable",  // v1.1: header and footer links
+    "keywords": ["dockable layout", "docking panels"]    // v1.2, optional: structured data only
 }
 ```
+
+- `description` is 50–160 characters (v1.2). It is the project's card text, its header-menu text
+  and the fallback text of its share card (§3.6).
+- `keywords` (v1.2, optional): 1–8 unique topics, lowercase, at most 40 characters each, true of
+  the project. `www` uses them only in the project's structured data
+  (`SoftwareSourceCode.keywords`): they are never rendered as `<meta name="keywords">` and never
+  shown.
 
 ## 3. Pages
 
@@ -96,6 +104,15 @@ Every `.mdx` except `index.mdx` appears in `config.json` exactly once, and every
 
 `title` and `description` are required on every page. `index.mdx` also takes
 `layout: "landing"`.
+
+- `title`: at most 60 characters (v1.2). It is the page's `h1`, and `www` builds the page's
+  `<title>` from it (§3.6).
+- `description`: 50–160 characters (v1.2). It is the page's meta description **and** its visible
+  lead, so write it for a reader first: what the page covers, in plain words, not a list of terms.
+- On the landing (`index.mdx`), `title` is the `<title>` of `/<slug>`, used **as is** (v1.2). It
+  contains the `project.json` `title` and says what the project is ("Dockable — headless
+  dockable panel layouts for React"), so it is more than the name. Its `description` is the
+  landing's meta description.
 
 ### 3.3 Links
 
@@ -134,6 +151,18 @@ and the build.
 "external" }`. `href` follows §3.3; an `https://` URL opens as external. A label may contain
 `{examples}`, replaced by the project's example count ("Browse {examples} examples").
 
+**Structure** (v1.2):
+
+- A page's `h1` is its frontmatter `title`, which `www` renders; on the landing it is the title of
+  its `<Hero>`. A page body has **no Markdown `#` heading**.
+- The landing has **exactly one `<Hero>`**.
+- Headings do not skip a level: a Markdown heading is at most one level below the heading before
+  it, counting the ones `www` renders. The page's title is an `h1`; on the landing `<Hero>` is
+  the `h1`, a `<Section>`'s title an `h2`, and a `<Feature>`'s title one level below the section
+  it is in (`h3`, or `h2` outside a section). So a page starts at `##`, and a heading inside a
+  `<Section>` at `###`. `##` followed by `####` is an error.
+- A Markdown image has non-empty alt text: `![Two tabsets side by side](…)`.
+
 `<Example>` gains a fourth variant in v1.1: **`showcase`** — the embed at full content width with
 the project's theme switcher above it (swatches, as in the gallery), an optional `label` before
 the switcher ("Same markup, five themes:") and a "See the code" link to the gallery entry with
@@ -148,6 +177,35 @@ hero, docs and examples; `www` owns the look of each piece, the same for every p
 
 `www` renders a footer on every page of a project: the project's title and description, its
 first sidebar section, and `repository`.
+
+### 3.6 Search and sharing
+
+`www` derives everything search engines and link previews read from the export; a project does
+not repeat it anywhere.
+
+- **Titles.** The landing's `<title>` is its frontmatter `title`, as is (§3.2). A docs page's is
+  `<title> · <project>`, an example's `<title> · <project> examples`, each followed by
+  ` · Fragiola` when the project's title does not already contain "Fragiola"
+  (`Tabs · Fragiola UI`, `Splitter · Dockable · Fragiola`). A suffix is left out when the whole
+  would pass 60 characters. So a project never writes its own name into a page's title.
+- **Descriptions.** The page's frontmatter `description`; an example's, its manifest
+  `description`.
+- **Canonical URLs.** Absolute, with a trailing slash and no query string:
+  `https://fragiola.com/<slug>/docs/<path>/`. The gallery's `?theme=`, `?code=` and
+  `?framework=` are the same page.
+- **Share image.** One per project, drawn by `www` from the project's `title` and `description`;
+  its docs and examples use it.
+- **Sitemap, `robots.txt` and structured data.** The sitemap lists the landing, every docs page
+  and every example. The landing is a `SoftwareSourceCode` (with `keywords`, §2), a docs page a
+  `TechArticle` in its sidebar section's breadcrumb. The embed apps are never indexed (§5.1).
+
+What a project writes: a specific `title`; a `description` of 50–160 characters that a person
+wants to read; headings that name their section; alt text on every image.
+
+> Bad: "Tabs React tabs component headless tabs accessible tabs keyboard tabs UI library."
+>
+> Good: "Tabs that switch panels in place, with the APG keyboard pattern and a selection you can
+> control."
 
 ## 4. The example gallery
 
@@ -210,6 +268,8 @@ One static app per framework, built with base `<base>/embed/<framework>/`.
 - The app never reads the site's `localStorage`. `www` resolves the site theme (including
   `system`) and always passes an explicit example theme.
 - Anything the app opens (a popout window) lives under the same base.
+- Every `.html` file under `embed/<framework>/` carries `<meta name="robots" content="noindex">`
+  (v1.2). An example is a fragment of a page, not a page for search engines.
 
 ### 5.2 Messages
 
@@ -280,6 +340,11 @@ On every build, per project: contract version; config ↔ files; frontmatter; vo
 (§3.3); `<Example id>`, `<InstallCommand item>` and manifest references; levels and themes in
 the manifest exist in `examples.json`; registry namespacing and duplicates.
 
+v1.2 adds: the `project.json` `description` length and `keywords`; frontmatter `title` and
+`description` lengths; the landing's `title` containing the project's; no Markdown `#` heading,
+no skipped heading level, exactly one `<Hero>` on the landing and alt text on every image
+(§3.4); `noindex` in every embed HTML file (§5.1). Each fails the build like any other problem.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -288,6 +353,19 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.2
+
+Search and sharing. The file format is unchanged and `project.json` keeps `"contract": 1`, but
+values are tightened: a v1.1 export may fail v1.2 until it meets them.
+
+- `project.json` `description` is 50–160 characters; optional `keywords` (§2).
+- Frontmatter `title` is at most 60 characters, `description` 50–160; the landing's `title` is
+  its `<title>`, contains the project's title and says what the project is (§3.2).
+- Structure: no Markdown `#` heading, no skipped heading level, exactly one `<Hero>` on the
+  landing, alt text on every image (§3.4).
+- What `www` derives for search and sharing, and what a project writes (§3.6).
+- Every embed HTML file is `noindex` (§5.1).
 
 ## Changes in v1.1
 
