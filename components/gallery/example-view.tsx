@@ -97,6 +97,7 @@ export function ExampleView({ id }: { id: string }) {
     const [fullscreen, setFullscreen] = useState(false);
     const wide = useWide();
     const row = useRef<HTMLDivElement>(null);
+    const codeSize = useRef<number | string | undefined>(undefined);
 
     // Fullscreen puts the whole page in fullscreen and lays the stage over it, rather than
     // making the stage the fullscreen element: what an example portals into its own <body>
@@ -139,7 +140,6 @@ export function ExampleView({ id }: { id: string }) {
 
     const docked = wide && state.code && ready;
     // fixed when the panel docks: a changed defaultSize would re-register it at that size
-    const codeSize = useRef<number | string | undefined>(undefined);
     if (!docked) codeSize.current = undefined;
     else codeSize.current ??= storedCodeSize() ?? defaultCodeSize(row.current);
     const code = (
