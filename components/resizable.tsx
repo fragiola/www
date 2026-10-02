@@ -13,6 +13,11 @@ import { cn } from "@/lib/cn";
 // data-separator state) it is lit with the ring role, the colour of focus on this site. The hit
 // area is wider than the line (`after:`), and the library adds its own minimum target size. While
 // a handle is dragged, no iframe in the group takes the pointer (an example's embed, §5).
+//
+// The library sets `touch-action: pan-y` inline on the group and on each panel's inner element,
+// which takes pinch-zoom and horizontal touch scrolling away from everything inside (a wide code
+// line, an example's embed: the effective touch-action reaches into an iframe). Resizing is the
+// handle's job, which keeps its own `touch-action: none`; the panels give the gestures back.
 
 function ResizablePanelGroup({
     className,
@@ -26,6 +31,8 @@ function ResizablePanelGroup({
                 // a drag that crosses an iframe would end inside it: the frame's document takes
                 // the pointer, the handle never hears it move
                 "[&:has([data-separator=active])_iframe]:pointer-events-none",
+                // the browser's own touch gestures back (see the header)
+                "touch-auto!",
                 className,
             )}
             {...props}
@@ -33,8 +40,18 @@ function ResizablePanelGroup({
     );
 }
 
-function ResizablePanel(props: ResizablePrimitive.PanelProps) {
-    return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />;
+function ResizablePanel({
+    className,
+    ...props
+}: ResizablePrimitive.PanelProps) {
+    return (
+        <ResizablePrimitive.Panel
+            data-slot="resizable-panel"
+            // the panel's inner element: the browser's own touch gestures back (see the header)
+            className={cn("touch-auto!", className)}
+            {...props}
+        />
+    );
 }
 
 function ResizableHandle({

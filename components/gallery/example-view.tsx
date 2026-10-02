@@ -3,7 +3,13 @@
 import { BookOpen, Code2, Maximize, Minimize, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+    useSyncExternalStore,
+} from "react";
 import { ExampleFrame } from "@/components/example-frame";
 import { setFramework } from "@/components/framework";
 import {
@@ -52,13 +58,15 @@ function storedCodeSize(): string | undefined {
 // `md`, as the overlay's classes read it
 const WIDE = "(min-width: 48rem)";
 
+function subscribeWide(onChange: () => void) {
+    const query = window.matchMedia(WIDE);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+}
+
 function useWide(): boolean {
     return useSyncExternalStore(
-        (onChange) => {
-            const query = window.matchMedia(WIDE);
-            query.addEventListener("change", onChange);
-            return () => query.removeEventListener("change", onChange);
-        },
+        subscribeWide,
         () => window.matchMedia(WIDE).matches,
         () => false,
     );
@@ -98,6 +106,10 @@ export function ExampleView({ id }: { id: string }) {
     const wide = useWide();
     const row = useRef<HTMLDivElement>(null);
     const codeSize = useRef<number | string | undefined>(undefined);
+    // the row is measured before the code docks in it (its default size is a share of the row);
+    // set before the first paint, so the code still opens with the page
+    const [measured, setMeasured] = useState(false);
+    useLayoutEffect(() => setMeasured(true), []);
 
     // Fullscreen puts the whole page in fullscreen and lays the stage over it, rather than
     // making the stage the fullscreen element: what an example portals into its own <body>
@@ -138,7 +150,7 @@ export function ExampleView({ id }: { id: string }) {
     const elsewhere = project.frameworks.filter((f) => example.variants[f]);
     const selectedTheme = gallery.themes.find((t) => t.name === theme);
 
-    const docked = wide && state.code && ready;
+    const docked = wide && state.code && ready && measured;
     // fixed when the panel docks: a changed defaultSize would re-register it at that size
     if (!docked) codeSize.current = undefined;
     else codeSize.current ??= storedCodeSize() ?? defaultCodeSize(row.current);

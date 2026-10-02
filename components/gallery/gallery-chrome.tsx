@@ -286,10 +286,15 @@ function Chrome({
     const [filter, setFilter] = useState("");
     const scroll = useRef(0);
 
+    // the list as the reader left it, before the first paint: on a client-side navigation into
+    // the gallery no mark painted it (the layout's script runs on a full load only)
+    useLayoutEffect(() => {
+        setListOpen(readStored(STORAGE_KEYS.examplesSidebar) !== "false");
+    }, []);
+
     // the URL and storage are client-only: read them once mounted
     useEffect(() => {
         setShellState(readState(gallery));
-        setListOpen(readStored(STORAGE_KEYS.examplesSidebar) !== "false");
         const asked = new URLSearchParams(window.location.search).get(
             "framework",
         );

@@ -3,6 +3,7 @@ import {
     collectErrors,
     DOCKABLE,
     embed,
+    expectReady,
     frameMarked,
     mark,
     marked,
@@ -319,6 +320,48 @@ test("a collapsed list is painted collapsed by the static page, before any scrip
     ).toBeHidden();
 });
 
+test("a collapsed list stays collapsed on a client-side navigation into the gallery", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() =>
+        localStorage.setItem("@fragiola:examples-sidebar", "false"),
+    );
+    await page.goto("dockable/");
+    await mark(page);
+    // the widest the column is painted, every frame from here on
+    await page.evaluate(() => {
+        const w = window as unknown as { widest: number };
+        w.widest = 0;
+        const frame = () => {
+            for (const column of document.querySelectorAll(
+                '[data-slot="sidebar"][data-state]',
+            )) {
+                w.widest = Math.max(
+                    w.widest,
+                    column.getBoundingClientRect().width,
+                );
+            }
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    });
+    await page
+        .getByTestId("site-header")
+        .getByRole("link", { name: "Examples", exact: true })
+        .click();
+    await expectReady(page.getByTestId("stage"));
+    expect(await marked(page)).toBe(true);
+    await expect(
+        page.getByRole("button", { name: "Examples list" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(
+        await page.evaluate(
+            () => (window as unknown as { widest: number }).widest,
+        ),
+    ).toBe(0);
+});
+
 test("small screens: the Drawer keeps the filter and the scroll between openings", async ({
     page,
 }) => {
@@ -468,6 +511,25 @@ test("a resized code panel keeps its share when the row changes, even with no st
     await expect
         .poll(async () => Math.abs((await share()) - resized))
         .toBeLessThan(0.01);
+});
+
+test("on a wide screen the code opens at 46rem, on every example", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 2560, height: 1000 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const near736 = async () =>
+        Math.abs(((await panel.boundingBox())?.width ?? 0) - 736) < 2;
+    await expect.poll(near736).toBe(true);
+    await page
+        .getByRole("navigation", { name: "Examples" })
+        .getByRole("link", { name: last.title, exact: true })
+        .click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        last.title,
+    );
+    await expect.poll(near736).toBe(true);
 });
 
 test("small screens: the code is an overlay, with no handle", async ({
