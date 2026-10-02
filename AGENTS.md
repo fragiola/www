@@ -81,7 +81,7 @@ Do not "fix" these.
 | command | does |
 |---|---|
 | `pnpm install` | install dependencies |
-| `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
+| `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project, the projects side by side (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
 | `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
