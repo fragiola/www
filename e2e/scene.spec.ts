@@ -142,17 +142,10 @@ test("three is loaded on / and on no other page", async ({ page }) => {
     });
     const three = () => requested.filter((path) => chunks.includes(path));
 
-    // elsewhere first (nothing cached): hydrated, its effects run, and no three
+    // elsewhere first (nothing cached): once the network is quiet, no three
     for (const path of ["ui/", "ui/docs/atoms/clickable/"]) {
         requested.length = 0;
-        await page.goto(path);
-        // the header's theme icon is drawn once the page is mounted
-        await expect(
-            page.getByTestId("site-header").locator("[data-theme-toggle] svg"),
-        ).toBeAttached();
-        await page.evaluate(
-            () => new Promise((resolve) => requestAnimationFrame(resolve)),
-        );
+        await page.goto(path, { waitUntil: "networkidle" });
         expect(three(), path).toEqual([]);
     }
 

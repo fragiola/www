@@ -16,7 +16,7 @@ for (const site of ["light", "dark"] as const) {
         page,
     }) => {
         await setSiteTheme(page, site);
-        // one embed, every theme through the switcher (the `?theme=` first paint: below)
+        // one embed, every theme through the switcher (each theme's `?theme=` first paint: below)
         await openExample(page, "dockable", "hello-layout");
         const seen = new Set<string>();
         for (const theme of DOCKABLE.examples.themes) {
@@ -37,19 +37,24 @@ for (const site of ["light", "dark"] as const) {
     });
 }
 
-test("the theme is applied before the embed's first paint", {
+test("every theme is applied before the embed's first paint", {
     tag: "@serve",
 }, async ({ page }) => {
     // the pre-paint script ran if the attribute is there when the document is parsed
-    await page.goto("dockable/embed/react/?id=hello-layout&theme=paper", {
-        waitUntil: "commit",
-    });
-    await page.waitForFunction(() => document.body !== null);
-    expect(
-        await page.evaluate(
-            () => document.documentElement.dataset.exampleTheme,
-        ),
-    ).toBe("paper");
+    for (const theme of DOCKABLE.examples.themes) {
+        await page.goto(
+            `dockable/embed/react/?id=hello-layout&theme=${theme.name}`,
+            { waitUntil: "commit" },
+        );
+        await page.waitForFunction(() => document.body !== null);
+        expect(
+            await page.evaluate(() => ({
+                theme: document.documentElement.dataset.exampleTheme,
+                scheme: document.documentElement.dataset.theme,
+            })),
+            theme.name,
+        ).toEqual({ theme: theme.name, scheme: theme.scheme });
+    }
 });
 
 test("an unknown ?theme= in the URL is ignored", async ({ page }) => {

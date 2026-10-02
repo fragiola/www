@@ -114,6 +114,10 @@ test("an Example card links the gallery", async ({ page }) => {
     const card = page.locator('a[data-example-link="popout"]');
     await expect(card).toContainText("Open the live example");
     await expect(card).toHaveAttribute("href", "/dockable/examples/popout/");
+    // client-side, from the docs' layout into the gallery's
+    await card.click();
+    await expect(page).toHaveURL(/\/dockable\/examples\/popout\//);
+    await expectReady(page.getByTestId("stage"));
 });
 
 test("the vocabulary: Callout title, Steps, Tabs, code block titles, Cards", async ({

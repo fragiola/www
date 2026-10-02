@@ -163,28 +163,21 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
     expect(errors).toEqual([]);
 });
 
-test("no page scrolls sideways at 375, 768 or 1440px", async ({ page }) => {
-    const widths = [375, 768, 1440];
-    for (const path of [
-        "",
-        "ui/",
-        "dockable/",
-        "ui/docs/atoms/clickable/",
-        "dockable/examples/hello-layout/",
-    ]) {
-        await page.setViewportSize({ width: widths[0] ?? 375, height: 800 });
-        await page.goto(path);
-        for (const width of widths) {
-            await page.setViewportSize({ width, height: 800 });
-            await expect
-                .poll(
-                    () =>
-                        page.evaluate(
-                            () => document.documentElement.scrollWidth,
-                        ),
-                    { message: `${path} at ${width}px` },
-                )
-                .toBeLessThanOrEqual(width);
+for (const width of [375, 768, 1440]) {
+    test(`no page scrolls sideways at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        for (const path of [
+            "",
+            "ui/",
+            "dockable/",
+            "ui/docs/atoms/clickable/",
+            "dockable/examples/hello-layout/",
+        ]) {
+            await page.goto(path);
+            const scrollWidth = await page.evaluate(
+                () => document.documentElement.scrollWidth,
+            );
+            expect(scrollWidth, path).toBeLessThanOrEqual(width);
         }
-    }
-});
+    });
+}
