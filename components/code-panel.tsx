@@ -86,12 +86,16 @@ function styleOf(css: string): CSSProperties {
     return style as CSSProperties;
 }
 
+// Fumadocs caps a code block at 600px (made for a page); here it fills the panel and is its
+// only scroller, so the horizontal scrollbar sits at the panel's bottom. Its `cn` does not merge
+// conflicting classes, hence the `!`.
 function Highlighted({ file }: { file: CodeFile }) {
     return (
         <CodeBlock
             allowCopy={false}
             className={cn("my-0", file.pre.className)}
             style={styleOf(file.pre.style)}
+            viewportProps={{ className: "h-full max-h-none!" }}
         >
             <Pre>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki's output, built from the export at build time */}
@@ -220,7 +224,7 @@ export function CodePanel({
                             role="tabpanel"
                             id={`${tabsId}-panel`}
                             aria-labelledby={`${tabsId}-tab-${index}`}
-                            className="relative min-h-0 flex-1 overflow-auto"
+                            className="relative flex min-h-0 flex-1 flex-col"
                         >
                             <button
                                 type="button"
@@ -244,7 +248,7 @@ export function CodePanel({
                             <div
                                 data-testid="code-file"
                                 data-path={current.path}
-                                className="text-[13px] [&_figure]:my-0 [&_figure]:rounded-none [&_figure]:border-0 [&_figure]:shadow-none"
+                                className="min-h-0 flex-1 text-[13px] [&_figure]:my-0 [&_figure]:h-full [&_figure]:rounded-none [&_figure]:border-0 [&_figure]:shadow-none"
                             >
                                 <Highlighted file={current} />
                             </div>

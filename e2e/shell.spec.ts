@@ -532,6 +532,23 @@ test("on a wide screen the code opens at 46rem, on every example", async ({
     await expect.poll(near736).toBe(true);
 });
 
+test("on a tall screen the code fills the panel, past Fumadocs' 600px", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1600, height: 1400 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const file = panel.getByRole("tabpanel");
+    const viewport = panel.getByTestId("code-file").getByRole("region");
+    await expect(viewport).toBeVisible();
+    const outer = await file.boundingBox();
+    const inner = await viewport.boundingBox();
+    expect(outer?.height ?? 0).toBeGreaterThan(600);
+    expect(Math.abs((inner?.height ?? 0) - (outer?.height ?? 0))).toBeLessThan(
+        2,
+    );
+});
+
 test("small screens: the code is an overlay, with no handle", async ({
     page,
 }) => {
