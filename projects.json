@@ -12,5 +12,12 @@
         "ref": "main",
         "localPath": "../dockable",
         "devUrl": "http://localhost:5180"
+    },
+    {
+        "slug": "data-grid",
+        "repo": "https://github.com/fragiola/data-grid.git",
+        "ref": "main",
+        "localPath": "../data-grid",
+        "devUrl": "http://localhost:5181"
     }
 ]

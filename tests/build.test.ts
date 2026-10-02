@@ -22,7 +22,12 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 //     moved on since (a new commit, an uncommitted change).
 
 const ROOT = join(import.meta.dirname, "..");
-const SLUGS = ["ui", "dockable"];
+/** Every project of projects.json: each has a fixture (fixtures/README.md). */
+const SLUGS = (
+    JSON.parse(readFileSync(join(ROOT, "projects.json"), "utf-8")) as {
+        slug: string;
+    }[]
+).map((project) => project.slug);
 let temp: string;
 let sources: string;
 

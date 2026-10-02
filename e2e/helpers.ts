@@ -41,6 +41,9 @@ export function fixture(slug: string) {
 
 export const DOCKABLE = fixture("dockable");
 export const UI = fixture("ui");
+export const DATA_GRID = fixture("data-grid");
+/** Every project, in projects.json order. */
+export const PROJECTS = [UI, DOCKABLE, DATA_GRID];
 
 /** Records the `fragiola:example:*` messages every window of the page receives. */
 export async function recordMessages(page: Page) {
