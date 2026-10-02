@@ -26,8 +26,9 @@
 # A dispatch or the schedule runs only build and deploy: www's own code did not change (it was
 # tested on its push), and the build checks the real exports against the contract.
 #
-# Caches: www's pnpm store (setup-node), the projects' pnpm store (keyed on every lockfile),
-# and Next's .next/cache, one for the fixtures site and one for the real one. None of them
+# Caches: www's pnpm store (setup-node) for the test jobs, one store for www and the projects in
+# the build (keyed on every lockfile), and Next's .next/cache, one for the fixtures site and one
+# for the real one. None of them
 # decides what is published: installs stay --frozen-lockfile and prepare:site always checks.
 #
 # One-time setup: README.md, "Deploying".
@@ -182,34 +183,39 @@ jobs:
             echo "$slug: $repo@$ref → $(git -C "$dir" rev-parse --short HEAD)" | tee -a "$GITHUB_STEP_SUMMARY"
           done
 
-      # One store for www and every project, keyed on all their lockfiles (hashFiles cannot read
-      # $RUNNER_TEMP, hence the step).
+      # One store for www and every project (sources:sync keeps PNPM_HOME for them), with pnpm's
+      # metadata cache (it remembers the lockfiles it has verified against the supply-chain
+      # policies), keyed on all the lockfiles (hashFiles cannot read $RUNNER_TEMP, hence the
+      # step). A lockfile change restores the closest store of the month and adds to it; a new
+      # month starts from an empty one, so the store never keeps what no lockfile uses for long.
       - name: Key the pnpm store on every lockfile
         id: store
         run: |
+          month="pnpm-store-${{ runner.os }}-$(date -u +%Y-%m)-"
           echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-          echo "key=pnpm-store-${{ runner.os }}-$(cat pnpm-lock.yaml "$FRAGIOLA_PROJECTS_DIR"/*/pnpm-lock.yaml | sha256sum | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+          echo "month=$month" >> "$GITHUB_OUTPUT"
+          echo "key=$month$(cat pnpm-lock.yaml "$FRAGIOLA_PROJECTS_DIR"/*/pnpm-lock.yaml | sha256sum | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
       - id: store-restore
         uses: actions/cache/restore@v6
         with:
-          path: ${{ steps.store.outputs.path }}
+          path: |
+            ${{ steps.store.outputs.path }}
+            ~/.cache/pnpm
           key: ${{ steps.store.outputs.key }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          restore-keys: ${{ steps.store.outputs.month }}
 
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm sources:sync --install
 
-      # Saved only when a lockfile changed, pruned first so that it holds what the lockfiles
-      # use and does not grow from one restore-key to the next.
-      - if: steps.store-restore.outputs.cache-hit != 'true'
-        run: pnpm store prune
-
+      # saved only when a lockfile changed (or the month did)
       - if: steps.store-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          path: ${{ steps.store.outputs.path }}
+          path: |
+            ${{ steps.store.outputs.path }}
+            ~/.cache/pnpm
           key: ${{ steps.store.outputs.key }}
 
       - uses: actions/cache@v6

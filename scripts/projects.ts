@@ -56,9 +56,12 @@ export function label(dir: string): string {
 }
 
 // The child pnpm must see its own repo's settings, not this one's: drop the npm_*/pnpm_*
-// variables the outer `pnpm <script>` exported.
+// variables the outer `pnpm <script>` exported. PNPM_HOME is the machine's, not the script's: it
+// stays, so that the projects install from the same store as this repo (the one CI caches).
 export const childEnv = Object.fromEntries(
-    Object.entries(process.env).filter(([key]) => !/^(npm|pnpm)_/i.test(key)),
+    Object.entries(process.env).filter(
+        ([key]) => key === "PNPM_HOME" || !/^(npm|pnpm)_/i.test(key),
+    ),
 ) as NodeJS.ProcessEnv;
 
 /**
