@@ -156,6 +156,9 @@ export const frameMarked = (scope: Locator) =>
 /** Switches the site's own theme (Fumadocs' toggle, next-themes). */
 export async function setSiteTheme(page: Page, theme: "light" | "dark") {
     await page.addInitScript((value) => {
+        // the page only: an embed loading later (Reset) would set it back, and next-themes
+        // follows another document's write
+        if (window !== window.top) return;
         try {
             localStorage.setItem("@fragiola:theme", value);
         } catch {}

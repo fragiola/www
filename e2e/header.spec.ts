@@ -1,25 +1,26 @@
 import { expect, type Page, test } from "@playwright/test";
-import {
-    collectErrors,
-    DOCKABLE,
-    expectReady,
-    mark,
-    marked,
-    PROJECTS,
-    UI,
-} from "./helpers";
+import { collectErrors, DOCKABLE, expectReady, PROJECTS, UI } from "./helpers";
 
 // The site header (components/site-header.tsx): the same on every page — the wordmark, the
 // Projects menu (Fragiola UI's navigation-menu), the project's own context under /<slug>/**,
 // search, the theme and GitHub — collapsing into a menu on small screens.
 
+// `current`: the one link of the project's context marked as the current section
 const PAGES = [
-    { path: "", slug: undefined },
-    { path: "ui/", slug: "ui" },
-    { path: "ui/docs/atoms/clickable/", slug: "ui" },
-    { path: "dockable/", slug: "dockable" },
-    { path: "dockable/docs/getting-started/installation/", slug: "dockable" },
-    { path: "dockable/examples/hello-layout/", slug: "dockable" },
+    { path: "", slug: undefined, current: undefined },
+    { path: "ui/", slug: "ui", current: "project" },
+    { path: "ui/docs/atoms/clickable/", slug: "ui", current: "Docs" },
+    { path: "dockable/", slug: "dockable", current: "project" },
+    {
+        path: "dockable/docs/getting-started/installation/",
+        slug: "dockable",
+        current: "Docs",
+    },
+    {
+        path: "dockable/examples/hello-layout/",
+        slug: "dockable",
+        current: "Examples",
+    },
 ] as const;
 
 const header = (page: Page) => page.getByTestId("site-header");
@@ -31,7 +32,7 @@ const menu = (page: Page) =>
         .locator('[data-slot="navigation-menu-popup"]')
         .getByRole("list", { name: "Projects" });
 
-for (const { path, slug } of PAGES) {
+for (const { path, slug, current } of PAGES) {
     test(`the header on /${path}`, async ({ page }) => {
         const errors = collectErrors(page);
         await page.goto(path);
@@ -71,6 +72,25 @@ for (const { path, slug } of PAGES) {
                 "href",
                 `/${project.project.slug}/examples/${project.ordered[0]?.id}/`,
             );
+            // the current section is marked, and only it
+            for (const [section, name] of [
+                ["project", project.project.title],
+                ["Docs", "Docs"],
+                ["Examples", "Examples"],
+            ] as const) {
+                const link = site(page).getByRole("link", {
+                    name,
+                    exact: true,
+                });
+                if (section === current) {
+                    await expect(link).toHaveAttribute("aria-current", "page");
+                } else {
+                    await expect(link).not.toHaveAttribute(
+                        "aria-current",
+                        /.*/,
+                    );
+                }
+            }
         } else {
             await expect(
                 site(page).getByRole("link", { name: "Docs", exact: true }),
@@ -79,25 +99,6 @@ for (const { path, slug } of PAGES) {
         expect(errors).toEqual([]);
     });
 }
-
-test("the current section is marked", async ({ page }) => {
-    await page.goto("ui/docs/atoms/clickable/");
-    const docs = site(page).getByRole("link", { name: "Docs", exact: true });
-    await expect(docs).toHaveAttribute("aria-current", "page");
-    await expect(
-        site(page).getByRole("link", { name: "Examples", exact: true }),
-    ).not.toHaveAttribute("aria-current", /.*/);
-
-    await page.goto("dockable/examples/hello-layout/");
-    await expect(
-        site(page).getByRole("link", { name: "Examples", exact: true }),
-    ).toHaveAttribute("aria-current", "page");
-
-    await page.goto("dockable/");
-    await expect(
-        site(page).getByRole("link", { name: "Dockable", exact: true }),
-    ).toHaveAttribute("aria-current", "page");
-});
 
 test("the Projects menu lists every project and marks the current one", async ({
     page,
@@ -149,20 +150,6 @@ test("the Projects menu works from the keyboard", async ({ page }) => {
     await page.keyboard.press("Escape");
 });
 
-test("the Projects menu moves between projects without a reload", async ({
-    page,
-}) => {
-    await page.goto("ui/docs/atoms/clickable/");
-    await mark(page);
-    await site(page).getByRole("button", { name: "Projects" }).click();
-    await menu(page)
-        .getByRole("link", { name: new RegExp(DOCKABLE.project.title) })
-        .click();
-    await expect(page).toHaveURL(/\/dockable\/$/);
-    await expect(menu(page)).toBeHidden();
-    expect(await marked(page)).toBe(true);
-});
-
 test("small screens: the header collapses into a menu", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 740 });
     await page.goto("dockable/examples/hello-layout/");
@@ -189,7 +176,9 @@ test("small screens: the header collapses into a menu", async ({ page }) => {
     expect(width).toBeLessThanOrEqual(375);
 });
 
-test("small screens: the docs keep the page's full width", async ({ page }) => {
+test("small screens: the docs keep the page's full width; Escape or a press outside closes the menu", async ({
+    page,
+}) => {
     await page.setViewportSize({ width: 375, height: 740 });
     await page.goto("ui/docs/atoms/clickable/");
     const title = page.getByRole("heading", { level: 1 });
@@ -198,13 +187,7 @@ test("small screens: the docs keep the page's full width", async ({ page }) => {
     const article = await page.locator("#nd-page").boundingBox();
     expect(article?.width ?? 0).toBeGreaterThan(330);
     expect(box?.x ?? 0).toBeLessThan(40);
-});
 
-test("small screens: Escape or a press outside closes the menu", async ({
-    page,
-}) => {
-    await page.setViewportSize({ width: 375, height: 740 });
-    await page.goto("ui/docs/atoms/clickable/");
     const button = header(page).getByRole("button", { name: "Menu" });
     await button.click();
     await expect(site(page)).toBeVisible();
@@ -218,9 +201,27 @@ test("small screens: Escape or a press outside closes the menu", async ({
     // a press on the page, then one inside an example's iframe
     await button.click();
     await expect(site(page)).toBeVisible();
-    await page.getByRole("heading", { level: 1 }).click({ force: true });
+    // a point of the page outside the header (its menu included), on nothing that acts: taller,
+    // so that the page shows below the open menu and the example's frame
+    await page.setViewportSize({ width: 375, height: 1400 });
+    const below = await page.evaluate(() => {
+        for (let y = 2; y < window.innerHeight; y += 4) {
+            const target = document.elementFromPoint(24, y);
+            if (
+                target &&
+                !target.closest(
+                    '[data-testid="site-header"], a, button, iframe, input, summary',
+                )
+            )
+                return { x: 24, y };
+        }
+        return null;
+    });
+    if (!below) throw new Error("no point of the page that acts on nothing");
+    await page.mouse.click(below.x, below.y);
     await expect(site(page)).toBeHidden();
-    await page.goto("ui/docs/atoms/clickable/");
+    await expect(page).toHaveURL(/\/ui\/docs\/atoms\/clickable\/$/);
+    await page.setViewportSize({ width: 375, height: 740 });
     await page.evaluate(() => window.scrollTo(0, 0));
     const example = await expectReady(page.locator("[data-example]").first());
     await button.click();

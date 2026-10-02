@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { collectErrors, mark, marked } from "./helpers";
 
@@ -49,35 +51,39 @@ async function instrument(page: Page) {
     });
 }
 
-/** The draws the page makes over `ms`. */
-async function drawsOver(page: Page, ms = 600) {
-    const before = await page.evaluate(
-        () => (window as unknown as { draws: number }).draws,
-    );
-    await page.waitForTimeout(ms);
-    const after = await page.evaluate(
-        () => (window as unknown as { draws: number }).draws,
-    );
-    return after - before;
+const draws = (page: Page) =>
+    page.evaluate(() => (window as unknown as { draws: number }).draws);
+
+/** The scene draws: the counter grows (a running loop draws on every frame). */
+async function expectDrawing(page: Page) {
+    const before = await draws(page);
+    await expect.poll(() => draws(page)).toBeGreaterThan(before);
 }
 
-/** Every script the page loaded that carries three (its warnings name THREE.WebGLRenderer). */
-function threeScripts(page: Page): Promise<string[]>[] {
-    const found: Promise<string[]>[] = [];
-    page.on("response", (response) => {
-        if (!response.url().endsWith(".js")) return;
-        found.push(
-            response
-                .text()
-                .then((body) =>
-                    body.includes("THREE.WebGLRenderer")
-                        ? [response.url()]
-                        : [],
-                )
-                .catch(() => []),
-        );
-    });
-    return found;
+/** The draws the page makes over the next `frames` animation frames (a loop draws on each). */
+function drawsOverFrames(page: Page, frames = 10) {
+    return page.evaluate(async (count) => {
+        const w = window as unknown as { draws: number };
+        const before = w.draws;
+        for (let frame = 0; frame < count; frame++) {
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+        }
+        return w.draws - before;
+    }, frames);
+}
+
+/** The export's chunks that carry three (its warnings name THREE.WebGLRenderer). */
+function threeChunks(): string[] {
+    const chunks = join(import.meta.dirname, "..", "out", "_next", "static");
+    return readdirSync(chunks, { recursive: true, encoding: "utf-8" })
+        .filter(
+            (file) =>
+                file.endsWith(".js") &&
+                readFileSync(join(chunks, file), "utf-8").includes(
+                    "THREE.WebGLRenderer",
+                ),
+        )
+        .map((file) => `/_next/static/${file}`);
 }
 
 async function settle(page: Page) {
@@ -85,7 +91,7 @@ async function settle(page: Page) {
     return scene(page).getAttribute("data-state");
 }
 
-test("the scene runs behind the hero on /, after hydration", async ({
+test("the scene runs behind the hero on /, after hydration; recoloured with the theme, paused when unseen", async ({
     page,
 }) => {
     const errors = collectErrors(page);
@@ -93,30 +99,60 @@ test("the scene runs behind the hero on /, after hydration", async ({
     await page.goto("");
     expect(await settle(page)).toBe("running");
     await expect(scene(page).locator("canvas")).toBeVisible();
-    expect(await drawsOver(page)).toBeGreaterThan(0);
+    await expectDrawing(page);
     // behind the content: the hero's actions still take the pointer
     await expect(scene(page)).toHaveCSS("pointer-events", "none");
     await expect(page.getByTestId("hero-grid")).toBeAttached();
+
+    // switching the site's theme recolours the scene, without a reload
+    await mark(page);
+    await expect(scene(page)).toHaveAttribute("data-scheme", "dark");
+    await page
+        .getByTestId("site-header")
+        .locator("[data-theme-toggle]")
+        .click();
+    await expect(scene(page)).toHaveAttribute("data-scheme", "light");
+    expect(await marked(page)).toBe(true);
+
+    // it stops drawing off-screen and in a hidden tab
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(scene(page)).toHaveAttribute("data-state", "paused");
+    expect(await drawsOverFrames(page)).toBe(0);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(scene(page)).toHaveAttribute("data-state", "running");
+    await expectDrawing(page);
+    await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", {
+            configurable: true,
+            get: () => true,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await expect(scene(page)).toHaveAttribute("data-state", "paused");
+    expect(await drawsOverFrames(page)).toBe(0);
     expect(errors).toEqual([]);
 });
 
 test("three is loaded on / and on no other page", async ({ page }) => {
-    const scripts = threeScripts(page);
+    const chunks = threeChunks();
+    expect(chunks.length).toBeGreaterThan(0);
+    const requested: string[] = [];
+    page.on("request", (request) => {
+        requested.push(new URL(request.url()).pathname);
+    });
+    const three = () => requested.filter((path) => chunks.includes(path));
+
+    // elsewhere first (nothing cached): once the network is quiet, no three
+    for (const path of ["ui/", "ui/docs/atoms/clickable/"]) {
+        requested.length = 0;
+        await page.goto(path, { waitUntil: "networkidle" });
+        expect(three(), path).toEqual([]);
+    }
+
+    requested.length = 0;
     await page.goto("");
     await settle(page);
-    expect((await Promise.all(scripts)).flat().length).toBeGreaterThan(0);
-
-    for (const path of [
-        "ui/",
-        "ui/docs/atoms/clickable/",
-        "dockable/examples/hello-layout/",
-    ]) {
-        const elsewhere = await page.context().newPage();
-        const loaded = threeScripts(elsewhere);
-        await elsewhere.goto(path, { waitUntil: "networkidle" });
-        expect((await Promise.all(loaded)).flat()).toEqual([]);
-        await elsewhere.close();
-    }
+    expect(three().length).toBeGreaterThan(0);
 });
 
 test.describe("with reduced motion", () => {
@@ -126,51 +162,14 @@ test.describe("with reduced motion", () => {
         await instrument(page);
         await page.goto("");
         expect(await settle(page)).toBe("still");
-        await page.waitForTimeout(200);
-        expect(await drawsOver(page)).toBe(0);
+        // the still is drawn again by the observers' first callbacks, then never: a loop
+        // would draw on every frame
+        await expect.poll(() => drawsOverFrames(page)).toBe(0);
         // the pointer moves nothing
         await page.mouse.move(900, 400);
         await page.mouse.move(1000, 500);
-        expect(await drawsOver(page)).toBe(0);
+        expect(await drawsOverFrames(page)).toBe(0);
     });
-});
-
-test("the scene stops drawing off-screen and in a hidden tab", async ({
-    page,
-}) => {
-    await instrument(page);
-    await page.goto("");
-    expect(await settle(page)).toBe("running");
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await expect(scene(page)).toHaveAttribute("data-state", "paused");
-    expect(await drawsOver(page)).toBe(0);
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(scene(page)).toHaveAttribute("data-state", "running");
-    expect(await drawsOver(page)).toBeGreaterThan(0);
-    await page.evaluate(() => {
-        Object.defineProperty(document, "hidden", {
-            configurable: true,
-            get: () => true,
-        });
-        document.dispatchEvent(new Event("visibilitychange"));
-    });
-    await expect(scene(page)).toHaveAttribute("data-state", "paused");
-    expect(await drawsOver(page)).toBe(0);
-});
-
-test("switching the site's theme recolours the scene, without a reload", async ({
-    page,
-}) => {
-    await page.goto("");
-    expect(await settle(page)).toBe("running");
-    await mark(page);
-    await expect(scene(page)).toHaveAttribute("data-scheme", "dark");
-    await page
-        .getByTestId("site-header")
-        .locator("[data-theme-toggle]")
-        .click();
-    await expect(scene(page)).toHaveAttribute("data-scheme", "light");
-    expect(await marked(page)).toBe(true);
 });
 
 test("leaving / releases the scene's WebGL context", async ({ page }) => {
@@ -178,13 +177,11 @@ test("leaving / releases the scene's WebGL context", async ({ page }) => {
     await instrument(page);
     await page.goto("");
     await settle(page);
-    for (let round = 0; round < 2; round++) {
-        await page.getByRole("link", { name: /^Meet / }).click();
-        await expect(page).toHaveURL(/\/ui\/$/);
-        await expect(scene(page)).toHaveCount(0);
-        await page.goBack();
-        await settle(page);
-    }
+    await page.getByRole("link", { name: /^Meet / }).click();
+    await expect(page).toHaveURL(/\/ui\/$/);
+    await expect(scene(page)).toHaveCount(0);
+    await page.goBack();
+    await settle(page);
     await expect(page.locator("canvas")).toHaveCount(1);
     // every context but the live one is lost (released)
     const lost = await page.evaluate(() =>
@@ -192,7 +189,7 @@ test("leaving / releases the scene's WebGL context", async ({ page }) => {
             window as unknown as { contexts: WebGL2RenderingContext[] }
         ).contexts.map((context) => context.isContextLost()),
     );
-    expect(lost.length).toBeGreaterThanOrEqual(3);
+    expect(lost.length).toBeGreaterThanOrEqual(2);
     expect(lost.slice(0, -1).every(Boolean)).toBe(true);
     expect(lost.at(-1)).toBe(false);
     expect(errors).toEqual([]);

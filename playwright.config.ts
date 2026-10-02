@@ -4,10 +4,12 @@ const CI = Boolean(process.env.CI);
 
 /**
  * What serves out/:
- *   pages   scripts/serve.ts, the way GitHub Pages serves it (the default)
+ *   pages   scripts/serve.ts, the way GitHub Pages serves it (the default): every test.
  *   serve   `serve out` (vercel/serve, what `npx serve out` runs): "clean URLs", so /x/index.html
  *           redirects to /x/index and loses its query string — the site must never depend on
- *           such a URL (§5.1). `pnpm e2e:serve`.
+ *           such a URL (§5.1). `pnpm e2e:serve` runs only the tests tagged `@serve`: those whose
+ *           result depends on how a static server maps URLs, query strings, redirects, 404s,
+ *           content types and static files. The rest behave the same under either server.
  */
 const SERVER = process.env.WWW_E2E_SERVER === "serve" ? "serve" : "pages";
 const PORT = Number(
@@ -20,6 +22,7 @@ const PORT = Number(
 export default defineConfig({
     testDir: "e2e",
     globalSetup: "./e2e/global-setup.ts",
+    grep: SERVER === "serve" ? /@serve/ : undefined,
     fullyParallel: true,
     forbidOnly: CI,
     retries: CI ? 2 : 0,

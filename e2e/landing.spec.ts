@@ -1,11 +1,17 @@
 import { expect, test } from "@playwright/test";
-import { collectErrors, embed, expectReady, setSiteTheme } from "./helpers";
+import {
+    collectErrors,
+    embed,
+    expectReady,
+    recordMessages,
+    setSiteTheme,
+} from "./helpers";
 
 // Contract v1.1: the landing vocabulary (§3.4) and the project's footer (§3.5), the sidebar's
-// collapsible sections (§3.1), the docs pages' breadcrumb and page footer, and embeds addressed
-// by their directory (§5.1). The fixtures' landings use every piece: ui's the grid hero, the
-// numbered features and sections with an eyebrow; dockable's the {examples} token, the showcase,
-// four features across and the struck-out pills.
+// collapsible sections (§3.1), the docs pages' breadcrumb and page footer (embeds addressed by
+// their directory, §5.1: embeds.spec.ts). The fixtures' landings use every piece: ui's the grid
+// hero, the numbered features and sections with an eyebrow; dockable's the {examples} token, the
+// showcase, four features across and the struck-out pills.
 
 test("the hero: eyebrow, grid background, actions by variant and icon", async ({
     page,
@@ -38,12 +44,22 @@ test("the hero: eyebrow, grid background, actions by variant and icon", async ({
     // dockable's: no background, {examples} counted, an external ghost action
     await page.goto("dockable/");
     const other = page.getByTestId("hero");
+    await expect(other.getByRole("heading", { level: 1 })).toHaveText(
+        "Dockable panels, without a single line of CSS from us.",
+    );
     await expect(other).toHaveAttribute("data-background", "none");
     await expect(other.getByTestId("hero-grid")).toHaveCount(0);
     await expect(
-        other.getByRole("link", { name: "Browse the 13 examples" }),
-    ).toHaveAttribute("data-variant", "secondary");
+        other.getByRole("link", { name: "Read the docs" }),
+    ).toHaveAttribute("href", "/dockable/docs/getting-started/installation/");
+    const browse = other.getByRole("link", { name: "Browse the 13 examples" });
+    await expect(browse).toHaveAttribute("data-variant", "secondary");
+    await expect(browse).toHaveAttribute("href", "/dockable/examples/");
     const github = other.getByRole("link", { name: "GitHub" });
+    await expect(github).toHaveAttribute(
+        "href",
+        "https://github.com/fragiola/dockable",
+    );
     await expect(github).toHaveAttribute("data-variant", "ghost");
     await expect(github).toHaveAttribute("target", "_blank");
     await expect(github).toHaveAttribute("rel", "noreferrer noopener");
@@ -134,14 +150,21 @@ test("four features across, struck-out pills", async ({ page }) => {
     );
 });
 
-test("the showcase: the theme switcher over the demo, and See the code", async ({
+test("the showcase: a live demo, the theme switcher over it, kept whatever the site's theme, and See the code", async ({
     page,
 }) => {
+    const errors = collectErrors(page);
+    await recordMessages(page);
     await setSiteTheme(page, "light");
     await page.goto("dockable/");
     const showcase = page.locator('[data-variant="showcase"]');
     await expect(showcase).toContainText("Same markup, four themes:");
     await expectReady(showcase);
+    // no toolbar, no code panel: the theme switcher and a link to the gallery
+    await expect(showcase.getByTestId("toggle-code")).toHaveCount(0);
+    await expect(embed(showcase).getByRole("heading")).toHaveText(
+        "Hello layout",
+    );
     const options = showcase.locator("[data-theme-option]");
     await expect(options).toHaveCount(4);
     // swatches, and the page's theme as the initial one
@@ -155,12 +178,30 @@ test("the showcase: the theme switcher over the demo, and See the code", async (
         "data-example-theme",
         "terminal",
     );
+    // a theme set by the page is kept whatever the site's theme
+    await page.locator("[data-theme-toggle]:visible").first().click();
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await expect(embed(showcase).locator("html")).toHaveAttribute(
+        "data-example-theme",
+        "terminal",
+    );
     // another theme reaches the embed without a reload, and the link follows it
     await showcase.locator('[data-theme-option="paper"]').click();
     await expect(embed(showcase).locator("html")).toHaveAttribute(
         "data-example-theme",
         "paper",
     );
+    // messages arrive in order: the only theme the embed was sent is the switcher's, none for
+    // the site's dark
+    const sent = await embed(showcase)
+        .locator("html")
+        .evaluate(() =>
+            (
+                window as unknown as { messages: { type: string }[] }
+            ).messages.filter((m) => m.type === "fragiola:example:theme"),
+        );
+    expect(sent).toEqual([{ type: "fragiola:example:theme", theme: "paper" }]);
+    expect(errors).toEqual([]);
     const code = showcase.getByTestId("see-the-code");
     await expect(code).toHaveText("See the code →");
     await expect(code).toHaveAttribute(
@@ -269,14 +310,4 @@ test("a docs page: the section above the title, the next page's description belo
     await expect(page).toHaveURL(
         /\/dockable\/docs\/getting-started\/first-layout\/$/,
     );
-});
-
-test("embeds are addressed by their directory, never index.html?…", async ({
-    page,
-}) => {
-    await page.goto("dockable/docs/getting-started/first-layout/");
-    const frame = page.locator('[data-example="hello-layout"]').first();
-    await expectReady(frame);
-    const src = await frame.locator("iframe").getAttribute("src");
-    expect(src).toMatch(/^\/dockable\/embed\/react\/\?id=hello-layout&theme=/);
 });

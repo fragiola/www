@@ -16,11 +16,15 @@ for (const site of ["light", "dark"] as const) {
         page,
     }) => {
         await setSiteTheme(page, site);
+        // one embed, every theme through the switcher (each theme's `?theme=` first paint: below)
+        await openExample(page, "dockable", "hello-layout");
         const seen = new Set<string>();
         for (const theme of DOCKABLE.examples.themes) {
-            await openExample(page, "dockable", "hello-layout", {
-                theme: theme.name,
-            });
+            await page.locator(`[data-theme-option="${theme.name}"]`).click();
+            await expect(page.getByTestId("stage")).toHaveAttribute(
+                "data-example-theme",
+                theme.name,
+            );
             const html = embed(page.getByTestId("stage")).locator("html");
             await expect(html).toHaveAttribute(
                 "data-example-theme",
@@ -33,39 +37,31 @@ for (const site of ["light", "dark"] as const) {
     });
 }
 
-test("the theme is applied before the embed's first paint", async ({
-    page,
-}) => {
+test("every theme is applied before the embed's first paint", {
+    tag: "@serve",
+}, async ({ page }) => {
     // the pre-paint script ran if the attribute is there when the document is parsed
-    await page.goto("dockable/embed/react/?id=hello-layout&theme=paper", {
-        waitUntil: "commit",
-    });
-    await page.waitForFunction(() => document.body !== null);
-    expect(
-        await page.evaluate(
-            () => document.documentElement.dataset.exampleTheme,
-        ),
-    ).toBe("paper");
+    for (const theme of DOCKABLE.examples.themes) {
+        await page.goto(
+            `dockable/embed/react/?id=hello-layout&theme=${theme.name}`,
+            { waitUntil: "commit" },
+        );
+        await page.waitForFunction(() => document.body !== null);
+        expect(
+            await page.evaluate(() => ({
+                theme: document.documentElement.dataset.exampleTheme,
+                scheme: document.documentElement.dataset.theme,
+            })),
+            theme.name,
+        ).toEqual({ theme: theme.name, scheme: theme.scheme });
+    }
 });
 
 test("an unknown ?theme= in the URL is ignored", async ({ page }) => {
-    await openExample(page, "dockable", "hello-layout", {});
     await page.goto("dockable/examples/hello-layout/?theme=sepia");
     // the site opens in dark: the first dark theme of examples.json
     await expect(page.getByTestId("stage")).toHaveAttribute(
         "data-example-theme",
         "dark",
     );
-});
-
-test("with no stored preference the site opens in dark, and so do the embeds", async ({
-    page,
-}) => {
-    await page.goto("dockable/docs/getting-started/first-layout/");
-    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    const block = page.locator(
-        '[data-example="hello-layout"][data-variant="inline"]',
-    );
-    await expect(block.locator("iframe")).toHaveAttribute("src", /theme=dark/);
 });

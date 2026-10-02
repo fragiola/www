@@ -20,32 +20,27 @@ async function search(page: Page, query: string) {
     return dialog;
 }
 
-for (const [query, project] of [
-    ["popoutURL", "dockable"],
-    ["palette-danger", "ui"],
-] as const) {
-    test(`search finds "${query}" across projects`, async ({ page }) => {
-        const errors = collectErrors(page);
-        const dialog = await search(page, query);
-        await expect(
-            dialog
-                .getByRole("button")
-                .filter({ hasText: new RegExp(query, "i") })
-                .first(),
-        ).toBeVisible();
-        await page.keyboard.press("Enter");
-        await expect(page).toHaveURL(new RegExp(`/${project}/docs/.+/`));
-        await expect(page.getByRole("dialog")).toBeHidden();
-        await expect(page.locator("body")).toContainText(
-            new RegExp(query, "i"),
-        );
-        expect(errors).toEqual([]);
-    });
-}
+// from dockable's docs, a term of ui's: the search crosses projects (the index itself holds
+// every project's terms, below)
+test('search finds "palette-danger" across projects', async ({ page }) => {
+    const errors = collectErrors(page);
+    const dialog = await search(page, "palette-danger");
+    await expect(
+        dialog
+            .getByRole("button")
+            .filter({ hasText: /palette-danger/i })
+            .first(),
+    ).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/ui\/docs\/.+\//);
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.locator("body")).toContainText(/palette-danger/i);
+    expect(errors).toEqual([]);
+});
 
-test("the static search index covers every project and the landings", async ({
-    request,
-}) => {
+test("the static search index covers every project and the landings", {
+    tag: "@serve",
+}, async ({ request }) => {
     const response = await request.get("api/search");
     expect(response.ok()).toBe(true);
     const index = await response.text();
@@ -69,6 +64,7 @@ test("pages render without errors", async ({ page }) => {
         "dockable/docs/getting-started/first-layout/",
         "dockable/docs/guides/popouts/",
         "dockable/docs/guides/vue/",
+        "data-grid/docs/getting-started/first-grid/",
     ]) {
         await page.goto(path);
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -76,7 +72,9 @@ test("pages render without errors", async ({ page }) => {
     expect(errors).toEqual([]);
 });
 
-test("/<slug>/docs opens the first page", async ({ page }) => {
+test("/<slug>/docs opens the first page", { tag: "@serve" }, async ({
+    page,
+}) => {
     await page.goto("ui/docs/");
     await expect(page).toHaveURL(/\/ui\/docs\/getting-started\/installation\//);
 });
@@ -116,6 +114,7 @@ test("an Example card links the gallery", async ({ page }) => {
     const card = page.locator('a[data-example-link="popout"]');
     await expect(card).toContainText("Open the live example");
     await expect(card).toHaveAttribute("href", "/dockable/examples/popout/");
+    // client-side, from the docs' layout into the gallery's
     await card.click();
     await expect(page).toHaveURL(/\/dockable\/examples\/popout\//);
     await expectReady(page.getByTestId("stage"));
@@ -147,10 +146,11 @@ test("the vocabulary: Callout title, Steps, Tabs, code block titles, Cards", asy
     );
 });
 
-test("the sidebar follows the framework, with sections for one framework only", async ({
+test("the sidebar follows the framework, with sections for one framework only; an inline example missing in it says so", async ({
     page,
 }) => {
-    await page.goto("dockable/docs/getting-started/installation/");
+    await page.goto("dockable/docs/guides/popouts/");
+    await expectReady(page.locator('[data-example="popout"]'));
     const sidebar = page.locator("#nd-sidebar");
     await expect(sidebar.getByRole("link", { name: "Popouts" })).toBeVisible();
     await expect(
@@ -164,6 +164,12 @@ test("the sidebar follows the framework, with sections for one framework only", 
         sidebar.getByRole("link", { name: "Dockable for Vue" }),
     ).toBeVisible();
     await expect(sidebar.getByRole("link", { name: "Popouts" })).toHaveCount(0);
+    // an inline example missing in the selected framework says so
+    await expect(
+        page.locator(
+            '[data-example="popout"][data-testid="missing-framework"]',
+        ),
+    ).toContainText("not available for Vue yet");
     // <Framework name="vue"> shows its children, <Example framework="vue"> its embed
     await sidebar.getByRole("link", { name: "Dockable for Vue" }).click();
     await expect(page.getByText("You are reading the Vue guide")).toBeVisible();
@@ -171,19 +177,6 @@ test("the sidebar follows the framework, with sections for one framework only", 
     // a project with one framework has no select
     await page.goto("ui/docs/atoms/clickable/");
     await expect(page.getByTestId("framework-select")).toHaveCount(0);
-});
-
-test("an inline example missing in the selected framework says so", async ({
-    page,
-}) => {
-    await page.goto("dockable/docs/guides/popouts/");
-    await expectReady(page.locator('[data-example="popout"]'));
-    await page.getByTestId("framework-select").first().selectOption("vue");
-    await expect(
-        page.locator(
-            '[data-example="popout"][data-testid="missing-framework"]',
-        ),
-    ).toContainText("not available for Vue yet");
 });
 
 test("the export has no broken internal link", () => {

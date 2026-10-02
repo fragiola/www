@@ -30,14 +30,17 @@ refuses it when a project's checkout has changed since.
 |---|---|
 | `pnpm build` | the contract checks, then `out/` (a broken link fails here, with its file and line) |
 | `pnpm test` | unit tests (the contract checks, the build refusing what it must) |
-| `pnpm e2e:build && pnpm e2e` | the browser suite, against `out/` built from the fixtures (`pnpm e2e:serve`: served by `serve`) |
+| `pnpm e2e:build && pnpm e2e` | the browser suite, against `out/` built from the fixtures (`pnpm e2e:serve`: its `@serve` tests, served by `serve`) |
 | `pnpm serve` · `pnpm measure` | serve `out/` like Pages; weigh pages |
 
 ## Deploying
 
 `.github/workflows/deploy-pages.yml` tests (against the fixtures), clones every project at its
 `ref`, runs their exports, builds and publishes. It runs on a push to `main`, daily at 05:17 UTC,
-on demand, and when a project's CI dispatches `project-updated`. None of it is set up yet; in
+on demand, and when a project's CI dispatches `project-updated`. The tests (Biome, TypeScript,
+Vitest, the browser suite in shards) and the build run side by side, and the deploy waits for all
+of them; a dispatch or the schedule only builds and deploys (www's own code did not change). Only
+`main` deploys: a run on another branch tests and builds. None of it is set up yet; in
 order:
 
 1. **The repository.** Create `fragiola/www` on GitHub (public, like the projects: the workflow

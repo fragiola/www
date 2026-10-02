@@ -13,14 +13,16 @@
 // (after a pull or a merge its node_modules may be missing or behind its lockfile), and with
 // `--install` for `$FRAGIOLA_PROJECTS_DIR` (CI passes it).
 //
+// The projects run concurrently, each one's output printed as a block when it is done.
+//
 // .sources/.origin.json records, per project, the checkout's commit and uncommitted changes as
 // they were exported: `pnpm build` refuses an export its checkout has moved away from.
 
-import { execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { CONTRACT_REVISION } from "../lib/contract/types.ts";
+import { CONTRACT_REVISION, type ProjectEntry } from "../lib/contract/types.ts";
 import { validateAll } from "../lib/contract/validate.ts";
 import {
     checkoutOf,
@@ -59,46 +61,87 @@ const origin: Origin = {
     projects: previous?.origin === "projects" ? previous.projects : {},
 };
 
-let failed = false;
-for (const project of projects) {
+interface Step {
+    ok: boolean;
+    output: string;
+}
+
+/** Runs a command in a project's checkout, its output (stdout and stderr, in order) kept. */
+function run(dir: string, args: string[]): Promise<Step> {
+    return new Promise((resolve) => {
+        const child = spawn("pnpm", args, {
+            cwd: dir,
+            env: childEnv,
+            stdio: ["ignore", "pipe", "pipe"],
+        });
+        const chunks: Buffer[] = [];
+        child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+        child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk));
+        const output = () => Buffer.concat(chunks).toString();
+        child.on("error", (error) =>
+            resolve({ ok: false, output: `${output()}${error.message}\n` }),
+        );
+        child.on("close", (code) =>
+            resolve({ ok: code === 0, output: output() }),
+        );
+    });
+}
+
+const install = values.install || !process.env.FRAGIOLA_PROJECTS_DIR;
+
+/**
+ * One project: install, export, then its block of output, printed whole so that the projects
+ * running side by side never interleave.
+ */
+async function sync(project: ProjectEntry): Promise<boolean> {
     const dir = checkoutOf(project);
     if (!dir || !existsSync(join(dir, "package.json"))) {
         console.error(
             `✗ ${project.slug}: no repo at ${dir ?? "(no localPath in projects.json)"}`,
         );
-        failed = true;
-        continue;
+        return false;
     }
     const out = join(SOURCES, project.slug);
-    console.log(`\n▶ ${project.slug} (${dir})`);
+    // its output comes as a block when it is done: say now that it started
+    console.log(
+        `… ${project.slug}: ${install ? "install, then " : ""}site:export`,
+    );
     const started = performance.now();
-    const install = values.install || !process.env.FRAGIOLA_PROJECTS_DIR;
+    const print = (steps: Step[]) =>
+        process.stdout.write(
+            `\n▶ ${project.slug} (${dir})\n${steps.map((s) => s.output).join("")}`,
+        );
+    const steps: Step[] = [];
     if (install) {
-        try {
-            execFileSync("pnpm", ["install", "--frozen-lockfile"], {
-                cwd: dir,
-                stdio: "inherit",
-                env: childEnv,
-            });
-        } catch {
+        // no TTY (the output is piped): purge an outdated node_modules without asking, as pnpm
+        // does in CI, rather than abort
+        const step = await run(dir, [
+            "install",
+            "--frozen-lockfile",
+            "--config.confirm-modules-purge=false",
+        ]);
+        steps.push(step);
+        if (!step.ok) {
+            print(steps);
             console.error(
                 `✗ ${project.slug}: \`pnpm install --frozen-lockfile\` failed in ${dir} (is its lockfile up to date?)`,
             );
-            failed = true;
-            continue;
+            return false;
         }
     }
-    try {
-        execFileSync(
-            "pnpm",
-            ["site:export", "--base", `/${project.slug}`, "--out", out],
-            { cwd: dir, stdio: "inherit", env: childEnv },
-        );
-    } catch {
+    const step = await run(dir, [
+        "site:export",
+        "--base",
+        `/${project.slug}`,
+        "--out",
+        out,
+    ]);
+    steps.push(step);
+    print(steps);
+    if (!step.ok) {
         console.error(`✗ ${project.slug}: site:export failed`);
         delete origin.projects[project.slug];
-        failed = true;
-        continue;
+        return false;
     }
     origin.projects[project.slug] = {
         dir,
@@ -107,7 +150,12 @@ for (const project of projects) {
     };
     const seconds = ((performance.now() - started) / 1000).toFixed(1);
     console.log(`✓ ${project.slug} → ${label(out)} in ${seconds}s`);
+    return true;
 }
+
+// The projects run side by side: each writes only to its own checkout and .sources/<slug>, and
+// pnpm's store is safe for concurrent installs. The origin is written once, after all of them.
+const failed = (await Promise.all(projects.map(sync))).includes(false);
 writeOrigin(SOURCES, origin);
 if (failed) process.exit(1);
 
