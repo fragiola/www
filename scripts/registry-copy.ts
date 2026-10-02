@@ -1,5 +1,5 @@
 // `pnpm registry:copy [--check]` — the Fragiola UI components the site itself is built with (the
-// header's navigation menu), copied from ui's registry the way a consumer installs them: each
+// header's navigation menu, the gallery's sidebar), copied from ui's registry the way a consumer installs them: each
 // item of ITEMS and its registryDependencies, from the export in .sources/ui/r, written at its
 // `target` with the registry's aliases resolved as a consumer's components.json would:
 //
@@ -8,7 +8,8 @@
 //   @lib/…         → lib/…
 //
 // The files are the registry's content, byte for byte: never edit them here (a fix belongs in
-// ../ui), re-copy them. The theme and the palettes are not copied: prepare:site vendors them
+// ../ui), re-copy them. The theme and the palettes (registry:theme/style, and the palettes'
+// registry:file items, whose files land under styles/) are not copied: prepare:site vendors them
 // into styles/fragiola/ on every build. `--check` writes nothing and fails when a copy differs
 // from the registry (after a `pnpm sources:sync` that brought a newer ui).
 
@@ -18,7 +19,7 @@ import { parseArgs } from "node:util";
 import type { RegistryItem } from "../lib/contract/types.ts";
 import { label, PROJECT_SOURCES, ROOT, readJson } from "./projects.ts";
 
-const ITEMS = ["navigation-menu"];
+const ITEMS = ["navigation-menu", "sidebar"];
 
 const ALIASES: [string, string][] = [
     ["@ui/", "components/ui/"],
@@ -57,7 +58,12 @@ for (let name = queue.shift(); name; name = queue.shift()) {
         );
     }
     const item = readJson<RegistryItem>(file);
-    if (item.type === "registry:theme" || item.type === "registry:style") {
+    if (
+        item.type === "registry:theme" ||
+        item.type === "registry:style" ||
+        (item.files?.length &&
+            item.files.every((file) => file.target?.startsWith("styles/")))
+    ) {
         continue;
     }
     copied.push(name);
