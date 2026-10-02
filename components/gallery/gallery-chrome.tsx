@@ -1,13 +1,15 @@
 "use client";
 
-import { PanelLeft, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import {
     createContext,
     type ReactNode,
+    type RefObject,
     useContext,
     useEffect,
+    useLayoutEffect,
+    useRef,
     useState,
 } from "react";
 import { defaultTheme, useSiteScheme } from "@/components/example-theme";
@@ -17,22 +19,25 @@ import {
     useFramework,
 } from "@/components/framework";
 import { SiteHeader, type SiteHeaderProps } from "@/components/site-header";
+import { Sidebar, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, Gallery, GalleryExample } from "@/lib/projects";
 import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 
 // The example gallery's chrome (§4), ported from dockable's docs (components/site/
-// examples-chrome.tsx) and made generic: the list on the left, by level, under the site header
-// (components/site-header.tsx, the same as on every page, its leading slot the list's toggle
-// on small screens). It is
-// the gallery's layout, so it stays mounted while you move between examples: the list keeps its
-// scroll and its filter, and the theme, the framework and the code panel their state. Plain
-// markup and Fragiola palettes: no project's package is used to draw it.
+// examples-chrome.tsx) and made generic, under the site header (components/site-header.tsx, the
+// same as on every page). The list of examples, by level, is Fragiola UI's Sidebar
+// (components/ui/sidebar.tsx, copied from ui's registry by `pnpm registry:copy`): a column that
+// collapses off canvas on desktop (the Trigger in the header's leading slot, Ctrl/⌘+B), its state
+// remembered, and a Drawer below 42rem of width. It is the gallery's layout, so it stays mounted
+// while you move between examples: the list keeps its scroll and its filter, and the theme, the
+// framework and the code panel their state. No project's package is used to draw it.
 //
 // URL state: ?theme=<name> (an explicit choice; without one the example follows the site's
 // scheme), ?code=1, ?framework=<name> (when not the project's default). The chosen theme is
-// remembered per project; the framework choice is site-wide (components/framework.tsx).
+// remembered per project; the framework choice is site-wide (components/framework.tsx); the
+// list's open state is the reader's (lib/storage.ts).
 
 export interface ShellState {
     /** the theme the reader chose; null follows the site's scheme */
@@ -105,15 +110,24 @@ function ExampleList({
     current,
     href,
     framework,
-    onNavigate,
+    filter,
+    setFilter,
+    scroll,
 }: {
     gallery: Gallery;
     current: string;
     href: (id: string) => string;
     framework: string;
-    onNavigate: () => void;
+    /** the filter and the scroll belong to the layout: the Drawer unmounts the list on close */
+    filter: string;
+    setFilter: (filter: string) => void;
+    scroll: RefObject<number>;
 }) {
-    const [filter, setFilter] = useState("");
+    const { setOpenMobile } = useSidebar();
+    const scroller = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        if (scroller.current) scroller.current.scrollTop = scroll.current;
+    }, [scroll]);
     const needle = filter.trim().toLowerCase();
     const visible = gallery.examples.filter((example) => {
         if (!needle) return true;
@@ -129,83 +143,122 @@ function ExampleList({
         items: visible.filter((example) => example.level === level.id),
     }));
 
+    // a landmark of its own, the same on the desktop column and in the Drawer
     return (
-        <div className="flex h-full min-h-0 flex-col">
-            <div className="p-3">
-                <label className="flex h-8 items-center gap-2 rounded-md border border-palette-line bg-palette-soft px-2 focus-within:ring-2 focus-within:ring-palette-ring">
-                    <Search
-                        aria-hidden
-                        className="size-4 text-palette-accent/85"
-                    />
-                    <span className="sr-only">Filter examples</span>
-                    <input
-                        type="search"
-                        value={filter}
-                        placeholder="Filter examples"
-                        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-palette-accent/85"
-                        onChange={(event) => setFilter(event.target.value)}
-                    />
-                </label>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+        <nav aria-label="Examples" className="flex h-full min-h-0 flex-col">
+            <Sidebar.Header>
+                <Sidebar.Input
+                    type="search"
+                    value={filter}
+                    aria-label="Filter examples"
+                    placeholder="Filter examples"
+                    onChange={(event) => setFilter(event.target.value)}
+                />
+            </Sidebar.Header>
+            <Sidebar.Content
+                ref={scroller}
+                className="pb-2"
+                onScroll={(event) => {
+                    scroll.current = event.currentTarget.scrollTop;
+                }}
+            >
                 {groups.map(({ level, items }) =>
                     items.length === 0 ? null : (
-                        <section
+                        <Sidebar.Group
                             key={level.id}
-                            className="mb-4"
+                            role="region"
                             aria-labelledby={`level-${level.id}`}
                         >
-                            <h2
+                            <Sidebar.GroupLabel
                                 id={`level-${level.id}`}
-                                className="flex items-center justify-between px-2 pb-1 font-semibold text-palette-accent/85 text-xs uppercase tracking-wide"
+                                // the level title and its count, a heading
+                                render={(props) => <h2 {...props} />}
                             >
                                 {level.title}
-                                <span className="font-normal">
+                                <span className="ms-auto tabular-nums">
                                     {items.length}
                                 </span>
-                            </h2>
-                            <ul>
-                                {items.map((example) => {
-                                    const { variant, available } = variantFor(
-                                        example,
-                                        framework,
-                                    );
-                                    return (
-                                        <li key={example.id}>
-                                            <Link
-                                                href={href(example.id)}
-                                                aria-current={
-                                                    example.id === current
-                                                        ? "page"
-                                                        : undefined
-                                                }
-                                                data-missing={
-                                                    available ? undefined : ""
-                                                }
-                                                onClick={onNavigate}
-                                                className="block rounded-md px-2 py-1.5 text-palette-accent/85 text-sm outline-none hover:bg-palette-soft hover:text-palette-contrast focus-visible:ring-2 focus-visible:ring-palette-ring aria-[current=page]:bg-palette-soft aria-[current=page]:font-medium aria-[current=page]:text-palette-contrast data-missing:opacity-60"
-                                            >
-                                                {variant.title}
-                                                {available ? null : (
-                                                    <span className="sr-only">
-                                                        {` (not in ${frameworkName(framework)})`}
+                            </Sidebar.GroupLabel>
+                            <Sidebar.GroupContent>
+                                <Sidebar.Menu>
+                                    {items.map((example) => {
+                                        const { variant, available } =
+                                            variantFor(example, framework);
+                                        const active = example.id === current;
+                                        return (
+                                            <Sidebar.MenuItem key={example.id}>
+                                                <Sidebar.MenuButton
+                                                    render={
+                                                        <Link
+                                                            href={href(
+                                                                example.id,
+                                                            )}
+                                                        />
+                                                    }
+                                                    isActive={active}
+                                                    aria-current={
+                                                        active
+                                                            ? "page"
+                                                            : undefined
+                                                    }
+                                                    data-missing={
+                                                        available
+                                                            ? undefined
+                                                            : ""
+                                                    }
+                                                    // choosing one closes the Drawer
+                                                    onClick={() =>
+                                                        setOpenMobile(false)
+                                                    }
+                                                    className="data-missing:opacity-60"
+                                                >
+                                                    <span className="truncate">
+                                                        {variant.title}
                                                     </span>
-                                                )}
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </section>
+                                                    {available ? null : (
+                                                        <span className="sr-only">
+                                                            {` (not in ${frameworkName(framework)})`}
+                                                        </span>
+                                                    )}
+                                                </Sidebar.MenuButton>
+                                            </Sidebar.MenuItem>
+                                        );
+                                    })}
+                                </Sidebar.Menu>
+                            </Sidebar.GroupContent>
+                        </Sidebar.Group>
                     ),
                 )}
                 {visible.length === 0 ? (
-                    <p className="px-2 text-palette-accent/85 text-sm">
+                    <p className="px-4 text-palette-accent/85 text-sm">
                         No example matches.
                     </p>
                 ) : null}
-            </div>
-        </div>
+            </Sidebar.Content>
+        </nav>
+    );
+}
+
+/** The header's leading control: the list's toggle, a Drawer below 42rem. */
+function ListTrigger() {
+    const { isMobile, open, openMobile } = useSidebar();
+    return (
+        <Sidebar.Trigger
+            aria-label="Examples list"
+            aria-expanded={isMobile ? openMobile : open}
+        />
+    );
+}
+
+/** The site header, its leading slot the list's toggle (inside the Provider: it needs it). */
+function GalleryHeader(header: SiteHeaderProps) {
+    const { setOpenMobile } = useSidebar();
+    return (
+        <SiteHeader
+            {...header}
+            onMenuOpen={() => setOpenMobile(false)}
+            leading={<ListTrigger />}
+        />
     );
 }
 
@@ -228,17 +281,38 @@ function Chrome({
         code: false,
     });
     const [ready, setReady] = useState(false);
-    const [navOpen, setNavOpen] = useState(false);
+    const [listOpen, setListOpen] = useState(true);
+    const [settled, setSettled] = useState(false);
+    const [filter, setFilter] = useState("");
+    const scroll = useRef(0);
 
     // the URL and storage are client-only: read them once mounted
     useEffect(() => {
         setShellState(readState(gallery));
+        setListOpen(readStored(STORAGE_KEYS.examplesSidebar) !== "false");
         const asked = new URLSearchParams(window.location.search).get(
             "framework",
         );
         if (asked && project.frameworks.includes(asked)) setFramework(asked);
         setReady(true);
     }, [gallery, project.frameworks]);
+
+    // the remembered state is painted without the slide; a toggle slides from then on. Until
+    // then a collapsed list was painted by CSS, from a mark the gallery's layout put on <html>
+    // before the list was parsed (lib/storage.ts): React has it now, the mark goes.
+    useEffect(() => {
+        if (!ready) return;
+        const frame = requestAnimationFrame(() => {
+            delete document.documentElement.dataset.examplesList;
+            setSettled(true);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [ready]);
+
+    const onListOpenChange = (open: boolean) => {
+        setListOpen(open);
+        writeStored(STORAGE_KEYS.examplesSidebar, String(open));
+    };
 
     // keep the URL (and the remembered theme) in step with the state, on every example
     // biome-ignore lint/correctness/useExhaustiveDependencies: a new example has a new URL to update
@@ -267,52 +341,34 @@ function Chrome({
 
     return (
         <ShellContext value={context}>
-            <div className="flex h-dvh flex-col bg-palette-base text-palette-contrast">
-                <SiteHeader
-                    {...header}
-                    onMenuOpen={() => setNavOpen(false)}
-                    leading={
-                        <button
-                            type="button"
-                            aria-label="Examples list"
-                            aria-expanded={navOpen}
-                            className={cn(iconButton, "md:hidden")}
-                            onClick={() => setNavOpen((open) => !open)}
-                        >
-                            <PanelLeft aria-hidden className="size-4" />
-                        </button>
-                    }
-                />
-
-                <div className="relative flex min-h-0 flex-1">
-                    <nav
-                        aria-label="Examples"
-                        data-open={navOpen ? "" : undefined}
-                        className="palette-surface absolute inset-y-0 start-0 z-40 hidden w-72 border-palette-line border-e bg-palette-base data-open:block md:static md:block md:w-64 md:shrink-0"
+            <Sidebar.Provider
+                open={listOpen}
+                onOpenChange={onListOpenChange}
+                className="h-dvh min-h-0 flex-col text-palette-contrast"
+            >
+                <GalleryHeader {...header} />
+                <div className="flex min-h-0 flex-1">
+                    {/* the row's height, under the header: nothing scrolls the page */}
+                    <Sidebar.Root
+                        collapsible="offcanvas"
+                        className={cn("h-full", !settled && "transition-none")}
                     >
                         <ExampleList
                             gallery={gallery}
                             current={current}
                             href={href}
                             framework={framework}
-                            onNavigate={() => setNavOpen(false)}
+                            filter={filter}
+                            setFilter={setFilter}
+                            scroll={scroll}
                         />
-                    </nav>
-
-                    {children}
-
-                    {navOpen ? (
-                        <button
-                            type="button"
-                            aria-label="Close the examples list"
-                            className="absolute inset-0 z-30 bg-scrim md:hidden"
-                            onClick={() => setNavOpen(false)}
-                        >
-                            <X aria-hidden className="sr-only" />
-                        </button>
-                    ) : null}
+                        <Sidebar.Rail />
+                    </Sidebar.Root>
+                    <Sidebar.Inset className="min-h-0 flex-row">
+                        {children}
+                    </Sidebar.Inset>
                 </div>
-            </div>
+            </Sidebar.Provider>
         </ShellContext>
     );
 }

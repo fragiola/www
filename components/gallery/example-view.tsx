@@ -20,8 +20,8 @@ const CodePanel = dynamic(
 // One example in the gallery (§4), ported from dockable's docs (components/site/
 // examples-shell.tsx): its title, level, description and features, the toolbar (theme, framework,
 // reset, fullscreen, code), the live example in the centre (the project's embed app in an iframe,
-// §5) and the code on the right. The list around it is the gallery's layout (gallery-chrome.tsx),
-// which stays mounted between examples.
+// §5) and the code on the right, both inside the Sidebar's Inset (the page's <main>). The list
+// around it is the gallery's layout (gallery-chrome.tsx), which stays mounted between examples.
 
 function FrameworkSwitcher({
     frameworks,
@@ -96,7 +96,7 @@ export function ExampleView({ id }: { id: string }) {
 
     return (
         <>
-            <main className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex flex-wrap items-start gap-x-4 gap-y-2 border-palette-line border-b px-4 py-3">
                     <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -235,7 +235,7 @@ export function ExampleView({ id }: { id: string }) {
                         )}
                     </div>
                 </div>
-            </main>
+            </div>
 
             <aside
                 id="example-code"

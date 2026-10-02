@@ -15,7 +15,8 @@ import {
 // The gallery (§4), ported from dockable's docs e2e/shell.spec.ts: navigation, theme and code
 // state in the URL, the code panel's files and copy buttons, reset, fullscreen, the small-screen
 // drawers, the persistent list. Plus what the generic gallery adds: the framework switcher, an
-// example missing in a framework, the theme remembered per project and following the site.
+// example missing in a framework, the theme remembered per project and following the site, and
+// the list on Fragiola UI's Sidebar (collapsible on desktop, remembered, a Drawer when narrow).
 
 const first = DOCKABLE.ordered[0];
 const last = DOCKABLE.ordered.at(-1);
@@ -251,6 +252,102 @@ test("small screens get drawers for the list and the code", async ({
     await expect(panel).toBeHidden();
 });
 
+test("on desktop the list collapses from the header or Ctrl+B, and stays as the reader left it", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id);
+    const list = page.getByRole("navigation", { name: "Examples" });
+    const trigger = page
+        .getByTestId("site-header")
+        .getByRole("button", { name: "Examples list" });
+    const stage = page.getByTestId("stage");
+    const width = async () => (await stage.boundingBox())?.width ?? 0;
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const open = await width();
+
+    // the Sidebar's column slides away, out of reach, and the stage takes its room
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(list).toBeHidden();
+    await expect.poll(width).toBeGreaterThan(open + 200);
+
+    // remembered across a reload and another example
+    await page.reload();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(list).toBeHidden();
+    await page.goto(`dockable/examples/${last.id}/`);
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    // Ctrl+B brings it back, except while typing in a field
+    await page.keyboard.press("Control+b");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(list).toBeVisible();
+    await expect(
+        list.getByRole("link", { name: last.title, exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    await list.getByRole("searchbox").focus();
+    await page.keyboard.press("Control+b");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(
+        await page.evaluate(() =>
+            localStorage.getItem("@fragiola:examples-sidebar"),
+        ),
+    ).toBe("true");
+});
+
+test("a collapsed list is painted collapsed by the static page, before any script of the site", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() =>
+        localStorage.setItem("@fragiola:examples-sidebar", "false"),
+    );
+    // no hydration: what shows is the static HTML and its inline scripts
+    await page.route("**/_next/static/chunks/**/*.js", (route) =>
+        route.abort(),
+    );
+    await page.goto(`dockable/examples/${first.id}/`);
+    await expect(page.locator("html")).toHaveAttribute(
+        "data-examples-list",
+        "collapsed",
+    );
+    const column = page.locator('[data-slot="sidebar"][data-state]');
+    expect((await column.boundingBox())?.width).toBe(0);
+    await expect(
+        page.getByRole("navigation", { name: "Examples" }),
+    ).toBeHidden();
+});
+
+test("small screens: the Drawer keeps the filter and the scroll between openings", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 400 });
+    await openExample(page, "dockable", first.id);
+    const trigger = page.getByRole("button", { name: "Examples list" });
+    const list = page.getByRole("navigation", { name: "Examples" });
+    await trigger.click();
+    const scroller = list.locator('[data-slot="sidebar-content"]');
+    await scroller.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+    });
+    const scrolled = await scroller.evaluate((element) => element.scrollTop);
+    expect(scrolled).toBeGreaterThan(0);
+    await list.getByRole("link", { name: last.title, exact: true }).click();
+    await expect(list).toBeHidden();
+    await trigger.click();
+    await expect(list).toBeVisible();
+    expect(await scroller.evaluate((element) => element.scrollTop)).toBe(
+        scrolled,
+    );
+    await list.getByRole("searchbox").fill("maximizeToggle");
+    await list.getByRole("link", { name: "Maximize" }).click();
+    await expect(list).toBeHidden();
+    await trigger.click();
+    await expect(list.getByRole("searchbox")).toHaveValue("maximizeToggle");
+    await expect(list.getByRole("link")).toHaveText(["Maximize"]);
+});
+
 test("fullscreen lays the stage over the page, and Escape restores it", async ({
     page,
 }) => {
@@ -277,7 +374,7 @@ test("the list keeps its scroll, the filter and the theme while moving between e
     await page.setViewportSize({ width: 1280, height: 420 });
     await openExample(page, "dockable", first.id, { theme: "paper" });
     const list = page.getByRole("navigation", { name: "Examples" });
-    const scroller = list.locator(".overflow-y-auto");
+    const scroller = list.locator('[data-slot="sidebar-content"]');
     await mark(page);
 
     await scroller.evaluate((element) => {

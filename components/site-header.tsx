@@ -17,7 +17,7 @@ import { cn } from "@/lib/cn";
 // The Projects menu is Fragiola UI's navigation-menu (components/ui/, copied from ui's registry
 // by `pnpm registry:copy`), its links Next links: moving between projects is client-side. Below
 // `md` the same entries collapse into a menu. `leading` is a slot before the wordmark (the
-// gallery's examples-list toggle).
+// gallery's examples-list toggle, the Sidebar's Trigger).
 
 export interface HeaderProject {
     slug: string;
@@ -418,7 +418,7 @@ export function SiteHeader({
     className,
 }: SiteHeaderProps & {
     leading?: ReactNode;
-    /** the small-screen menu opened: the gallery closes its examples list */
+    /** the small-screen menu opened: the gallery closes its examples Drawer */
     onMenuOpen?: () => void;
     className?: string;
 }) {

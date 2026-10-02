@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    examplesListScript,
     LEGACY_KEYS,
     STORAGE_KEYS,
     storageMigrationScript,
@@ -98,5 +99,25 @@ describe("the migration script", () => {
         expect(() =>
             new Function("window", storageMigrationScript())(window),
         ).not.toThrow();
+    });
+});
+
+describe("the gallery list's script", () => {
+    function mark(stored: string | null): string | undefined {
+        const storage = new MemoryStorage();
+        if (stored !== null)
+            storage.setItem(STORAGE_KEYS.examplesSidebar, stored);
+        const documentElement = { dataset: {} as Record<string, string> };
+        new Function("window", "document", examplesListScript())(
+            { localStorage: storage },
+            { documentElement },
+        );
+        return documentElement.dataset.examplesList;
+    }
+
+    it("marks <html> only for a list the reader collapsed", () => {
+        expect(mark("false")).toBe("collapsed");
+        expect(mark("true")).toBeUndefined();
+        expect(mark(null)).toBeUndefined();
     });
 });

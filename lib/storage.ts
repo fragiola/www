@@ -47,6 +47,16 @@ export function writeStored(key: string, value: string): void {
 }
 
 /**
+ * The inline script that marks <html> when the reader collapsed the gallery's list
+ * (`data-examples-list="collapsed"`), run by the gallery's layout before the list is parsed: the
+ * static page paints the list collapsed before hydration, and the gallery takes the mark away once
+ * React holds the state (components/gallery/gallery-chrome.tsx, app/globals.css).
+ */
+export function examplesListScript(): string {
+    return `(function(){try{if(window.localStorage.getItem(${JSON.stringify(STORAGE_KEYS.examplesSidebar)})==="false")document.documentElement.dataset.examplesList="collapsed"}catch(e){}})();`;
+}
+
+/**
  * The inline script that moves each legacy key to its new one: copied when the new key is not
  * set (a newer choice wins), then removed. Idempotent, and silent when storage throws. Plain
  * ES2015, written once here so the page and the tests run the same text.
