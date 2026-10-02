@@ -49,7 +49,9 @@ Do not "fix" these.
    overlay. Behaviour changes go through its specs (`e2e/shell.spec.ts`), which are ported too.
    Its header is not its own: it is the site header, as on every page (rule 9). Its list is
    Fragiola UI's Sidebar (rule 3): collapsed off canvas on desktop from the header's leading
-   slot or Ctrl/⌘+B, the state remembered, a Drawer below 42rem.
+   slot or Ctrl/⌘+B, the state remembered, a Drawer below 42rem. From `md` the code panel is
+   resizable (`components/resizable.tsx`, shadcn's over `react-resizable-panels`, in palette
+   roles), its width remembered; below `md` it is the overlay it always was.
 7. **The framework choice is site-wide** (`localStorage["@fragiola:framework"]`, `?framework=` in
    the gallery). An example missing in the chosen framework says so; it never disappears. Every
    key the site stores starts with `@fragiola:` and is named in `lib/storage.ts` only; the keys
@@ -114,6 +116,7 @@ app/                        / (organization), /[project] (landing), /[project]/d
 components/site-header.tsx  the one header of every page (rule 9)
 components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's registry; never edited
 components/gallery/         the gallery: chrome (layout, the list on ui's Sidebar), example view (page)
+components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one
 components/example-frame.tsx  the iframe side of §5
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)

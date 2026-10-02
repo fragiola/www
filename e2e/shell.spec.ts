@@ -348,6 +348,154 @@ test("small screens: the Drawer keeps the filter and the scroll between openings
     await expect(list.getByRole("link")).toHaveText(["Maximize"]);
 });
 
+test("on desktop the code panel is resized by its handle, by pointer or keyboard, and keeps its width", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const handle = page.getByRole("separator", { name: "Resize the code" });
+    const stage = page.getByTestId("stage");
+    const width = async () => (await panel.boundingBox())?.width ?? 0;
+    await expect(panel).toBeVisible();
+    await expect(handle).toBeVisible();
+    const before = await width();
+
+    // dragged 200px towards the stage: the code is 200px wider, the stage narrower
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("no handle");
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const stageBefore = (await stage.boundingBox())?.width ?? 0;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x - 100, y, { steps: 5 });
+    await page.mouse.move(x - 200, y, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(width).toBeGreaterThan(before + 190);
+    expect((await stage.boundingBox())?.width ?? 0).toBeLessThan(
+        stageBefore - 190,
+    );
+
+    // the keyboard moves it too
+    const dragged = await width();
+    await handle.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect.poll(width).toBeGreaterThan(dragged);
+    const resized = await width();
+    expect(
+        Number(
+            await page.evaluate(() =>
+                localStorage.getItem("@fragiola:code-panel-width"),
+            ),
+        ),
+    ).toBeGreaterThan(0);
+
+    // kept: on another example, closed and reopened, after a reload
+    const near = (value: number) => Math.abs(value - resized) < 3;
+    await page
+        .getByRole("navigation", { name: "Examples" })
+        .getByRole("link", { name: last.title, exact: true })
+        .click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        last.title,
+    );
+    await expect.poll(async () => near(await width())).toBe(true);
+    await page.getByTestId("toggle-code").click();
+    await expect(panel).toBeHidden();
+    await expect(handle).toBeHidden();
+    await page.getByTestId("toggle-code").click();
+    await expect.poll(async () => near(await width())).toBe(true);
+    await page.reload();
+    await expect.poll(async () => near(await width())).toBe(true);
+
+    // bounded: the stage keeps 30% of the row, the code 25%
+    const row = (await page.locator("#example-panels").boundingBox())?.width;
+    if (!row) throw new Error("no row");
+    const drag = async (dx: number) => {
+        const at = await handle.boundingBox();
+        if (!at) throw new Error("no handle");
+        const hx = at.x + at.width / 2;
+        const hy = at.y + at.height / 2;
+        await page.mouse.move(hx, hy);
+        await page.mouse.down();
+        await page.mouse.move(hx + dx, hy, { steps: 10 });
+        await page.mouse.up();
+    };
+    await drag(-2000);
+    await expect
+        .poll(async () => (await stage.boundingBox())?.width ?? 0)
+        .toBeGreaterThan(row * 0.3 - 30);
+    await drag(2000);
+    await expect.poll(width).toBeGreaterThan(row * 0.25 - 3);
+    expect(await width()).toBeLessThan(row * 0.25 + 3);
+});
+
+test("a resized code panel keeps its share when the row changes, even with no storage", async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        Storage.prototype.setItem = () => {
+            throw new Error("storage is blocked");
+        };
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const row = page.locator("#example-panels");
+    const share = async () =>
+        ((await panel.boundingBox())?.width ?? 0) /
+        ((await row.boundingBox())?.width ?? 1);
+    const handle = page.getByRole("separator", { name: "Resize the code" });
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("no handle");
+    await page.mouse.move(box.x, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 150, box.y + box.height / 2, { steps: 5 });
+    await page.mouse.up();
+    const resized = await share();
+
+    // the list collapses (the row widens), then the view renders again (another theme)
+    await page.keyboard.press("Control+b");
+    await expect(
+        page.getByRole("navigation", { name: "Examples" }),
+    ).toBeHidden();
+    await page.getByRole("button", { name: "Paper" }).click();
+    await expect(page.getByTestId("stage")).toHaveAttribute(
+        "data-example-theme",
+        "paper",
+    );
+    await expect
+        .poll(async () => Math.abs((await share()) - resized))
+        .toBeLessThan(0.01);
+});
+
+test("small screens: the code is an overlay, with no handle", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 740 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    await expect(panel).toBeVisible();
+    expect((await panel.boundingBox())?.width).toBeGreaterThan(360);
+    await expect(page.getByRole("separator")).toHaveCount(0);
+});
+
+test("fullscreen lays the stage over the page with the code open", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    await page.getByRole("button", { name: "Fullscreen" }).click();
+    const box = await page.getByTestId("stage").boundingBox();
+    expect(box?.width).toBeGreaterThan(1440 - 40);
+    expect(box?.height).toBeGreaterThan(900 - 40);
+    await page.keyboard.press("Escape");
+    await expect(
+        page.getByRole("complementary", { name: "Example code" }),
+    ).toBeVisible();
+});
+
 test("fullscreen lays the stage over the page, and Escape restores it", async ({
     page,
 }) => {
