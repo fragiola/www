@@ -45,6 +45,7 @@ describe("storage keys", () => {
             STORAGE_KEYS.exampleTheme("ui"),
             STORAGE_KEYS.examplesSidebar,
             STORAGE_KEYS.codePanelWidth,
+            STORAGE_KEYS.migrated,
         ];
         for (const key of keys) expect(key).toMatch(/^@fragiola:/);
         for (const [, to] of LEGACY_KEYS) expect(to).toMatch(/^@fragiola:/);
@@ -67,6 +68,7 @@ describe("the migration script", () => {
             "@fragiola:example-theme:ui": "terminal",
             "@fragiola:example-theme:dockable": "paper",
             "dockable:layout": "{}",
+            "@fragiola:migrated": "1",
         });
     });
 
@@ -82,12 +84,18 @@ describe("the migration script", () => {
             "@fragiola:theme": "dark",
             "@fragiola:framework": "react",
             "@fragiola:example-theme:ui": "terminal",
+            "@fragiola:migrated": "1",
         });
     });
 
-    it("is idempotent", () => {
+    it("runs once: a key written after the move is someone else's", () => {
         const once = migrate({ theme: "light", "fragiola:framework": "vue" });
         expect(migrate(once)).toEqual(once);
+        // an embed on the same origin with next-themes' default key
+        expect(migrate({ ...once, theme: "dark" })).toEqual({
+            ...once,
+            theme: "dark",
+        });
     });
 
     it("is silent when storage is unavailable", () => {
