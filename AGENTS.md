@@ -1,7 +1,7 @@
 # www — fragiola.com
 
-The **single site** of every Fragiola project: `/` (the organization), `/ui`, `/dockable`, and
-later `/grid`, `/scheduler`, … A project never ships a docs site of its own. It **exports** its
+The **single site** of every Fragiola project: `/` (the organization), `/ui`, `/dockable`,
+`/data-grid`, and later `/scheduler`, … A project never ships a docs site of its own. It **exports** its
 pages, its examples and (optionally) its registry with one command, and this repo owns
 everything else: the shell, navigation, search, the example gallery, the code panel, the site
 theme. The output is a static Next.js + Fumadocs export (`out/`) on GitHub Pages.

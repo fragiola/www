@@ -5,6 +5,7 @@ import {
     expectReady,
     mark,
     marked,
+    PROJECTS,
     UI,
 } from "./helpers";
 
@@ -106,8 +107,8 @@ test("the Projects menu lists every project and marks the current one", async ({
     const list = menu(page);
     await expect(list).toBeVisible();
     const links = list.getByRole("link");
-    await expect(links).toHaveCount(2);
-    for (const { project } of [UI, DOCKABLE]) {
+    await expect(links).toHaveCount(PROJECTS.length);
+    for (const { project } of PROJECTS) {
         const link = list.getByRole("link", {
             name: new RegExp(project.title),
         });

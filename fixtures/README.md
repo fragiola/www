@@ -24,6 +24,9 @@ base-free and pointed at pages that exist here, the v1 vocabulary (`Steps`, `Car
 manifests with the gallery fields and the shared files stored once, `#/` imports, and a registry
 whose dependencies are all namespaced. Edit them by hand from now on.
 
+`data-grid` was written by hand for v1.2 when the project joined: a landing, two pages, three of
+its examples with placeholder sources (no registry items), and the shared fixture embed app.
+
 What is **not** the real projects':
 
 - **The embed apps** (`*/embed/<fw>/`) are one small app with no build and no framework

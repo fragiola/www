@@ -6,7 +6,7 @@ import {
     type Page,
     test,
 } from "@playwright/test";
-import { DOCKABLE, UI } from "./helpers";
+import { PROJECTS } from "./helpers";
 
 // Search and sharing (AGENTS.md, "Search and sharing"; CONTRACT.md §3.6), on the static HTML a
 // crawler reads: JavaScript off. For every URL of the sitemap: one title of at most 60
@@ -76,7 +76,7 @@ test("the sitemap lists every indexable page and nothing else", async ({
     }
     const expected = [
         "/",
-        ...[UI, DOCKABLE].flatMap(({ project, manifests }) => [
+        ...PROJECTS.flatMap(({ project, manifests }) => [
             `/${project.slug}/`,
             ...docsPaths(project.slug),
             ...[
@@ -90,7 +90,8 @@ test("the sitemap lists every indexable page and nothing else", async ({
     ];
     expect([...paths].sort()).toEqual([...expected].sort());
     // the redirect pages are not indexable pages
-    for (const slug of ["ui", "dockable"]) {
+    for (const { project } of PROJECTS) {
+        const { slug } = project;
         expect(paths).not.toContain(`/${slug}/docs/`);
         expect(paths).not.toContain(`/${slug}/examples/`);
     }
