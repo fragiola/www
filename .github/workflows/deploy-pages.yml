@@ -49,10 +49,11 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; a newer run waits for the one in flight rather than cancelling it (and
-# an older run can never publish after a newer one).
+# One run at a time per branch: on main, a newer run waits for the one in flight rather than
+# cancelling it, so an older run can never publish after a newer one; a run on another branch
+# (which never deploys) never queues behind main's or takes the place of a pending one.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -62,6 +63,7 @@ jobs:
   checks:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # the whole job works on the fixtures: typecheck (fumadocs-mdx) reads them too
       FRAGIOLA_SOURCES: .sources-fixtures
@@ -116,6 +118,7 @@ jobs:
   e2e:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         shard: [1, 2]
@@ -150,6 +153,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       DISPATCHED_SLUG: ${{ github.event.client_payload.slug }}
       # dockable sends { slug, sha }, ui { slug, ref }: the contract does not fix the payload yet
@@ -221,7 +225,9 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: .next/cache
-          key: next-build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'styles/**', 'next.config.mjs', 'source.config.ts', '.sources/**') }}
+          # keyed on www's code only: the exports change on every dispatch, and Turbopack checks
+          # its inputs itself, so one entry per change of www is enough
+          key: next-build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'styles/**', 'next.config.mjs', 'source.config.ts') }}
           restore-keys: next-build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       - run: pnpm build

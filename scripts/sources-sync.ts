@@ -102,6 +102,10 @@ async function sync(project: ProjectEntry): Promise<boolean> {
         return false;
     }
     const out = join(SOURCES, project.slug);
+    // its output comes as a block when it is done: say now that it started
+    console.log(
+        `… ${project.slug}: ${install ? "install, then " : ""}site:export`,
+    );
     const started = performance.now();
     const print = (steps: Step[]) =>
         process.stdout.write(
@@ -109,7 +113,13 @@ async function sync(project: ProjectEntry): Promise<boolean> {
         );
     const steps: Step[] = [];
     if (install) {
-        const step = await run(dir, ["install", "--frozen-lockfile"]);
+        // no TTY (the output is piped): purge an outdated node_modules without asking, as pnpm
+        // does in CI, rather than abort
+        const step = await run(dir, [
+            "install",
+            "--frozen-lockfile",
+            "--config.confirm-modules-purge=false",
+        ]);
         steps.push(step);
         if (!step.ok) {
             print(steps);
