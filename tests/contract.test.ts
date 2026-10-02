@@ -20,7 +20,12 @@ import {
 // problem must name its file and, where there is one, its line.
 
 const FIXTURES = join(import.meta.dirname, "..", "fixtures");
-const SLUGS = ["ui", "dockable"];
+/** Every project of projects.json: each has a fixture. */
+const SLUGS = (
+    JSON.parse(
+        readFileSync(join(import.meta.dirname, "..", "projects.json"), "utf-8"),
+    ) as { slug: string }[]
+).map((project) => project.slug);
 
 let dir: string;
 beforeEach(() => {
