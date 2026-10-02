@@ -1,0 +1,19 @@
+---
+title: Your first grid
+description: From an array of rows and a list of columns to a scrolling, keyboard-ready grid in a few lines.
+---
+
+## Columns and rows
+
+```tsx title="people.tsx"
+<DataGrid.Root columns={columns} rows={people}>
+    <DataGrid.Grid aria-label="People">
+        <DataGrid.Header />
+        <DataGrid.Body />
+    </DataGrid.Grid>
+</DataGrid.Root>
+```
+
+<Example id="hello-grid" />
+
+See the [large dataset](/examples/large-dataset) and [loading by window](/examples/windowed-loading).

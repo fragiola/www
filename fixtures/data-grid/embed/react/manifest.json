@@ -1,0 +1,60 @@
+{
+    "files": {
+        "hello-grid/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { DataGrid } from \"@fragiola/data-grid-react\";\n\n// Hello grid: a placeholder source of the www fixture.\nexport default function Example() {\n    return <DataGrid.Root columns={[]} rows={[]} />;\n}\n"
+        },
+        "large-dataset/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { DataGrid } from \"@fragiola/data-grid-react\";\n\n// A billion cells: a placeholder source of the www fixture.\nexport default function Example() {\n    return <DataGrid.Root columns={[]} rows={[]} />;\n}\n"
+        },
+        "windowed-loading/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { DataGrid } from \"@fragiola/data-grid-react\";\n\n// Loading by window: a placeholder source of the www fixture.\nexport default function Example() {\n    return <DataGrid.Root columns={[]} rows={[]} />;\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "hello-grid",
+            "title": "Hello grid",
+            "description": "The smallest themed grid: a hundred rows and six columns, styled from outside.",
+            "level": "getting-started",
+            "order": 1,
+            "features": ["DataGrid.Root", "columns", "rows"],
+            "docs": "/docs/getting-started/first-grid",
+            "layout": "fill",
+            "height": 480,
+            "files": ["hello-grid/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/data-grid", "@fragiola/data-grid-react"]
+        },
+        {
+            "id": "large-dataset",
+            "title": "A billion cells",
+            "description": "One million rows by a thousand columns, virtualized on both axes.",
+            "level": "virtualization",
+            "order": 1,
+            "features": ["rowCount", "getRow"],
+            "docs": "/docs/getting-started/first-grid",
+            "layout": "fill",
+            "height": 480,
+            "files": ["large-dataset/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/data-grid", "@fragiola/data-grid-react"]
+        },
+        {
+            "id": "windowed-loading",
+            "title": "Loading by window",
+            "description": "A million rows loaded only by the window in view, wherever the scrollbar lands.",
+            "level": "data-loading",
+            "order": 1,
+            "features": ["onRowWindowChange", "data-loading"],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 480,
+            "files": ["windowed-loading/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/data-grid", "@fragiola/data-grid-react"]
+        }
+    ]
+}
