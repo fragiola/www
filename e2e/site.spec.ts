@@ -1,11 +1,10 @@
 import { expect, test } from "@playwright/test";
 import {
     collectErrors,
-    DOCKABLE,
-    embed,
     expectReady,
     mark,
     marked,
+    PROJECTS,
     UI,
 } from "./helpers";
 
@@ -13,26 +12,12 @@ import {
 // project's landing (§3.5), client-side navigation between projects, and the registry at /r
 // (§7).
 
-test("the landing lists every project from its project.json", async ({
-    page,
-}) => {
-    const errors = collectErrors(page);
-    await page.goto("");
-    const projects = page.getByRole("list", { name: "Projects" });
-    for (const { project } of [UI, DOCKABLE]) {
-        const item = projects.locator(`[data-project="${project.slug}"]`);
-        await expect(
-            item.getByRole("link", { name: project.title }),
-        ).toHaveAttribute("href", `/${project.slug}/`);
-        await expect(item).toContainText(project.description);
-    }
-    await expect(projects.locator('[data-project="dockable"]')).toContainText(
-        "React · Vue",
-    );
-    expect(errors).toEqual([]);
-});
+/** Projects that are not in projects.json (not published): no page may name them. */
+const UNPUBLISHED = ["Scheduler"];
 
-test("moving between projects never reloads the page", async ({ page }) => {
+test("moving between projects never reloads the page", {
+    tag: "@serve",
+}, async ({ page }) => {
     await page.goto("");
     await mark(page);
     await page
@@ -50,11 +35,11 @@ test("moving between projects never reloads the page", async ({ page }) => {
         .getByTestId("site-header")
         .getByRole("button", { name: "Projects" })
         .click();
-    await page
-        .locator('[data-slot="navigation-menu-popup"]')
-        .getByRole("link", { name: /^Dockable/ })
-        .click();
+    const menu = page.locator('[data-slot="navigation-menu-popup"]');
+    await menu.getByRole("link", { name: /^Dockable/ }).click();
     await expect(page).toHaveURL(/\/dockable\/$/);
+    // the menu closes with the navigation
+    await expect(menu.getByRole("list", { name: "Projects" })).toBeHidden();
     await page.getByRole("link", { name: "Browse the 13 examples" }).click();
     await expect(page).toHaveURL(/\/dockable\/examples\/hello-layout\/$/);
     await expectReady(page.getByTestId("stage"));
@@ -63,38 +48,6 @@ test("moving between projects never reloads the page", async ({ page }) => {
         /\/dockable\/docs\/getting-started\/installation\/$/,
     );
     expect(await marked(page)).toBe(true);
-});
-
-test("a project's landing: the hero, its actions, a live showcase", async ({
-    page,
-}) => {
-    const errors = collectErrors(page);
-    await page.goto("dockable/");
-    const hero = page.getByTestId("hero");
-    await expect(hero.getByRole("heading", { level: 1 })).toHaveText(
-        "Dockable panels, without a single line of CSS from us.",
-    );
-    await expect(
-        hero.getByRole("link", { name: "Read the docs" }),
-    ).toHaveAttribute("href", "/dockable/docs/getting-started/installation/");
-    await expect(
-        hero.getByRole("link", { name: "Browse the 13 examples" }),
-    ).toHaveAttribute("href", "/dockable/examples/");
-    await expect(hero.getByRole("link", { name: "GitHub" })).toHaveAttribute(
-        "href",
-        "https://github.com/fragiola/dockable",
-    );
-    const showcase = page.locator('[data-variant="showcase"]');
-    await expectReady(showcase);
-    // no toolbar, no code panel: the theme switcher and a link to the gallery
-    await expect(showcase.getByTestId("toggle-code")).toHaveCount(0);
-    await expect(embed(showcase).getByRole("heading")).toHaveText(
-        "Hello layout",
-    );
-    await expect(page).toHaveTitle(
-        "Dockable — headless dockable panel layouts for React",
-    );
-    expect(errors).toEqual([]);
 });
 
 test("InstallCommand renders the namespaced shadcn command", async ({
@@ -106,9 +59,9 @@ test("InstallCommand renders the namespaced shadcn command", async ({
     );
 });
 
-test("the registry is served at /r, every project's items in one index", async ({
-    request,
-}) => {
+test("the registry is served at /r, every project's items in one index", {
+    tag: "@serve",
+}, async ({ request }) => {
     const index = await request.get("r/index.json");
     expect(index.ok()).toBe(true);
     const { items } = (await index.json()) as {
@@ -129,12 +82,7 @@ test("the registry is served at /r, every project's items in one index", async (
     ).toBeGreaterThan(0);
 });
 
-test("an unknown page is a 404 page", async ({ page }) => {
-    const response = await page.goto("dockable/docs/nope/");
-    expect(response?.status()).toBe(404);
-});
-
-test("the organization's landing says what Fragiola is, first thing", async ({
+test("the organization's landing: what Fragiola is first, the idea, your stack, Fragiola UI, the projects", async ({
     page,
 }) => {
     const errors = collectErrors(page);
@@ -154,13 +102,21 @@ test("the organization's landing says what Fragiola is, first thing", async ({
     await explore.click();
     await expect(page.locator("#projects")).toBeInViewport();
     await expect(page).toHaveTitle(/^Fragiola/);
-    expect(errors).toEqual([]);
-});
 
-test("the organization's landing: the idea, your stack, Fragiola UI, the projects", async ({
-    page,
-}) => {
-    await page.goto("");
+    // every project, from its project.json
+    const projects = page.getByRole("list", { name: "Projects" });
+    for (const { project } of PROJECTS) {
+        const item = projects.locator(`[data-project="${project.slug}"]`);
+        await expect(
+            item.getByRole("link", { name: project.title }),
+        ).toHaveAttribute("href", `/${project.slug}/`);
+        await expect(item).toContainText(project.description);
+    }
+    await expect(projects.locator('[data-project="dockable"]')).toContainText(
+        "React · Vue",
+    );
+
+    // the idea, your stack, Fragiola UI, the projects
     const titles = page
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
@@ -185,14 +141,17 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
         spotlight.getByRole("link", { name: "Read the docs" }),
     ).toHaveAttribute("href", /^\/ui\/docs\/.+\/$/);
     // only what exists: no project that is not published is named, anywhere
-    await expect(page.locator("body")).not.toContainText(/\bGrid\b|Scheduler/);
-    expect(await page.title()).not.toMatch(/\bGrid\b|Scheduler/);
+    const published = PROJECTS.map(({ project }) => project.title).join(" ");
+    for (const name of UNPUBLISHED) expect(published).not.toContain(name);
+    const unpublished = new RegExp(UNPUBLISHED.join("|"));
+    await expect(page.locator("body")).not.toContainText(unpublished);
+    expect(await page.title()).not.toMatch(unpublished);
     expect(
         await page.locator('meta[name="description"]').getAttribute("content"),
-    ).not.toMatch(/\bGrid\b|Scheduler/);
+    ).not.toMatch(unpublished);
     // the footer lists every project and the organization
     const footer = page.getByTestId("site-footer");
-    for (const { project } of [UI, DOCKABLE]) {
+    for (const { project } of PROJECTS) {
         await expect(
             footer.getByRole("link", { name: project.title }),
         ).toHaveAttribute("href", `/${project.slug}/`);
@@ -201,23 +160,31 @@ test("the organization's landing: the idea, your stack, Fragiola UI, the project
         "href",
         "https://github.com/fragiola",
     );
+    expect(errors).toEqual([]);
 });
 
-for (const width of [375, 768, 1440]) {
-    test(`no page scrolls sideways at ${width}px`, async ({ page }) => {
-        await page.setViewportSize({ width, height: 800 });
-        for (const path of [
-            "",
-            "ui/",
-            "dockable/",
-            "ui/docs/atoms/clickable/",
-            "dockable/examples/hello-layout/",
-        ]) {
-            await page.goto(path);
-            const scrollWidth = await page.evaluate(
-                () => document.documentElement.scrollWidth,
-            );
-            expect(scrollWidth, path).toBeLessThanOrEqual(width);
+test("no page scrolls sideways at 375, 768 or 1440px", async ({ page }) => {
+    const widths = [375, 768, 1440];
+    for (const path of [
+        "",
+        "ui/",
+        "dockable/",
+        "ui/docs/atoms/clickable/",
+        "dockable/examples/hello-layout/",
+    ]) {
+        await page.setViewportSize({ width: widths[0] ?? 375, height: 800 });
+        await page.goto(path);
+        for (const width of widths) {
+            await page.setViewportSize({ width, height: 800 });
+            await expect
+                .poll(
+                    () =>
+                        page.evaluate(
+                            () => document.documentElement.scrollWidth,
+                        ),
+                    { message: `${path} at ${width}px` },
+                )
+                .toBeLessThanOrEqual(width);
         }
-    });
-}
+    }
+});

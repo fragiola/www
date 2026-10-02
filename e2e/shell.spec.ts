@@ -23,7 +23,9 @@ const first = DOCKABLE.ordered[0];
 const last = DOCKABLE.ordered.at(-1);
 if (!first || !last) throw new Error("no examples in the dockable fixture");
 
-test("/<slug>/examples opens the first example", async ({ page }) => {
+test("/<slug>/examples opens the first example", { tag: "@serve" }, async ({
+    page,
+}) => {
     await page.goto("dockable/examples/");
     await expect(page).toHaveURL(new RegExp(`/dockable/examples/${first.id}/`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -31,7 +33,9 @@ test("/<slug>/examples opens the first example", async ({ page }) => {
     );
 });
 
-test("lists every example under its level, in order", async ({ page }) => {
+test("lists every example under its level, in order; the header and the filter", async ({
+    page,
+}) => {
     await openExample(page, "dockable", first.id);
     const list = page.getByRole("navigation", { name: "Examples" });
     for (const level of DOCKABLE.examples.levels) {
@@ -46,26 +50,8 @@ test("lists every example under its level, in order", async ({ page }) => {
     await expect(
         list.getByRole("link", { name: first.title, exact: true }),
     ).toHaveAttribute("aria-current", "page");
-});
 
-test("the filter narrows the list, over titles, descriptions and features", async ({
-    page,
-}) => {
-    await openExample(page, "dockable", first.id);
-    const list = page.getByRole("navigation", { name: "Examples" });
-    const filter = list.getByRole("searchbox");
-    await filter.fill("zzzz-no-match");
-    await expect(list.getByText("No example matches.")).toBeVisible();
-    await filter.fill("maximizeToggle");
-    await expect(list.getByRole("link")).toHaveText(["Maximize"]);
-    await filter.fill("native window");
-    await expect(list.getByRole("link")).toHaveText(["Pop out"]);
-});
-
-test("the header shows the level, the description, the features and the guide", async ({
-    page,
-}) => {
-    await openExample(page, "dockable", first.id);
+    // the header shows the level, the description, the features and the guide
     const main = page.getByRole("main");
     await expect(main.getByText("Basic", { exact: true })).toBeVisible();
     await expect(main.getByText(first.description)).toBeVisible();
@@ -75,15 +61,35 @@ test("the header shows the level, the description, the features and the guide", 
     await expect(
         main.getByRole("link", { name: "Read the guide" }),
     ).toHaveAttribute("href", "/dockable/docs/getting-started/first-layout/");
+
+    // the filter narrows the list, over titles, descriptions and features
+    const filter = list.getByRole("searchbox");
+    await filter.fill("zzzz-no-match");
+    await expect(list.getByText("No example matches.")).toBeVisible();
+    await filter.fill("maximizeToggle");
+    await expect(list.getByRole("link")).toHaveText(["Maximize"]);
+    await filter.fill("native window");
+    await expect(list.getByRole("link")).toHaveText(["Pop out"]);
 });
 
-test("the theme switcher changes the example's theme and the URL, without a reload", async ({
-    page,
-}) => {
+test("the theme switcher changes the example's theme and the URL, without a reload", {
+    tag: "@serve",
+}, async ({ page }) => {
     // the site opens in dark: start from its light scheme
     await setSiteTheme(page, "light");
     const stage = await openExample(page, "dockable", first.id);
+    // without a chosen theme, the example follows the site's scheme: the first light theme of
+    // examples.json, passed explicitly to the embed
     await expect(stage).toHaveAttribute("data-example-theme", "light");
+    await expect(embed(stage).locator("html")).toHaveAttribute(
+        "data-example-theme",
+        "light",
+    );
+    await expect(stage.locator("iframe")).toHaveAttribute(
+        "src",
+        /[?&]theme=light(&|$)/,
+    );
+    await expect(page).not.toHaveURL(/theme=/);
     await mark(page);
     await markFrame(stage);
     const swatches = page.locator('[data-theme-option="terminal"] span span');
@@ -109,7 +115,9 @@ test("the theme switcher changes the example's theme and the URL, without a relo
     ).toHaveAttribute("data-example-theme", "terminal");
 });
 
-test("the chosen theme is remembered per project", async ({ page }) => {
+test("the chosen theme is remembered per project; one framework, no switcher", async ({
+    page,
+}) => {
     // the site opens in dark: start from its light scheme
     await setSiteTheme(page, "light");
     await openExample(page, "dockable", first.id, { theme: "paper" });
@@ -124,25 +132,11 @@ test("the chosen theme is remembered per project", async ({ page }) => {
         "data-example-theme",
         "light",
     );
-});
-
-test("without a chosen theme, the example follows the site's scheme", async ({
-    page,
-}) => {
-    // the site opens in dark: its light scheme shows the example following it
-    await setSiteTheme(page, "light");
-    const stage = await openExample(page, "dockable", first.id);
-    // the first light theme of examples.json, passed explicitly to the embed
-    await expect(stage).toHaveAttribute("data-example-theme", "light");
-    await expect(embed(stage).locator("html")).toHaveAttribute(
-        "data-example-theme",
-        "light",
+    // a project with one framework has no framework switcher
+    await expect(page.locator("[data-framework-option]")).toHaveCount(0);
+    await expect(page.locator("[data-theme-option]")).toHaveCount(
+        UI.examples.themes.length,
     );
-    await expect(stage.locator("iframe")).toHaveAttribute(
-        "src",
-        /[?&]theme=light(&|$)/,
-    );
-    await expect(page).not.toHaveURL(/theme=/);
 });
 
 test("the code panel shows every file and the theme's CSS, and copies one or all", async ({
@@ -195,22 +189,6 @@ test("the code panel shows every file and the theme's CSS, and copies one or all
     ).toBeVisible();
 });
 
-test("the setup command lists the packages and the namespaced registry items", async ({
-    page,
-}) => {
-    await openExample(page, "dockable", "add-tabs", { code: true });
-    const setup = page
-        .getByRole("complementary", { name: "Example code" })
-        .getByTestId("setup");
-    await expect(setup).toHaveText(
-        [
-            "npm install @fragiola/dockable @fragiola/dockable-react lucide-react",
-            "npx shadcn@latest add @fragiola/cn @fragiola/input",
-        ].join("\n"),
-    );
-    await expect(setup).not.toContainText("fields");
-});
-
 test("reset reloads the example", async ({ page }) => {
     const stage = await openExample(page, "dockable", first.id);
     const counter = embed(stage).getByTestId("counter");
@@ -242,9 +220,10 @@ test("small screens get drawers for the list and the code", async ({
     await page.getByTestId("toggle-code").click();
     const panel = page.getByRole("complementary", { name: "Example code" });
     await expect(panel).toBeVisible();
-    // the panel overlays the stage
+    // the panel overlays the stage, with no handle
     const box = await panel.boundingBox();
     expect(box?.width).toBeGreaterThan(360);
+    await expect(page.getByRole("separator")).toHaveCount(0);
     const width = await page.evaluate(
         () => document.documentElement.scrollWidth,
     );
@@ -451,8 +430,18 @@ test("on desktop the code panel is resized by its handle, by pointer or keyboard
     await expect.poll(async () => near(await width())).toBe(true);
     await page.reload();
     await expect.poll(async () => near(await width())).toBe(true);
+});
 
-    // bounded: the stage keeps 30% of the row, the code 25%
+test("on desktop the code panel's handle is bounded: the stage keeps 30% of the row, the code 25%", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const handle = page.getByRole("separator", { name: "Resize the code" });
+    const stage = page.getByTestId("stage");
+    const width = async () => (await panel.boundingBox())?.width ?? 0;
+    await expect(handle).toBeVisible();
     const row = (await page.locator("#example-panels").boundingBox())?.width;
     if (!row) throw new Error("no row");
     const drag = async (dx: number) => {
@@ -513,12 +502,23 @@ test("a resized code panel keeps its share when the row changes, even with no st
         .toBeLessThan(0.01);
 });
 
-test("on a wide screen the code opens at 46rem, on every example", async ({
+test("on a wide and tall screen the code opens at 46rem, on every example, and fills the panel past Fumadocs' 600px", async ({
     page,
 }) => {
-    await page.setViewportSize({ width: 2560, height: 1000 });
+    await page.setViewportSize({ width: 2560, height: 1400 });
     await openExample(page, "dockable", first.id, { code: true });
     const panel = page.getByRole("complementary", { name: "Example code" });
+    // tall: the code fills the panel, past Fumadocs' 600px
+    const file = panel.getByRole("tabpanel");
+    const viewport = panel.getByTestId("code-file").getByRole("region");
+    await expect(viewport).toBeVisible();
+    const outer = await file.boundingBox();
+    const inner = await viewport.boundingBox();
+    expect(outer?.height ?? 0).toBeGreaterThan(600);
+    expect(Math.abs((inner?.height ?? 0) - (outer?.height ?? 0))).toBeLessThan(
+        2,
+    );
+    // wide: 46rem
     const near736 = async () =>
         Math.abs(((await panel.boundingBox())?.width ?? 0) - 736) < 2;
     await expect.poll(near736).toBe(true);
@@ -532,53 +532,11 @@ test("on a wide screen the code opens at 46rem, on every example", async ({
     await expect.poll(near736).toBe(true);
 });
 
-test("on a tall screen the code fills the panel, past Fumadocs' 600px", async ({
-    page,
-}) => {
-    await page.setViewportSize({ width: 1600, height: 1400 });
-    await openExample(page, "dockable", first.id, { code: true });
-    const panel = page.getByRole("complementary", { name: "Example code" });
-    const file = panel.getByRole("tabpanel");
-    const viewport = panel.getByTestId("code-file").getByRole("region");
-    await expect(viewport).toBeVisible();
-    const outer = await file.boundingBox();
-    const inner = await viewport.boundingBox();
-    expect(outer?.height ?? 0).toBeGreaterThan(600);
-    expect(Math.abs((inner?.height ?? 0) - (outer?.height ?? 0))).toBeLessThan(
-        2,
-    );
-});
-
-test("small screens: the code is an overlay, with no handle", async ({
-    page,
-}) => {
-    await page.setViewportSize({ width: 375, height: 740 });
-    await openExample(page, "dockable", first.id, { code: true });
-    const panel = page.getByRole("complementary", { name: "Example code" });
-    await expect(panel).toBeVisible();
-    expect((await panel.boundingBox())?.width).toBeGreaterThan(360);
-    await expect(page.getByRole("separator")).toHaveCount(0);
-});
-
-test("fullscreen lays the stage over the page with the code open", async ({
+test("fullscreen lays the stage over the page with the code open, and Escape restores it", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openExample(page, "dockable", first.id, { code: true });
-    await page.getByRole("button", { name: "Fullscreen" }).click();
-    const box = await page.getByTestId("stage").boundingBox();
-    expect(box?.width).toBeGreaterThan(1440 - 40);
-    expect(box?.height).toBeGreaterThan(900 - 40);
-    await page.keyboard.press("Escape");
-    await expect(
-        page.getByRole("complementary", { name: "Example code" }),
-    ).toBeVisible();
-});
-
-test("fullscreen lays the stage over the page, and Escape restores it", async ({
-    page,
-}) => {
-    await openExample(page, "dockable", first.id);
     const fullscreen = page.getByRole("button", { name: "Fullscreen" });
     await fullscreen.click();
     await expect(fullscreen).toHaveAttribute("aria-pressed", "true");
@@ -593,6 +551,9 @@ test("fullscreen lays the stage over the page, and Escape restores it", async ({
     ).toHaveAttribute("aria-pressed", "false");
     const after = await page.getByTestId("stage").boundingBox();
     expect(after?.width).toBeLessThan((viewport?.width ?? 0) - 200);
+    await expect(
+        page.getByRole("complementary", { name: "Example code" }),
+    ).toBeVisible();
 });
 
 test("the list keeps its scroll, the filter and the theme while moving between examples", async ({
@@ -639,9 +600,9 @@ test("the list keeps its scroll, the filter and the theme while moving between e
     expect(await marked(page)).toBe(true);
 });
 
-test("the framework switcher shows another framework's embed, site-wide", async ({
-    page,
-}) => {
+test("the framework switcher shows another framework's embed, site-wide", {
+    tag: "@serve",
+}, async ({ page }) => {
     const errors = collectErrors(page);
     await openExample(page, "dockable", first.id);
     await expect(
@@ -674,9 +635,9 @@ test("the framework switcher shows another framework's embed, site-wide", async 
     expect(errors).toEqual([]);
 });
 
-test("an example missing in the selected framework says so instead of disappearing", async ({
-    page,
-}) => {
+test("an example missing in the selected framework says so instead of disappearing", {
+    tag: "@serve",
+}, async ({ page }) => {
     await page.goto("dockable/examples/popout/?framework=vue");
     const list = page.getByRole("navigation", { name: "Examples" });
     const item = list.getByRole("link", { name: /^Pop out/ });
@@ -692,14 +653,4 @@ test("an example missing in the selected framework says so instead of disappeari
     await expect(
         page.getByTestId("stage").getByTestId("example-frame"),
     ).toHaveAttribute("data-ready", "");
-});
-
-test("a project with one framework has no framework switcher", async ({
-    page,
-}) => {
-    await openExample(page, "ui", UI.ordered[0]?.id ?? "");
-    await expect(page.locator("[data-framework-option]")).toHaveCount(0);
-    await expect(page.locator("[data-theme-option]")).toHaveCount(
-        UI.examples.themes.length,
-    );
 });

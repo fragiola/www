@@ -34,14 +34,25 @@ test("an example page carries no code", () => {
     expect(html).not.toContain('_kit/card.tsx","lang');
 });
 
-test("the files are fetched when the panel opens, the shared ones once", async ({
+test("the files are fetched when the panel opens, the shared ones once; the setup command", async ({
     page,
 }) => {
     const requests = codeRequests(page);
+    // until the panel opens, any code request fails (and is kept): the panel could not show it
+    let open = false;
+    const early: string[] = [];
+    await page.route(
+        (url) => /^\/[^/]+\/code\//.test(url.pathname),
+        (route) => {
+            if (open) return route.continue();
+            early.push(new URL(route.request().url()).pathname);
+            return route.abort();
+        },
+    );
     await openExample(page, "dockable", "hello-layout");
-    await page.waitForLoadState("networkidle");
     expect(requests).toEqual([]);
 
+    open = true;
     await page.getByTestId("toggle-code").click();
     const panel = page.getByRole("complementary", { name: "Example code" });
     await expect(panel.getByTestId("code-file")).toBeVisible();
@@ -62,16 +73,31 @@ test("the files are fetched when the panel opens, the shared ones once", async (
     );
     await expect(panel.getByRole("tab").nth(1)).toHaveText("_kit/card.tsx");
     expect(requests).toEqual(["/dockable/code/react/add-tabs.json"]);
+    expect(early).toEqual([]);
+
+    // the setup command lists the packages and the namespaced registry items
+    const setup = panel.getByTestId("setup");
+    await expect(setup).toHaveText(
+        [
+            "npm install @fragiola/dockable @fragiola/dockable-react lucide-react",
+            "npx shadcn@latest add @fragiola/cn @fragiola/input",
+        ].join("\n"),
+    );
+    await expect(setup).not.toContainText("fields");
 });
 
-test("an inline example fetches its code when asked, not before", async ({
+test("an inline example fetches its code when asked, not before; with no stored preference, dark", async ({
     page,
 }) => {
     const requests = codeRequests(page);
     await page.goto("dockable/docs/getting-started/first-layout/");
+    // with no stored preference the site opens in dark, and so do the embeds
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     const block = page.locator(
         '[data-example="hello-layout"][data-variant="inline"]',
     );
+    await expect(block.locator("iframe")).toHaveAttribute("src", /theme=dark/);
     await expectReady(block);
     expect(requests).toEqual([]);
     await block.getByTestId("toggle-code").click();

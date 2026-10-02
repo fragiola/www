@@ -63,9 +63,9 @@ function docsPaths(slug: string): string[] {
         .map((file) => `/${slug}/docs/${file.replace(/\.mdx$/, "")}/`);
 }
 
-test("the sitemap lists every indexable page and nothing else", async ({
-    request,
-}) => {
+test("the sitemap lists every indexable page and nothing else", {
+    tag: "@serve",
+}, async ({ request }) => {
     const urls = await sitemap(request);
     const paths = urls.map(pathOf);
     for (const url of urls) {
@@ -101,24 +101,80 @@ test("the sitemap lists every indexable page and nothing else", async ({
     );
 });
 
+/** What a crawler reads of a page's static HTML: its head, its headings, its structured data. */
+async function readPage(page: Page) {
+    return page.evaluate(() => {
+        const metas: Record<string, string[]> = {};
+        for (const tag of document.head.querySelectorAll(
+            "meta[name], meta[property]",
+        )) {
+            for (const key of new Set([
+                tag.getAttribute("name"),
+                tag.getAttribute("property"),
+            ])) {
+                if (key) {
+                    metas[key] ??= [];
+                    metas[key].push(tag.getAttribute("content") ?? "");
+                }
+            }
+        }
+        return {
+            titles: [...document.head.querySelectorAll("title")].map(
+                (title) => title.textContent ?? "",
+            ),
+            metas,
+            canonicals: [
+                ...document.head.querySelectorAll('link[rel="canonical"]'),
+            ].map((link) => link.getAttribute("href")),
+            levels: [
+                ...document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+            ].map((heading) => Number(heading.tagName.slice(1))),
+            graphs: [
+                ...document.querySelectorAll(
+                    'script[type="application/ld+json"]',
+                ),
+            ].map((script) => script.textContent ?? ""),
+        };
+    });
+}
+
+// titles: the landing's own, then · project, then · Fragiola when it fits
+const TITLES: Record<string, string> = {
+    "/": "Fragiola — headless React components and a design system",
+    "/ui/": "Fragiola UI — React components on Base UI and Tailwind",
+    "/dockable/": "Dockable — headless dockable panel layouts for React",
+    "/ui/docs/atoms/clickable/": "Clickable · Fragiola UI",
+    "/dockable/docs/guides/popouts/": "Popouts · Dockable · Fragiola",
+    "/ui/examples/text/": "Text · Fragiola UI examples",
+    "/dockable/examples/add-tabs/": "Add tabs · Dockable examples · Fragiola",
+};
+
 test("every sitemap URL: title, description, canonical, cards, one h1, headings, JSON-LD", async ({
     page,
     request,
 }) => {
     test.setTimeout(120_000);
     const images = new Map<string, boolean>();
+    const titled: string[] = [];
     for (const url of await sitemap(request)) {
         const path = pathOf(url);
         const where = `${path}:`;
-        await page.goto(path.slice(1));
+        // the static HTML: its head and its headings are there once it is parsed
+        await page.goto(path.slice(1), { waitUntil: "domcontentloaded" });
+        const read = await readPage(page);
+        const content = (key: string) => read.metas[key]?.[0] ?? null;
 
-        const titles = page.locator("head title");
-        await expect(titles, where).toHaveCount(1);
-        const title = await titles.textContent();
+        expect(read.titles, where).toHaveLength(1);
+        const title = read.titles[0] ?? "";
         expect(chars(title), `${where} title "${title}"`).toBeLessThanOrEqual(
             60,
         );
-        const description = await meta(page, "description");
+        const expectedTitle = TITLES[path];
+        if (expectedTitle !== undefined) {
+            expect(title, where).toBe(expectedTitle);
+            titled.push(path);
+        }
+        const description = content("description");
         expect(
             chars(description),
             `${where} description "${description}"`,
@@ -126,25 +182,20 @@ test("every sitemap URL: title, description, canonical, cards, one h1, headings,
         expect(chars(description), where).toBeLessThanOrEqual(160);
         expect(description, where).not.toContain("`");
 
-        await expect(
-            page.locator('head link[rel="canonical"]'),
-            where,
-        ).toHaveAttribute("href", url);
-        expect(await meta(page, "robots"), where).toBeNull();
+        expect(read.canonicals, where).toEqual([url]);
+        expect(content("robots"), where).toBeNull();
 
-        expect(await meta(page, "og:title"), where).toBe(title);
-        expect(await meta(page, "og:description"), where).toBe(description);
-        expect(await meta(page, "og:url"), where).toBe(url);
-        expect(await meta(page, "og:site_name"), where).toBe("Fragiola");
-        expect(await meta(page, "og:type"), where).toBe(
+        expect(content("og:title"), where).toBe(title);
+        expect(content("og:description"), where).toBe(description);
+        expect(content("og:url"), where).toBe(url);
+        expect(content("og:site_name"), where).toBe("Fragiola");
+        expect(content("og:type"), where).toBe(
             kindOf(path) === "docs" ? "article" : "website",
         );
-        expect(await meta(page, "twitter:card"), where).toBe(
-            "summary_large_image",
-        );
-        const image = (await meta(page, "og:image")) ?? "";
-        expect(await meta(page, "twitter:image"), where).toBe(image);
-        expect(await meta(page, "og:image:alt"), where).toBeTruthy();
+        expect(content("twitter:card"), where).toBe("summary_large_image");
+        const image = content("og:image") ?? "";
+        expect(content("twitter:image"), where).toBe(image);
+        expect(content("og:image:alt"), where).toBeTruthy();
         expect(image.startsWith(`${SITE}/`), where).toBe(true);
         if (!images.has(image)) {
             const response = await request.get(pathOf(image).slice(1));
@@ -158,12 +209,11 @@ test("every sitemap URL: title, description, canonical, cards, one h1, headings,
         }
         expect(images.get(image), `${where} ${image} is a PNG`).toBe(true);
 
-        await expect(page.locator("h1"), where).toHaveCount(1);
-        const levels = await page
-            .locator("h1, h2, h3, h4, h5, h6")
-            .evaluateAll((headings) =>
-                headings.map((heading) => Number(heading.tagName.slice(1))),
-            );
+        const { levels, graphs } = read;
+        expect(
+            levels.filter((level) => level === 1),
+            where,
+        ).toHaveLength(1);
         // from the page's h1: the gallery's list (its levels' h2s) comes before the example's h1
         let previous = 1;
         for (const level of levels) {
@@ -174,9 +224,6 @@ test("every sitemap URL: title, description, canonical, cards, one h1, headings,
             previous = level;
         }
 
-        const graphs = await page
-            .locator('script[type="application/ld+json"]')
-            .allTextContents();
         expect(graphs, where).toHaveLength(1);
         const data = JSON.parse(graphs[0] ?? "{}") as {
             "@context": string;
@@ -189,6 +236,7 @@ test("every sitemap URL: title, description, canonical, cards, one h1, headings,
         ).toEqual(EXPECTED_TYPES[kindOf(path)]);
         for (const item of data["@graph"]) checkEntity(item, url, where);
     }
+    expect(titled.sort()).toEqual(Object.keys(TITLES).sort());
 });
 
 /** The fields each type needs, and breadcrumbs that end on the page itself. */
@@ -258,27 +306,6 @@ function checkEntity(
     }
 }
 
-test("titles: the landing's own, then · project, then · Fragiola when it fits", async ({
-    page,
-}) => {
-    const cases: [string, string][] = [
-        ["", "Fragiola — headless React components and a design system"],
-        ["ui/", "Fragiola UI — React components on Base UI and Tailwind"],
-        ["dockable/", "Dockable — headless dockable panel layouts for React"],
-        ["ui/docs/atoms/clickable/", "Clickable · Fragiola UI"],
-        ["dockable/docs/guides/popouts/", "Popouts · Dockable · Fragiola"],
-        ["ui/examples/text/", "Text · Fragiola UI examples"],
-        [
-            "dockable/examples/add-tabs/",
-            "Add tabs · Dockable examples · Fragiola",
-        ],
-    ];
-    for (const [path, title] of cases) {
-        await page.goto(path);
-        await expect(page).toHaveTitle(title);
-    }
-});
-
 test("the gallery's query strings are one page: the canonical has none", async ({
     page,
 }) => {
@@ -291,10 +318,9 @@ test("the gallery's query strings are one page: the canonical has none", async (
     );
 });
 
-test("redirect pages and the 404 are noindex; the embeds say noindex themselves", async ({
-    page,
-    request,
-}) => {
+test("redirect pages and the 404 are noindex; the embeds say noindex themselves", {
+    tag: "@serve",
+}, async ({ page, request }) => {
     for (const path of [
         "ui/docs/",
         "ui/examples/",
@@ -320,9 +346,9 @@ test("redirect pages and the 404 are noindex; the embeds say noindex themselves"
     }
 });
 
-test("robots.txt allows everything but the search index, and names the sitemap", async ({
-    request,
-}) => {
+test("robots.txt allows everything but the search index, and names the sitemap", {
+    tag: "@serve",
+}, async ({ request }) => {
     const response = await request.get("robots.txt");
     expect(response.ok()).toBe(true);
     const robots = await response.text();
@@ -362,7 +388,10 @@ test("following links in the static HTML from / reaches every sitemap URL", asyn
     expect(wanted.filter((path) => !seen.has(path))).toEqual([]);
 });
 
-test("the icons and the manifest are served", async ({ page, request }) => {
+test("the icons and the manifest are served", { tag: "@serve" }, async ({
+    page,
+    request,
+}) => {
     for (const [path, type] of [
         ["favicon.ico", "image/x-icon"],
         ["icon.svg", "image/svg+xml"],
