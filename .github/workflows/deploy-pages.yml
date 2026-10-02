@@ -3,21 +3,32 @@
 # When it runs:
 #   - push to main (this repo changed);
 #   - every day at 05:17 UTC (a safety net: a project that changed without dispatching);
-#   - on demand (Actions → "Deploy site to GitHub Pages" → Run workflow);
+#   - on demand (Actions → "Deploy site to GitHub Pages" → Run workflow), on any branch: only
+#     main deploys, so a branch run tests and builds without publishing;
 #   - repository_dispatch "project-updated", sent by a project's CI after a push to its default
 #     branch, with client_payload { slug, sha } (or { slug, ref }): that project is built at
 #     exactly that commit.
 #
-# What it does:
-#   1. test — Biome, TypeScript, the unit tests, and the Playwright suite against the site built
-#      from fixtures/ (.sources-fixtures/: it needs no project repo), served twice: the way Pages
-#      serves it, and by `serve` (clean URLs, what `npx serve out` runs);
-#   2. build — clones every project of projects.json at its `ref` (or the dispatched sha) into
-#      $RUNNER_TEMP/projects/<slug>, then `pnpm sources:sync --install` (in each clone: `pnpm
-#      install --frozen-lockfile` with the project's own lockfile, `pnpm site:export --base /<slug>
-#      --out .sources/<slug>`, and the contract checks), then `pnpm build` → out/ (which refuses
-#      anything but those fresh exports);
-#   3. deploy — publishes out/ to Pages.
+# What it does, every job side by side:
+#   - checks (push and on demand) — Biome, TypeScript, the unit tests, and the `@serve` subset of
+#     the Playwright suite served by `serve` (clean URLs, what `npx serve out` runs: the tests
+#     whose result depends on how a static server maps URLs, query strings, redirects and files),
+#     against the site built from fixtures/ (.sources-fixtures/: it needs no project repo);
+#   - e2e (push and on demand) — the whole Playwright suite against the same fixtures site, served
+#     the way Pages serves it, in shards;
+#   - build — clones every project of projects.json at its `ref` (or the dispatched sha) into
+#     $RUNNER_TEMP/projects/<slug>, then `pnpm sources:sync --install` (in each clone, side by
+#     side: `pnpm install --frozen-lockfile` with the project's own lockfile, `pnpm site:export
+#     --base /<slug> --out .sources/<slug>`; then the contract checks), then `pnpm build` → out/
+#     (which refuses anything but those fresh exports);
+#   - deploy — publishes out/ to Pages, from main only, once every job that ran has passed.
+#
+# A dispatch or the schedule runs only build and deploy: www's own code did not change (it was
+# tested on its push), and the build checks the real exports against the contract.
+#
+# Caches: www's pnpm store (setup-node), the projects' pnpm store (keyed on every lockfile),
+# and Next's .next/cache, one for the fixtures site and one for the real one. None of them
+# decides what is published: installs stay --frozen-lockfile and prepare:site always checks.
 #
 # One-time setup: README.md, "Deploying".
 
@@ -37,7 +48,8 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; a newer run waits for the one in flight rather than cancelling it.
+# One deploy at a time; a newer run waits for the one in flight rather than cancelling it (and
+# an older run can never publish after a newer one).
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -46,7 +58,8 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
-  test:
+  checks:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       # the whole job works on the fixtures: typecheck (fumadocs-mdx) reads them too
@@ -67,17 +80,26 @@ jobs:
 
       - run: pnpm check
 
-      - run: pnpm e2e:build
+      - &next-fixtures-cache
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: next-fixtures-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'styles/**', 'next.config.mjs', 'source.config.ts', 'fixtures/**') }}
+          restore-keys: next-fixtures-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      # The suite runs Chromium's headless shell only. Its download and system packages go
+      # while the fixtures site builds.
+      - &build-fixtures
+        name: Build the fixtures site, install Chromium's headless shell
+        run: |
+          pnpm exec playwright install --with-deps --only-shell chromium > "$RUNNER_TEMP/playwright-install.log" 2>&1 &
+          browser=$!
+          pnpm e2e:build
+          wait "$browser" || { cat "$RUNNER_TEMP/playwright-install.log"; exit 1; }
 
       - run: pnpm typecheck
 
       - run: pnpm test
-
-      - run: pnpm exec playwright install --with-deps chromium
-
-      - run: pnpm e2e
-        env:
-          CI: true
 
       - run: pnpm e2e:serve
         env:
@@ -86,17 +108,18 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-checks
           path: playwright-report
           retention-days: 7
 
-  build:
-    needs: test
+  e2e:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2]
     env:
-      DISPATCHED_SLUG: ${{ github.event.client_payload.slug }}
-      # dockable sends { slug, sha }, ui { slug, ref }: the contract does not fix the payload yet
-      DISPATCHED_SHA: ${{ github.event.client_payload.sha || github.event.client_payload.ref }}
+      FRAGIOLA_SOURCES: .sources-fixtures
     steps:
       - uses: actions/checkout@v4
 
@@ -108,6 +131,37 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - *next-fixtures-cache
+
+      - *build-fixtures
+
+      - run: pnpm e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          CI: true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-e2e-${{ matrix.shard }}
+          path: playwright-report
+          retention-days: 7
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DISPATCHED_SLUG: ${{ github.event.client_payload.slug }}
+      # dockable sends { slug, sha }, ui { slug, ref }: the contract does not fix the payload yet
+      DISPATCHED_SHA: ${{ github.event.client_payload.sha || github.event.client_payload.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      # No `cache: pnpm` here: the store is cached below, keyed on the projects' lockfiles too.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
       # (the runner context is not available in a job's env)
       - run: echo "FRAGIOLA_PROJECTS_DIR=$RUNNER_TEMP/projects" >> "$GITHUB_ENV"
@@ -128,7 +182,41 @@ jobs:
             echo "$slug: $repo@$ref → $(git -C "$dir" rev-parse --short HEAD)" | tee -a "$GITHUB_STEP_SUMMARY"
           done
 
+      # One store for www and every project, keyed on all their lockfiles (hashFiles cannot read
+      # $RUNNER_TEMP, hence the step).
+      - name: Key the pnpm store on every lockfile
+        id: store
+        run: |
+          echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+          echo "key=pnpm-store-${{ runner.os }}-$(cat pnpm-lock.yaml "$FRAGIOLA_PROJECTS_DIR"/*/pnpm-lock.yaml | sha256sum | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - id: store-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.store.outputs.path }}
+          key: ${{ steps.store.outputs.key }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
       - run: pnpm sources:sync --install
+
+      # Saved only when a lockfile changed, pruned first so that it holds what the lockfiles
+      # use and does not grow from one restore-key to the next.
+      - if: steps.store-restore.outputs.cache-hit != 'true'
+        run: pnpm store prune
+
+      - if: steps.store-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.store.outputs.path }}
+          key: ${{ steps.store.outputs.key }}
+
+      - uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: next-build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'styles/**', 'next.config.mjs', 'source.config.ts', '.sources/**') }}
+          restore-keys: next-build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       - run: pnpm build
 
@@ -137,7 +225,10 @@ jobs:
           path: out
 
   deploy:
-    needs: build
+    needs: [checks, e2e, build]
+    # after checks and e2e passed, or were skipped (a dispatch or the schedule); never after one
+    # failed, and only from main
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

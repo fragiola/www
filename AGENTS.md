@@ -92,7 +92,7 @@ Do not "fix" these.
 | `pnpm check` / `pnpm check:fix` | Biome |
 | `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
 | `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`) |
-| `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`), served like Pages / by `serve` (clean URLs) |
+| `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`): the whole suite served like Pages / the `@serve` tests (whose result depends on how a static server maps URLs, query strings, redirects and files) served by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
 ## Repository layout
