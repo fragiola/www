@@ -3,6 +3,7 @@ import {
     collectErrors,
     DOCKABLE,
     embed,
+    expectReady,
     frameMarked,
     mark,
     marked,
@@ -15,7 +16,8 @@ import {
 // The gallery (§4), ported from dockable's docs e2e/shell.spec.ts: navigation, theme and code
 // state in the URL, the code panel's files and copy buttons, reset, fullscreen, the small-screen
 // drawers, the persistent list. Plus what the generic gallery adds: the framework switcher, an
-// example missing in a framework, the theme remembered per project and following the site.
+// example missing in a framework, the theme remembered per project and following the site, and
+// the list on Fragiola UI's Sidebar (collapsible on desktop, remembered, a Drawer when narrow).
 
 const first = DOCKABLE.ordered[0];
 const last = DOCKABLE.ordered.at(-1);
@@ -251,6 +253,311 @@ test("small screens get drawers for the list and the code", async ({
     await expect(panel).toBeHidden();
 });
 
+test("on desktop the list collapses from the header or Ctrl+B, and stays as the reader left it", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id);
+    const list = page.getByRole("navigation", { name: "Examples" });
+    const trigger = page
+        .getByTestId("site-header")
+        .getByRole("button", { name: "Examples list" });
+    const stage = page.getByTestId("stage");
+    const width = async () => (await stage.boundingBox())?.width ?? 0;
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const open = await width();
+
+    // the Sidebar's column slides away, out of reach, and the stage takes its room
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(list).toBeHidden();
+    await expect.poll(width).toBeGreaterThan(open + 200);
+
+    // remembered across a reload and another example
+    await page.reload();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(list).toBeHidden();
+    await page.goto(`dockable/examples/${last.id}/`);
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    // Ctrl+B brings it back, except while typing in a field
+    await page.keyboard.press("Control+b");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(list).toBeVisible();
+    await expect(
+        list.getByRole("link", { name: last.title, exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+    await list.getByRole("searchbox").focus();
+    await page.keyboard.press("Control+b");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(
+        await page.evaluate(() =>
+            localStorage.getItem("@fragiola:examples-sidebar"),
+        ),
+    ).toBe("true");
+});
+
+test("a collapsed list is painted collapsed by the static page, before any script of the site", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() =>
+        localStorage.setItem("@fragiola:examples-sidebar", "false"),
+    );
+    // no hydration: what shows is the static HTML and its inline scripts
+    await page.route("**/_next/static/chunks/**/*.js", (route) =>
+        route.abort(),
+    );
+    await page.goto(`dockable/examples/${first.id}/`);
+    await expect(page.locator("html")).toHaveAttribute(
+        "data-examples-list",
+        "collapsed",
+    );
+    const column = page.locator('[data-slot="sidebar"][data-state]');
+    expect((await column.boundingBox())?.width).toBe(0);
+    await expect(
+        page.getByRole("navigation", { name: "Examples" }),
+    ).toBeHidden();
+});
+
+test("a collapsed list stays collapsed on a client-side navigation into the gallery", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() =>
+        localStorage.setItem("@fragiola:examples-sidebar", "false"),
+    );
+    await page.goto("dockable/");
+    await mark(page);
+    // the widest the column is painted, every frame from here on
+    await page.evaluate(() => {
+        const w = window as unknown as { widest: number };
+        w.widest = 0;
+        const frame = () => {
+            for (const column of document.querySelectorAll(
+                '[data-slot="sidebar"][data-state]',
+            )) {
+                w.widest = Math.max(
+                    w.widest,
+                    column.getBoundingClientRect().width,
+                );
+            }
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    });
+    await page
+        .getByTestId("site-header")
+        .getByRole("link", { name: "Examples", exact: true })
+        .click();
+    await expectReady(page.getByTestId("stage"));
+    expect(await marked(page)).toBe(true);
+    await expect(
+        page.getByRole("button", { name: "Examples list" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(
+        await page.evaluate(
+            () => (window as unknown as { widest: number }).widest,
+        ),
+    ).toBe(0);
+});
+
+test("small screens: the Drawer keeps the filter and the scroll between openings", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 400 });
+    await openExample(page, "dockable", first.id);
+    const trigger = page.getByRole("button", { name: "Examples list" });
+    const list = page.getByRole("navigation", { name: "Examples" });
+    await trigger.click();
+    const scroller = list.locator('[data-slot="sidebar-content"]');
+    await scroller.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+    });
+    const scrolled = await scroller.evaluate((element) => element.scrollTop);
+    expect(scrolled).toBeGreaterThan(0);
+    await list.getByRole("link", { name: last.title, exact: true }).click();
+    await expect(list).toBeHidden();
+    await trigger.click();
+    await expect(list).toBeVisible();
+    expect(await scroller.evaluate((element) => element.scrollTop)).toBe(
+        scrolled,
+    );
+    await list.getByRole("searchbox").fill("maximizeToggle");
+    await list.getByRole("link", { name: "Maximize" }).click();
+    await expect(list).toBeHidden();
+    await trigger.click();
+    await expect(list.getByRole("searchbox")).toHaveValue("maximizeToggle");
+    await expect(list.getByRole("link")).toHaveText(["Maximize"]);
+});
+
+test("on desktop the code panel is resized by its handle, by pointer or keyboard, and keeps its width", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const handle = page.getByRole("separator", { name: "Resize the code" });
+    const stage = page.getByTestId("stage");
+    const width = async () => (await panel.boundingBox())?.width ?? 0;
+    await expect(panel).toBeVisible();
+    await expect(handle).toBeVisible();
+    const before = await width();
+
+    // dragged 200px towards the stage: the code is 200px wider, the stage narrower
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("no handle");
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const stageBefore = (await stage.boundingBox())?.width ?? 0;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x - 100, y, { steps: 5 });
+    await page.mouse.move(x - 200, y, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(width).toBeGreaterThan(before + 190);
+    expect((await stage.boundingBox())?.width ?? 0).toBeLessThan(
+        stageBefore - 190,
+    );
+
+    // the keyboard moves it too
+    const dragged = await width();
+    await handle.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect.poll(width).toBeGreaterThan(dragged);
+    const resized = await width();
+    expect(
+        Number(
+            await page.evaluate(() =>
+                localStorage.getItem("@fragiola:code-panel-width"),
+            ),
+        ),
+    ).toBeGreaterThan(0);
+
+    // kept: on another example, closed and reopened, after a reload
+    const near = (value: number) => Math.abs(value - resized) < 3;
+    await page
+        .getByRole("navigation", { name: "Examples" })
+        .getByRole("link", { name: last.title, exact: true })
+        .click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        last.title,
+    );
+    await expect.poll(async () => near(await width())).toBe(true);
+    await page.getByTestId("toggle-code").click();
+    await expect(panel).toBeHidden();
+    await expect(handle).toBeHidden();
+    await page.getByTestId("toggle-code").click();
+    await expect.poll(async () => near(await width())).toBe(true);
+    await page.reload();
+    await expect.poll(async () => near(await width())).toBe(true);
+
+    // bounded: the stage keeps 30% of the row, the code 25%
+    const row = (await page.locator("#example-panels").boundingBox())?.width;
+    if (!row) throw new Error("no row");
+    const drag = async (dx: number) => {
+        const at = await handle.boundingBox();
+        if (!at) throw new Error("no handle");
+        const hx = at.x + at.width / 2;
+        const hy = at.y + at.height / 2;
+        await page.mouse.move(hx, hy);
+        await page.mouse.down();
+        await page.mouse.move(hx + dx, hy, { steps: 10 });
+        await page.mouse.up();
+    };
+    await drag(-2000);
+    await expect
+        .poll(async () => (await stage.boundingBox())?.width ?? 0)
+        .toBeGreaterThan(row * 0.3 - 30);
+    await drag(2000);
+    await expect.poll(width).toBeGreaterThan(row * 0.25 - 3);
+    expect(await width()).toBeLessThan(row * 0.25 + 3);
+});
+
+test("a resized code panel keeps its share when the row changes, even with no storage", async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        Storage.prototype.setItem = () => {
+            throw new Error("storage is blocked");
+        };
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const row = page.locator("#example-panels");
+    const share = async () =>
+        ((await panel.boundingBox())?.width ?? 0) /
+        ((await row.boundingBox())?.width ?? 1);
+    const handle = page.getByRole("separator", { name: "Resize the code" });
+    const box = await handle.boundingBox();
+    if (!box) throw new Error("no handle");
+    await page.mouse.move(box.x, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 150, box.y + box.height / 2, { steps: 5 });
+    await page.mouse.up();
+    const resized = await share();
+
+    // the list collapses (the row widens), then the view renders again (another theme)
+    await page.keyboard.press("Control+b");
+    await expect(
+        page.getByRole("navigation", { name: "Examples" }),
+    ).toBeHidden();
+    await page.getByRole("button", { name: "Paper" }).click();
+    await expect(page.getByTestId("stage")).toHaveAttribute(
+        "data-example-theme",
+        "paper",
+    );
+    await expect
+        .poll(async () => Math.abs((await share()) - resized))
+        .toBeLessThan(0.01);
+});
+
+test("on a wide screen the code opens at 46rem, on every example", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 2560, height: 1000 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    const near736 = async () =>
+        Math.abs(((await panel.boundingBox())?.width ?? 0) - 736) < 2;
+    await expect.poll(near736).toBe(true);
+    await page
+        .getByRole("navigation", { name: "Examples" })
+        .getByRole("link", { name: last.title, exact: true })
+        .click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        last.title,
+    );
+    await expect.poll(near736).toBe(true);
+});
+
+test("small screens: the code is an overlay, with no handle", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 740 });
+    await openExample(page, "dockable", first.id, { code: true });
+    const panel = page.getByRole("complementary", { name: "Example code" });
+    await expect(panel).toBeVisible();
+    expect((await panel.boundingBox())?.width).toBeGreaterThan(360);
+    await expect(page.getByRole("separator")).toHaveCount(0);
+});
+
+test("fullscreen lays the stage over the page with the code open", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openExample(page, "dockable", first.id, { code: true });
+    await page.getByRole("button", { name: "Fullscreen" }).click();
+    const box = await page.getByTestId("stage").boundingBox();
+    expect(box?.width).toBeGreaterThan(1440 - 40);
+    expect(box?.height).toBeGreaterThan(900 - 40);
+    await page.keyboard.press("Escape");
+    await expect(
+        page.getByRole("complementary", { name: "Example code" }),
+    ).toBeVisible();
+});
+
 test("fullscreen lays the stage over the page, and Escape restores it", async ({
     page,
 }) => {
@@ -277,7 +584,7 @@ test("the list keeps its scroll, the filter and the theme while moving between e
     await page.setViewportSize({ width: 1280, height: 420 });
     await openExample(page, "dockable", first.id, { theme: "paper" });
     const list = page.getByRole("navigation", { name: "Examples" });
-    const scroller = list.locator(".overflow-y-auto");
+    const scroller = list.locator('[data-slot="sidebar-content"]');
     await mark(page);
 
     await scroller.evaluate((element) => {

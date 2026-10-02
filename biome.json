@@ -63,5 +63,15 @@
             "trailingNewline": true
         }
     },
-    "overrides": []
+    "overrides": [
+        {
+            "includes": [
+                "components/ui/**",
+                "components/atoms/**",
+                "components/families/**",
+                "lib/cn.ts"
+            ],
+            "assist": { "enabled": false }
+        }
+    ]
 }

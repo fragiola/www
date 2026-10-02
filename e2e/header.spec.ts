@@ -253,6 +253,11 @@ test("small screens: the gallery's list and the site menu never open together", 
     await header(page).getByRole("button", { name: "Examples list" }).click();
     await expect(list).toBeVisible();
     await expect(site(page)).toBeHidden();
+    // the list is the Sidebar's Drawer, modal: the page behind it, the menu with it, is out of
+    // reach until it closes
+    await expect(menu).toBeHidden();
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
     await menu.click();
     await expect(site(page)).toBeVisible();
     await expect(list).toBeHidden();

@@ -3,12 +3,24 @@
 import { BookOpen, Code2, Maximize, Minimize, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+    useSyncExternalStore,
+} from "react";
 import { ExampleFrame } from "@/components/example-frame";
 import { setFramework } from "@/components/framework";
+import {
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup,
+} from "@/components/resizable";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
+import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 import { iconButton, useShell, variantFor } from "./gallery-chrome";
 
 // the panel (and the code block it renders with) loads when it first opens
@@ -20,8 +32,45 @@ const CodePanel = dynamic(
 // One example in the gallery (§4), ported from dockable's docs (components/site/
 // examples-shell.tsx): its title, level, description and features, the toolbar (theme, framework,
 // reset, fullscreen, code), the live example in the centre (the project's embed app in an iframe,
-// §5) and the code on the right. The list around it is the gallery's layout (gallery-chrome.tsx),
-// which stays mounted between examples.
+// §5) and the code on the right, both inside the Sidebar's Inset (the page's <main>). The list
+// around it is the gallery's layout (gallery-chrome.tsx), which stays mounted between examples.
+//
+// From `md` the stage and the code are two resizable panels (components/resizable.tsx): the code's
+// share of the row is the reader's, remembered (lib/storage.ts) across examples and visits. Below
+// `md` the code is an overlay over the whole row, as it always was. The stage's panel is the same
+// element either way, so crossing `md` never reloads the example.
+
+/** The code panel's size when the reader has not chosen one, as before: min(46rem, 46%), in px. */
+function defaultCodeSize(row: HTMLElement | null): number | string {
+    if (!row) return "46%";
+    const rem = Number.parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+    );
+    return Math.min(46 * rem, row.clientWidth * 0.46);
+}
+
+/** The reader's code panel share, in %, if it is one. */
+function storedCodeSize(): string | undefined {
+    const stored = Number(readStored(STORAGE_KEYS.codePanelWidth));
+    return stored > 0 && stored < 100 ? `${stored}%` : undefined;
+}
+
+// `md`, as the overlay's classes read it
+const WIDE = "(min-width: 48rem)";
+
+function subscribeWide(onChange: () => void) {
+    const query = window.matchMedia(WIDE);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+}
+
+function useWide(): boolean {
+    return useSyncExternalStore(
+        subscribeWide,
+        () => window.matchMedia(WIDE).matches,
+        () => false,
+    );
+}
 
 function FrameworkSwitcher({
     frameworks,
@@ -54,6 +103,13 @@ export function ExampleView({ id }: { id: string }) {
     const { project } = gallery;
     const [resetKey, setResetKey] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
+    const wide = useWide();
+    const row = useRef<HTMLDivElement>(null);
+    const codeSize = useRef<number | string | undefined>(undefined);
+    // the row is measured before the code docks in it (its default size is a share of the row);
+    // set before the first paint, so the code still opens with the page
+    const [measured, setMeasured] = useState(false);
+    useLayoutEffect(() => setMeasured(true), []);
 
     // Fullscreen puts the whole page in fullscreen and lays the stage over it, rather than
     // making the stage the fullscreen element: what an example portals into its own <body>
@@ -94,175 +150,243 @@ export function ExampleView({ id }: { id: string }) {
     const elsewhere = project.frameworks.filter((f) => example.variants[f]);
     const selectedTheme = gallery.themes.find((t) => t.name === theme);
 
+    const docked = wide && state.code && ready && measured;
+    // fixed when the panel docks: a changed defaultSize would re-register it at that size
+    if (!docked) codeSize.current = undefined;
+    else codeSize.current ??= storedCodeSize() ?? defaultCodeSize(row.current);
+    const code = (
+        <aside
+            id="example-code"
+            aria-label="Example code"
+            data-open={state.code ? "" : undefined}
+            className={
+                docked
+                    ? "palette-surface min-w-0 flex-1 bg-palette-base"
+                    : "palette-surface absolute inset-0 z-40 hidden bg-palette-base data-open:block"
+            }
+        >
+            {state.code && ready ? (
+                available ? (
+                    <CodePanel
+                        key={`${framework}:${id}`}
+                        slug={project.slug}
+                        framework={framework}
+                        id={id}
+                        theme={selectedTheme?.hasFile ? theme : undefined}
+                        setup={variant.setup}
+                        onClose={() => setState((s) => ({ ...s, code: false }))}
+                    />
+                ) : (
+                    <p className="p-4 text-sm">
+                        {`No ${frameworkName(framework)} code for this example yet.`}
+                    </p>
+                )
+            ) : null}
+        </aside>
+    );
+
+    // Both panels' minimums are shares of the row, so they hold from `md` with the list open
+    // (a 512px row) to a wide screen: the stage keeps 30%, the code 25%.
     return (
         <>
-            <main className="flex min-w-0 flex-1 flex-col">
-                <div className="flex flex-wrap items-start gap-x-4 gap-y-2 border-palette-line border-b px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-full bg-palette-soft px-2 py-0.5 text-palette-accent text-xs">
-                                {level?.title ?? example.level}
-                            </span>
-                            <h1 className="text-lg">{variant.title}</h1>
-                        </div>
-                        <p className="mt-1 max-w-3xl text-palette-accent/85 text-sm">
-                            {variant.description}
-                        </p>
-                        <ul
-                            aria-label="Features"
-                            className="mt-2 flex flex-wrap gap-1"
-                        >
-                            {variant.features.map((feature) => (
-                                <li
-                                    key={feature}
-                                    className="rounded border border-palette-line px-1.5 py-0.5 font-mono text-[11px] text-palette-accent/85"
-                                >
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    {variant.docs ? (
-                        <Link href={variant.docs} className={iconButton}>
-                            <BookOpen aria-hidden className="size-4" />
-                            Read the guide
-                        </Link>
-                    ) : null}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 border-palette-line border-b px-3 py-1.5">
-                    <ThemeSwitcher
-                        themes={gallery.themes}
-                        value={theme}
-                        onChange={(value) =>
-                            setState((s) => ({ ...s, theme: value }))
-                        }
-                        buttonClassName={cn(iconButton, "h-7 px-2 text-xs")}
-                    />
-                    {project.frameworks.length > 1 ? (
-                        <FrameworkSwitcher
-                            frameworks={project.frameworks}
-                            value={framework}
-                        />
-                    ) : null}
-                    <div className="ms-auto flex items-center gap-1">
-                        <button
-                            type="button"
-                            data-testid="reset"
-                            disabled={!available}
-                            className={iconButton}
-                            onClick={() => setResetKey((key) => key + 1)}
-                        >
-                            <RotateCcw aria-hidden className="size-4" />
-                            Reset
-                        </button>
-                        <button
-                            type="button"
-                            aria-pressed={fullscreen}
-                            className={iconButton}
-                            onClick={toggleFullscreen}
-                        >
-                            {fullscreen ? (
-                                <Minimize aria-hidden className="size-4" />
-                            ) : (
-                                <Maximize aria-hidden className="size-4" />
-                            )}
-                            Fullscreen
-                        </button>
-                        <button
-                            type="button"
-                            data-testid="toggle-code"
-                            aria-pressed={state.code}
-                            aria-controls="example-code"
-                            className={iconButton}
-                            onClick={() =>
-                                setState((s) => ({ ...s, code: !s.code }))
-                            }
-                        >
-                            <Code2 aria-hidden className="size-4" />
-                            Code
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    data-fullscreen={fullscreen ? "" : undefined}
-                    className="flex min-h-0 flex-1 bg-palette-soft p-2 data-fullscreen:fixed data-fullscreen:inset-0 data-fullscreen:z-40 md:p-3"
-                >
-                    <div
-                        data-testid="stage"
-                        data-example-theme={theme}
-                        data-scheme={selectedTheme?.scheme}
-                        className="palette-surface grid min-h-0 flex-1 overflow-auto rounded-lg border border-palette-line bg-palette-base text-palette-contrast [grid-template:minmax(0,1fr)/minmax(0,1fr)]"
-                    >
-                        {!ready ? null : available ? (
-                            <ExampleFrame
-                                key={`${project.slug}:${framework}:${id}:${resetKey}`}
-                                slug={project.slug}
-                                framework={framework}
-                                id={id}
-                                title={variant.title}
-                                theme={theme}
-                                layout={variant.layout}
-                                height={variant.height}
-                                fill
-                            />
-                        ) : (
-                            <div
-                                role="status"
-                                data-testid="missing-framework"
-                                className="m-auto flex max-w-sm flex-col items-center gap-3 p-6 text-center text-sm"
-                            >
-                                <p>
-                                    {`“${variant.title}” is not available for ${frameworkName(framework)} yet.`}
-                                </p>
-                                <div className="flex flex-wrap justify-center gap-1">
-                                    {elsewhere.map((other) => (
-                                        <button
-                                            key={other}
-                                            type="button"
-                                            className={cn(
-                                                iconButton,
-                                                "border border-palette-line",
-                                            )}
-                                            onClick={() => setFramework(other)}
-                                        >
-                                            {`Show it in ${frameworkName(other)}`}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </main>
-
-            <aside
-                id="example-code"
-                aria-label="Example code"
-                data-open={state.code ? "" : undefined}
-                className="palette-surface absolute inset-0 z-40 hidden bg-palette-base data-open:block md:static md:w-[min(46rem,46%)] md:shrink-0 md:border-palette-line md:border-s"
+            <ResizablePanelGroup
+                id="example-panels"
+                orientation="horizontal"
+                elementRef={row}
+                className="min-w-0 flex-1"
+                onLayoutChanged={(layout, meta) => {
+                    const size = layout["example-code-panel"];
+                    if (meta.isUserInteraction && size !== undefined) {
+                        writeStored(
+                            STORAGE_KEYS.codePanelWidth,
+                            size.toFixed(2),
+                        );
+                    }
+                }}
             >
-                {state.code && ready ? (
-                    available ? (
-                        <CodePanel
-                            key={`${framework}:${id}`}
-                            slug={project.slug}
-                            framework={framework}
-                            id={id}
-                            theme={selectedTheme?.hasFile ? theme : undefined}
-                            setup={variant.setup}
-                            onClose={() =>
-                                setState((s) => ({ ...s, code: false }))
-                            }
+                <ResizablePanel
+                    id="example-stage-panel"
+                    minSize="30%"
+                    className="flex"
+                >
+                    <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex flex-wrap items-start gap-x-4 gap-y-2 border-palette-line border-b px-4 py-3">
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full bg-palette-soft px-2 py-0.5 text-palette-accent text-xs">
+                                        {level?.title ?? example.level}
+                                    </span>
+                                    <h1 className="text-lg">{variant.title}</h1>
+                                </div>
+                                <p className="mt-1 max-w-3xl text-palette-accent/85 text-sm">
+                                    {variant.description}
+                                </p>
+                                <ul
+                                    aria-label="Features"
+                                    className="mt-2 flex flex-wrap gap-1"
+                                >
+                                    {variant.features.map((feature) => (
+                                        <li
+                                            key={feature}
+                                            className="rounded border border-palette-line px-1.5 py-0.5 font-mono text-[11px] text-palette-accent/85"
+                                        >
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            {variant.docs ? (
+                                <Link
+                                    href={variant.docs}
+                                    className={iconButton}
+                                >
+                                    <BookOpen aria-hidden className="size-4" />
+                                    Read the guide
+                                </Link>
+                            ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 border-palette-line border-b px-3 py-1.5">
+                            <ThemeSwitcher
+                                themes={gallery.themes}
+                                value={theme}
+                                onChange={(value) =>
+                                    setState((s) => ({ ...s, theme: value }))
+                                }
+                                buttonClassName={cn(
+                                    iconButton,
+                                    "h-7 px-2 text-xs",
+                                )}
+                            />
+                            {project.frameworks.length > 1 ? (
+                                <FrameworkSwitcher
+                                    frameworks={project.frameworks}
+                                    value={framework}
+                                />
+                            ) : null}
+                            <div className="ms-auto flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    data-testid="reset"
+                                    disabled={!available}
+                                    className={iconButton}
+                                    onClick={() =>
+                                        setResetKey((key) => key + 1)
+                                    }
+                                >
+                                    <RotateCcw aria-hidden className="size-4" />
+                                    Reset
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-pressed={fullscreen}
+                                    className={iconButton}
+                                    onClick={toggleFullscreen}
+                                >
+                                    {fullscreen ? (
+                                        <Minimize
+                                            aria-hidden
+                                            className="size-4"
+                                        />
+                                    ) : (
+                                        <Maximize
+                                            aria-hidden
+                                            className="size-4"
+                                        />
+                                    )}
+                                    Fullscreen
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="toggle-code"
+                                    aria-pressed={state.code}
+                                    aria-controls="example-code"
+                                    className={iconButton}
+                                    onClick={() =>
+                                        setState((s) => ({
+                                            ...s,
+                                            code: !s.code,
+                                        }))
+                                    }
+                                >
+                                    <Code2 aria-hidden className="size-4" />
+                                    Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            data-fullscreen={fullscreen ? "" : undefined}
+                            className="flex min-h-0 flex-1 bg-palette-soft p-2 data-fullscreen:fixed data-fullscreen:inset-0 data-fullscreen:z-40 md:p-3"
+                        >
+                            <div
+                                data-testid="stage"
+                                data-example-theme={theme}
+                                data-scheme={selectedTheme?.scheme}
+                                className="palette-surface grid min-h-0 flex-1 overflow-auto rounded-lg border border-palette-line bg-palette-base text-palette-contrast [grid-template:minmax(0,1fr)/minmax(0,1fr)]"
+                            >
+                                {!ready ? null : available ? (
+                                    <ExampleFrame
+                                        key={`${project.slug}:${framework}:${id}:${resetKey}`}
+                                        slug={project.slug}
+                                        framework={framework}
+                                        id={id}
+                                        title={variant.title}
+                                        theme={theme}
+                                        layout={variant.layout}
+                                        height={variant.height}
+                                        fill
+                                    />
+                                ) : (
+                                    <div
+                                        role="status"
+                                        data-testid="missing-framework"
+                                        className="m-auto flex max-w-sm flex-col items-center gap-3 p-6 text-center text-sm"
+                                    >
+                                        <p>
+                                            {`“${variant.title}” is not available for ${frameworkName(framework)} yet.`}
+                                        </p>
+                                        <div className="flex flex-wrap justify-center gap-1">
+                                            {elsewhere.map((other) => (
+                                                <button
+                                                    key={other}
+                                                    type="button"
+                                                    className={cn(
+                                                        iconButton,
+                                                        "border border-palette-line",
+                                                    )}
+                                                    onClick={() =>
+                                                        setFramework(other)
+                                                    }
+                                                >
+                                                    {`Show it in ${frameworkName(other)}`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </ResizablePanel>
+                {docked ? (
+                    <>
+                        <ResizableHandle
+                            withHandle
+                            aria-label="Resize the code"
                         />
-                    ) : (
-                        <p className="p-4 text-sm">
-                            {`No ${frameworkName(framework)} code for this example yet.`}
-                        </p>
-                    )
+                        <ResizablePanel
+                            id="example-code-panel"
+                            minSize="25%"
+                            defaultSize={codeSize.current}
+                            className="flex"
+                        >
+                            {code}
+                        </ResizablePanel>
+                    </>
                 ) : null}
-            </aside>
+            </ResizablePanelGroup>
+            {docked ? null : code}
         </>
     );
 }

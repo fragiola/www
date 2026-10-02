@@ -148,6 +148,21 @@
     scroll-margin-top: calc(7rem + var(--fd-banner-height));
 }
 
+/* ─── The gallery's list (components/gallery/gallery-chrome.tsx) ─────────
+   A reader who collapsed it gets it collapsed from the first paint: the
+   gallery's layout marks <html> before the list is parsed (lib/storage.ts),
+   and until React holds the state and takes the mark away, the Sidebar's
+   desktop column (data-state, its own attribute) is painted as its own
+   collapsed state paints it: no width, out of reach, no slide. */
+:root[data-examples-list="collapsed"] [data-slot="sidebar"][data-state] {
+    width: 0;
+    transition: none;
+}
+
+:root[data-examples-list="collapsed"] [data-slot="sidebar-container"] {
+    visibility: hidden;
+}
+
 /* ─── Landings (§3.4, §3.5) ──────────────────────────────────────────────
    The pieces of a project's landing (components/landing/), ported from Fragiola
    UI's own landing (ui/apps/www): the same look for every project. */

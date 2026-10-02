@@ -30,9 +30,11 @@ Do not "fix" these.
    themed by `?theme=` and the `theme` message. The iframe is created only after hydration
    (a frame loaded before hydration could say ready before anyone listens). Reset remounts it.
    This is about examples only: the Fragiola UI components the site itself is built with (the
-   header's navigation menu) are copied from ui's registry into this repo, the way a consumer
-   installs them (`pnpm registry:copy`), and are the site's own code from then on, like the
-   theme `prepare:site` vendors. Never edit the copies: a fix belongs in `../ui`, then re-copy.
+   header's navigation menu, the gallery's sidebar) are copied from ui's registry into this
+   repo, the way a consumer installs them (`pnpm registry:copy`), and are the site's own code
+   from then on, like the theme `prepare:site` vendors. Never edit the copies: a fix belongs in
+   `../ui`, then re-copy. Biome does not organize their imports (`biome.json`): the registry's
+   aliases, resolved, reorder them.
 4. **The site resolves the theme.** The embeds never read the site's `localStorage`: the site
    resolves its own theme (including `system`) and always passes an explicit example theme — the
    chosen one, else the first theme of the site's scheme.
@@ -45,9 +47,16 @@ Do not "fix" these.
    persistent layout (list scroll and filter kept), the toolbar (themes with swatches,
    Reset, Fullscreen, Code), the URL state, the remembered theme, the setup command, the mobile
    overlay. Behaviour changes go through its specs (`e2e/shell.spec.ts`), which are ported too.
-   Its header is not its own: it is the site header, as on every page (rule 9).
-7. **The framework choice is site-wide** (`localStorage["fragiola:framework"]`, `?framework=` in
-   the gallery). An example missing in the chosen framework says so; it never disappears.
+   Its header is not its own: it is the site header, as on every page (rule 9). Its list is
+   Fragiola UI's Sidebar (rule 3): collapsed off canvas on desktop from the header's leading
+   slot or Ctrl/⌘+B, the state remembered, a Drawer below 42rem. From `md` the code panel is
+   resizable (`components/resizable.tsx`, shadcn's over `react-resizable-panels`, in palette
+   roles), its width remembered; below `md` it is the overlay it always was.
+7. **The framework choice is site-wide** (`localStorage["@fragiola:framework"]`, `?framework=` in
+   the gallery). An example missing in the chosen framework says so; it never disappears. Every
+   key the site stores starts with `@fragiola:` and is named in `lib/storage.ts` only; the keys
+   written before the prefix move on the first visit (an inline script in `<head>`, before
+   next-themes reads `@fragiola:theme`).
 8. **This repo never installs a project's dependencies.** `site:export` and `site:dev` run in the
    project's own checkout with its own lockfile.
 9. **One header, the same on every page.** `components/site-header.tsx` is the header of the
@@ -75,7 +84,7 @@ Do not "fix" these.
 | `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
-| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu` and its registry dependencies) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
+| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
 | `pnpm brand:icons` | draw every icon from the mark in `lib/brand.ts` with Playwright's Chromium: `public/brand/fragiola-mark.svg`, `app/icon.svg`, `app/favicon.ico` (16/32/48), `app/apple-icon.png`, the manifest's icons and the 512 px logo in `public/brand/`; the same machine gives the same bytes. Run it when the mark or the palette changes (`tests/brand.test.ts` fails then) |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
@@ -97,6 +106,7 @@ lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
 lib/seo.ts                  titles, meta descriptions, canonical URLs, Open Graph/Twitter, JSON-LD (rule 10)
+lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
 app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
@@ -105,7 +115,8 @@ app/                        / (organization), /[project] (landing), /[project]/d
                               icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)
 components/site-header.tsx  the one header of every page (rule 9)
 components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's registry; never edited
-components/gallery/         the gallery: chrome (layout), example view (page)
+components/gallery/         the gallery: chrome (layout, the list on ui's Sidebar), example view (page)
+components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one
 components/example-frame.tsx  the iframe side of §5
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
