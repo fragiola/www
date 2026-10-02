@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { BRAND } from "@/lib/brand";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/seo";
+import { STORAGE_KEYS, storageMigrationScript } from "@/lib/storage";
 import "./globals.css";
 
 // No title template: every page's title is whole, built by lib/seo.ts (a template would double
@@ -21,14 +22,24 @@ export const viewport: Viewport = {
     ],
 };
 
-// Theme: next-themes, key localStorage["theme"], emitted as both the .dark class (Fumadocs UI)
-// and data-theme (Fragiola's palettes). The embeds never read it: the site resolves its theme
-// (including "system") and passes each embed an explicit example theme (CONTRACT.md §5.1).
+// Theme: next-themes, key localStorage["@fragiola:theme"], emitted as both the .dark class
+// (Fumadocs UI) and data-theme (Fragiola's palettes). The embeds never read it: the site resolves
+// its theme (including "system") and passes each embed an explicit example theme (CONTRACT.md
+// §5.1). The script in <head> moves the keys written before the `@fragiola:` prefix
+// (lib/storage.ts); it runs before next-themes' script in <body> reads the theme.
 //
 // Search is static: app/api/search is exported as a file and queried in the browser.
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <script
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: a constant of lib/storage.ts, no input
+                    dangerouslySetInnerHTML={{
+                        __html: storageMigrationScript(),
+                    }}
+                />
+            </head>
             <body className="palette-surface flex min-h-screen flex-col">
                 <RootProvider
                     search={{
@@ -40,6 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         attribute: ["class", "data-theme"],
                         defaultTheme: "dark",
                         enableSystem: true,
+                        storageKey: STORAGE_KEYS.theme,
                     }}
                 >
                     {children}

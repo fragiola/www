@@ -154,7 +154,7 @@ export const frameMarked = (scope: Locator) =>
 export async function setSiteTheme(page: Page, theme: "light" | "dark") {
     await page.addInitScript((value) => {
         try {
-            localStorage.setItem("theme", value);
+            localStorage.setItem("@fragiola:theme", value);
         } catch {}
     }, theme);
 }

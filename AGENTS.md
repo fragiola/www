@@ -46,8 +46,11 @@ Do not "fix" these.
    Reset, Fullscreen, Code), the URL state, the remembered theme, the setup command, the mobile
    overlay. Behaviour changes go through its specs (`e2e/shell.spec.ts`), which are ported too.
    Its header is not its own: it is the site header, as on every page (rule 9).
-7. **The framework choice is site-wide** (`localStorage["fragiola:framework"]`, `?framework=` in
-   the gallery). An example missing in the chosen framework says so; it never disappears.
+7. **The framework choice is site-wide** (`localStorage["@fragiola:framework"]`, `?framework=` in
+   the gallery). An example missing in the chosen framework says so; it never disappears. Every
+   key the site stores starts with `@fragiola:` and is named in `lib/storage.ts` only; the keys
+   written before the prefix move on the first visit (an inline script in `<head>`, before
+   next-themes reads `@fragiola:theme`).
 8. **This repo never installs a project's dependencies.** `site:export` and `site:dev` run in the
    project's own checkout with its own lockfile.
 9. **One header, the same on every page.** `components/site-header.tsx` is the header of the
@@ -97,6 +100,7 @@ lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
 lib/seo.ts                  titles, meta descriptions, canonical URLs, Open Graph/Twitter, JSON-LD (rule 10)
+lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
 app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search

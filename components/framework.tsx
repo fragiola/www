@@ -7,21 +7,18 @@ import {
     useSyncExternalStore,
 } from "react";
 import { frameworkName } from "@/lib/frameworks";
+import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 
 // The chosen framework: one value for the whole site (§4), persisted in
-// localStorage["fragiola:framework"] and shared across tabs through `storage`. A project that
-// does not offer the stored framework shows its default one; the choice is kept for the next
-// project that does.
+// localStorage["@fragiola:framework"] (lib/storage.ts) and shared across tabs through `storage`.
+// A project that does not offer the stored framework shows its default one; the choice is kept
+// for the next project that does.
 
-const KEY = "fragiola:framework";
+const KEY = STORAGE_KEYS.framework;
 const listeners = new Set<() => void>();
 
 function read(): string | null {
-    try {
-        return localStorage.getItem(KEY);
-    } catch {
-        return null;
-    }
+    return readStored(KEY);
 }
 
 function subscribe(listener: () => void) {
@@ -37,11 +34,7 @@ function subscribe(listener: () => void) {
 }
 
 export function setFramework(framework: string) {
-    try {
-        localStorage.setItem(KEY, framework);
-    } catch {
-        // storage unavailable: the choice lasts for this page
-    }
+    writeStored(KEY, framework);
     for (const listener of listeners) listener();
 }
 

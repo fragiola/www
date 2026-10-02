@@ -20,6 +20,7 @@ import { SiteHeader, type SiteHeaderProps } from "@/components/site-header";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, Gallery, GalleryExample } from "@/lib/projects";
+import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 
 // The example gallery's chrome (§4), ported from dockable's docs (components/site/
 // examples-chrome.tsx) and made generic: the list on the left, by level, under the site header
@@ -39,18 +40,11 @@ export interface ShellState {
     code: boolean;
 }
 
-const themeKey = (slug: string) => `fragiola:example-theme:${slug}`;
-
 function readState(gallery: Gallery): ShellState {
     const params = new URLSearchParams(window.location.search);
     const known = (name: string | null) =>
         name !== null && gallery.themes.some((theme) => theme.name === name);
-    let stored: string | null = null;
-    try {
-        stored = window.localStorage.getItem(themeKey(gallery.project.slug));
-    } catch {
-        // storage unavailable: the URL and the default still work
-    }
+    const stored = readStored(STORAGE_KEYS.exampleTheme(gallery.project.slug));
     const fromUrl = params.get("theme");
     return {
         theme: known(fromUrl) ? fromUrl : known(stored) ? stored : null,
@@ -253,14 +247,7 @@ function Chrome({
         const url = `${window.location.pathname}${query(state, framework, project.defaultFramework)}${window.location.hash}`;
         window.history.replaceState(window.history.state, "", url);
         if (state.theme) {
-            try {
-                window.localStorage.setItem(
-                    themeKey(project.slug),
-                    state.theme,
-                );
-            } catch {
-                // storage unavailable: nothing to remember
-            }
+            writeStored(STORAGE_KEYS.exampleTheme(project.slug), state.theme);
         }
     }, [state, framework, ready, current]);
 
