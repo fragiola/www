@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- The fixture embed app of www/fixtures (contract v1 §5): see app.js. -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="robots" content="noindex" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Grid Layout examples (react, fixture)</title>
+        <script id="fixture-config" type="application/json">
+            {"framework":"react","themes":{"light":"light","dark":"dark","paper":"light","terminal":"dark"},"examples":{"hello-grid":{"title":"Hello grid","layout":"fill"},"compaction-modes":{"title":"Compaction modes","layout":"fill"},"keyboard":{"title":"Keyboard","layout":"fill"}}}
+        </script>
+        <script>
+            (() => {
+                const schemes = JSON.parse(document.getElementById("fixture-config").textContent).themes;
+                const asked = new URLSearchParams(location.search).get("theme");
+                const theme = asked && Object.hasOwn(schemes, asked) ? asked : "light";
+                const html = document.documentElement;
+                html.dataset.theme = schemes[theme];
+                html.classList.toggle("dark", schemes[theme] === "dark");
+                html.dataset.exampleTheme = theme;
+            })();
+        </script>
+        <link rel="stylesheet" href="/grid-layout/embed/react/app.css" />
+    </head>
+    <body>
+        <div id="stage" data-testid="stage"></div>
+        <script type="module" src="/grid-layout/embed/react/app.js"></script>
+    </body>
+</html>

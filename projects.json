@@ -19,5 +19,12 @@
         "ref": "main",
         "localPath": "../data-grid",
         "devUrl": "http://localhost:5181"
+    },
+    {
+        "slug": "grid-layout",
+        "repo": "https://github.com/fragiola/grid-layout.git",
+        "ref": "main",
+        "localPath": "../grid-layout",
+        "devUrl": "http://localhost:5182"
     }
 ]

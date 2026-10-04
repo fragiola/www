@@ -1,0 +1,64 @@
+{
+    "files": {
+        "hello-grid/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { GridLayout } from \"@fragiola/grid-layout-react\";\n\n// Hello grid: a placeholder source of the www fixture.\nexport default function Example() {\n    return <GridLayout.Root defaultLayout={[]} />;\n}\n"
+        },
+        "compaction-modes/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { GridLayout } from \"@fragiola/grid-layout-react\";\n\n// Compaction modes: a placeholder source of the www fixture.\nexport default function Example() {\n    return <GridLayout.Root defaultLayout={[]} />;\n}\n"
+        },
+        "keyboard/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { GridLayout } from \"@fragiola/grid-layout-react\";\n\n// Keyboard: a placeholder source of the www fixture.\nexport default function Example() {\n    return <GridLayout.Root defaultLayout={[]} />;\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "hello-grid",
+            "title": "Hello grid",
+            "description": "Six widgets on twelve columns: drag one and it pushes the others aside, pull its corner to resize it.",
+            "level": "getting-started",
+            "order": 1,
+            "features": ["GridLayout.Root", "defaultLayout", "ResizeHandle"],
+            "docs": "/docs/getting-started/first-grid",
+            "layout": "fill",
+            "height": 480,
+            "files": ["hello-grid/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/grid-layout-react"]
+        },
+        {
+            "id": "compaction-modes",
+            "title": "Compaction modes",
+            "description": "A scattered layout settled three ways, vertical, horizontal or not at all, with collisions pushed or prevented.",
+            "level": "compaction",
+            "order": 1,
+            "features": [
+                "verticalCompactor",
+                "noCompactor",
+                "preventCollision"
+            ],
+            "docs": "/docs/getting-started/first-grid",
+            "layout": "fill",
+            "height": 480,
+            "files": ["compaction-modes/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/grid-layout-react"]
+        },
+        {
+            "id": "keyboard",
+            "title": "Keyboard",
+            "description": "Grab a widget with Space, move it with the arrows, resize it with Shift, drop or put it back.",
+            "level": "keyboard",
+            "order": 1,
+            "features": ["Space and Enter", "arrows", "useGridLayoutEvents"],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 480,
+            "files": ["keyboard/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/grid-layout-react"]
+        }
+    ]
+}
