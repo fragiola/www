@@ -26,6 +26,7 @@ whose dependencies are all namespaced. Edit them by hand from now on.
 
 `data-grid` was written by hand for v1.2 when the project joined: a landing, two pages, three of
 its examples with placeholder sources (no registry items), and the shared fixture embed app.
+`grid-layout` was written the same way when it joined.
 
 What is **not** the real projects':
 

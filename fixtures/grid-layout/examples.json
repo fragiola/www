@@ -1,0 +1,66 @@
+{
+    "levels": [
+        {
+            "id": "getting-started",
+            "title": "Getting started"
+        },
+        {
+            "id": "compaction",
+            "title": "Compaction"
+        },
+        {
+            "id": "keyboard",
+            "title": "Keyboard"
+        }
+    ],
+    "themes": [
+        {
+            "name": "light",
+            "title": "Light",
+            "description": "Neutral and quiet: the reference look.",
+            "scheme": "light",
+            "swatch": ["oklch(0.98 0 0)", "oklch(0.55 0.02 260)"],
+            "file": {
+                "path": "_themes/light.css",
+                "lang": "css",
+                "content": "/* Light: Neutral and quiet: the reference look. */\n[data-example-theme=\"light\"] {\n    --floor: rgb(255, 255, 255);\n    --ink: rgb(20, 20, 20);\n}\n"
+            }
+        },
+        {
+            "name": "dark",
+            "title": "Dark",
+            "description": "The reference look, at night.",
+            "scheme": "dark",
+            "swatch": ["oklch(0.2 0 0)", "oklch(0.7 0.02 260)"],
+            "file": {
+                "path": "_themes/dark.css",
+                "lang": "css",
+                "content": "/* Dark: The reference look, at night. */\n[data-example-theme=\"dark\"] {\n    --floor: rgb(17, 24, 39);\n    --ink: rgb(240, 240, 240);\n}\n"
+            }
+        },
+        {
+            "name": "paper",
+            "title": "Paper",
+            "description": "Warm and wide: rounded tabs, generous splitters.",
+            "scheme": "light",
+            "swatch": ["oklch(0.96 0.02 85)", "oklch(0.5 0.08 60)"],
+            "file": {
+                "path": "_themes/paper.css",
+                "lang": "css",
+                "content": "/* Paper: Warm and wide: rounded tabs, generous splitters. */\n[data-example-theme=\"paper\"] {\n    --floor: rgb(245, 239, 224);\n    --ink: rgb(60, 40, 20);\n}\n"
+            }
+        },
+        {
+            "name": "terminal",
+            "title": "Terminal",
+            "description": "Green on black, monospace, square.",
+            "scheme": "dark",
+            "swatch": ["oklch(0.15 0.03 150)", "oklch(0.8 0.2 145)"],
+            "file": {
+                "path": "_themes/terminal.css",
+                "lang": "css",
+                "content": "/* Terminal: Green on black, monospace, square. */\n[data-example-theme=\"terminal\"] {\n    --floor: rgb(0, 26, 0);\n    --ink: rgb(120, 255, 120);\n}\n"
+            }
+        }
+    ]
+}

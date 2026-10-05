@@ -1,0 +1,18 @@
+---
+title: Your first grid
+description: From a layout of plain objects to a dashboard that drags, resizes and pushes, in a few lines.
+---
+
+## A layout and its items
+
+```tsx title="dashboard.tsx"
+<GridLayout.Root defaultLayout={layout}>
+    <GridLayout.Items>
+        {(item) => <GridLayout.Item itemId={item.id}>{item.id}</GridLayout.Item>}
+    </GridLayout.Items>
+</GridLayout.Root>
+```
+
+<Example id="hello-grid" />
+
+See [compaction modes](/examples/compaction-modes) and [the keyboard](/examples/keyboard).
