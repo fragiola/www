@@ -1,0 +1,19 @@
+---
+title: Quick start
+description: From a card and a box you already render to a drag and drop that works, with one wrapper on each and no provider.
+---
+
+## A draggable and a droppable
+
+```tsx title="board.tsx"
+<Draggable id="card">
+    <div className="card">Card</div>
+</Draggable>
+<Droppable id="box" onDrop={({ draggableId }) => move(draggableId)}>
+    <div className="box" />
+</Droppable>
+```
+
+<Example id="hello-dnd" />
+
+See [a sortable list](/examples/sortable-list) and [the keyboard](/examples/keyboard).

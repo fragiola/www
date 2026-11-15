@@ -26,5 +26,12 @@
         "ref": "main",
         "localPath": "../grid-layout",
         "devUrl": "http://localhost:5182"
+    },
+    {
+        "slug": "dnd",
+        "repo": "https://github.com/fragiola/dnd.git",
+        "ref": "main",
+        "localPath": "../dnd",
+        "devUrl": "http://localhost:5183"
     }
 ]
