@@ -1,0 +1,60 @@
+{
+    "files": {
+        "hello-dnd/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Draggable } from \"@fragiola/dnd-react/draggable\";\n\n// Hello DnD: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Draggable id=\"card\"><div>Card</div></Draggable>;\n}\n"
+        },
+        "sortable-list/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Sortable } from \"@fragiola/dnd-react/sortable\";\n\n// Sortable list: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Sortable id=\"card\"><div>Card</div></Sortable>;\n}\n"
+        },
+        "keyboard/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Draggable } from \"@fragiola/dnd-react/draggable\";\n\n// Keyboard: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Draggable id=\"card\"><div>Card</div></Draggable>;\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "hello-dnd",
+            "title": "Hello DnD",
+            "description": "A card you drag into a box: a Draggable and a Droppable, no provider and no HTML of their own.",
+            "level": "getting-started",
+            "order": 1,
+            "features": ["Draggable", "Droppable", "onDrop"],
+            "docs": "/docs/getting-started/quick-start",
+            "layout": "fill",
+            "height": 420,
+            "files": ["hello-dnd/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/dnd-react"]
+        },
+        {
+            "id": "sortable-list",
+            "title": "Sortable list",
+            "description": "A vertical list you reorder by dragging; neighbours slide aside and the app applies the move with arrayMove.",
+            "level": "sortable",
+            "order": 1,
+            "features": ["Sortable", "verticalList", "arrayMove"],
+            "docs": "/docs/getting-started/quick-start",
+            "layout": "fill",
+            "height": 420,
+            "files": ["sortable-list/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/dnd-react"]
+        },
+        {
+            "id": "keyboard",
+            "title": "Keyboard",
+            "description": "Grab a card with Space, move it with the arrows, drop it with Enter or put it back with Escape.",
+            "level": "keyboard",
+            "order": 1,
+            "features": ["Space and Enter", "arrows", "Escape"],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 420,
+            "files": ["keyboard/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/dnd-react"]
+        }
+    ]
+}
