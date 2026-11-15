@@ -551,6 +551,15 @@ export function lowerPage(source: string, lowering: Lowering): string {
         }
         return out + raw(cursor, to, indent);
     };
+    // code is kept verbatim: set aside during the clean-up below (behind private-use marks), put
+    // back after it
+    const code: string[] = [];
+    const keep = (text: string) => {
+        code.push(text);
+        return `\uE000${code.length - 1}\uE000`;
+    };
+    const titleOf = (title: string | null | undefined) =>
+        title ? ` "${title.replace(/"/g, '\\"')}"` : "";
     const childrenOf = (node: Nodes) =>
         ("children" in node ? node.children : []) as Nodes[];
     const emit = (node: Nodes, indent: number): string => {
@@ -595,11 +604,31 @@ export function lowerPage(source: string, lowering: Lowering): string {
                     flow ? text.trim() : text,
                     flow,
                 );
-                // a block stays a block: blank lines around it (collapsed at the end)
-                return flow ? `\n\n${lowered}\n\n` : lowered;
+                if (!flow) return lowered;
+                // inside a list item or a blockquote, every line keeps the container's prefix
+                // (a list marker counts as its width in spaces); elsewhere a block stays a block,
+                // blank lines around it (collapsed at the end)
+                const before = raw(lineStart(start(node)), start(node), indent);
+                if (
+                    before !== "" &&
+                    /^[ \t>]*(?:(?:[-*+]|\d+[.)])[ \t]+)?$/.test(before)
+                ) {
+                    const prefix = before.replace(
+                        /(?:[-*+]|\d+[.)])[ \t]+$/,
+                        (marker) => " ".repeat(marker.length),
+                    );
+                    return lowered
+                        .split("\n")
+                        .map((line, index) =>
+                            index === 0
+                                ? line
+                                : `${prefix}${line}`.replace(/[ \t]+$/, ""),
+                        )
+                        .join("\n");
+                }
+                return `\n\n${lowered}\n\n`;
             }
             case "link": {
-                const title = node.title ? ` "${node.title}"` : "";
                 const children = childrenOf(node);
                 const label =
                     children.length > 0
@@ -610,10 +639,12 @@ export function lowerPage(source: string, lowering: Lowering): string {
                               indent,
                           )
                         : "";
-                return `[${label}](${lowering.link(node.url)}${title})`;
+                return `[${label}](${lowering.link(node.url)}${titleOf(node.title)})`;
             }
             case "definition":
-                return `[${node.label ?? node.identifier}]: ${lowering.link(node.url)}`;
+                return `[${node.label ?? node.identifier}]: ${lowering.link(node.url)}${titleOf(node.title)}`;
+            case "code":
+                return keep(raw(start(node), end(node), indent));
             case "mdxFlowExpression":
             case "mdxTextExpression":
             case "mdxjsEsm":
@@ -627,5 +658,10 @@ export function lowerPage(source: string, lowering: Lowering): string {
     return splice(0, body.length, tree.children as Nodes[], 0)
         .replace(/^[ \t]+$/gm, "")
         .replace(/\n{3,}/g, "\n\n")
-        .trim();
+        .replace(/^(?:>\n){2,}/gm, ">\n")
+        .trim()
+        .replace(
+            /\uE000(\d+)\uE000/g,
+            (_match, index: string) => code[Number(index)] ?? "",
+        );
 }

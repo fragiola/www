@@ -355,9 +355,12 @@ export function buildAgentFiles(
 
         const components: AgentComponent[] = [];
         if (kind === "registry") {
-            const byLeaf = new Map(
-                pages.map((page) => [page.path.split("/").at(-1), page.path]),
-            );
+            // a component's page ends with its name; an ambiguous name links no page
+            const byLeaf = new Map<string, string | null>();
+            for (const page of pages) {
+                const leaf = page.path.split("/").at(-1) ?? page.path;
+                byLeaf.set(leaf, byLeaf.has(leaf) ? null : page.path);
+            }
             for (const [name, item] of source.registry) {
                 components.push({
                     name,

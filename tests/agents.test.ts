@@ -383,6 +383,55 @@ describe("lowering a page", () => {
     });
 });
 
+describe("lowering, edge cases", () => {
+    const lower = (body: string) =>
+        pageMarkdown(
+            `---\ntitle: T\n---\n\n${body}\n`,
+            "dockable",
+            AGENT_SITE,
+            "@fragiola",
+        );
+
+    test("a component inside a list item stays in it", () => {
+        const out = lower(
+            '- one\n\n  <Callout type="info">\n    inside\n  </Callout>\n- two',
+        );
+        expect(out).toContain("- one\n\n  > **Info**\n  >\n  > inside\n- two");
+        const step = lower(
+            '1. Install:\n\n   <InstallCommand item="select" />\n2. Use it.',
+        );
+        expect(step).toContain(
+            "1. Install:\n\n   ```bash\n   npx shadcn@latest add @fragiola/select\n   ```\n2. Use it.",
+        );
+    });
+
+    test("a component inside a blockquote keeps the quote marks", () => {
+        const out = lower('> Note:\n>\n> <Example id="add-tabs" />');
+        expect(out).toContain(
+            "> [Example: add-tabs](https://fragiola.com/dockable/examples/add-tabs/)",
+        );
+    });
+
+    test("code is kept verbatim, blank lines and spaces included", () => {
+        const fence = "```py\nx = 1\n\n\n\ny = 2\n    \n```";
+        expect(lower(fence)).toContain(fence);
+        const inside = lower(
+            `<Framework name="react">\n    ${fence.replace(/\n/g, "\n    ")}\n</Framework>`,
+        );
+        expect(inside).toContain(fence);
+    });
+
+    test("a link title with quotes stays valid, and definitions keep theirs", () => {
+        const out = lower('[a](/docs/x \'say "hi"\')\n\n[d]: /docs/y "Title"');
+        expect(out).toContain(
+            '[a](https://fragiola.com/dockable/docs/x/ "say \\"hi\\"")',
+        );
+        expect(out).toContain(
+            '[d]: https://fragiola.com/dockable/docs/y/ "Title"',
+        );
+    });
+});
+
 describe("helpers", () => {
     test("groups registry items by type and target", () => {
         expect(componentGroup({ name: "t", type: "registry:theme" })).toBe(
