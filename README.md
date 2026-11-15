@@ -8,6 +8,20 @@ GitHub Pages.
 - **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.2).
 - **How this repo works**, its rules and commands: [`AGENTS.md`](AGENTS.md).
 
+## For AI agents
+
+Next to the site, the build publishes what AI agents read (`lib/agents.ts`):
+
+- `/llms.txt`, the [llms.txt](https://llmstxt.org) entry point;
+- `/agents/index.json`, every project, its kind (Fragiola UI's source code or a library's npm
+  packages), pages, examples and components;
+- `/agents/overview.md`, the ecosystem written for agents (`content/agents/overview.md`);
+- `/agents/<slug>/<path>.md`, each docs page as plain Markdown.
+
+`fragiola mcp`, the MCP server of [fragiola/cli](https://github.com/fragiola/cli), reads them. Its
+[`docs/agent-index.md`](https://github.com/fragiola/cli/blob/main/docs/agent-index.md) is the
+contract `tests/agents.test.ts` checks. The `/mcp/` page tells people how to set it up.
+
 ## Working on it
 
 ```sh

@@ -9,6 +9,8 @@
 //   .sources/<slug>/r/*.json          → public/r/*.json + a merged index.json (§7)
 //   .sources/ui/r (theme, palettes)   → styles/fragiola/ (the site is painted by Fragiola UI,
 //                                       installed the way a consumer installs it)
+//   pages, manifests, registries      → public/agents/** + public/llms.txt: the agent index
+//     + content/agents/overview.md      (lib/agents.ts), what AI agents and `fragiola mcp` read
 //
 // Everything under public/<slug>/ is generated (marked with public/<slug>/.generated).
 //
@@ -25,12 +27,14 @@ import {
     existsSync,
     mkdirSync,
     readdirSync,
+    readFileSync,
     rmSync,
     writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { bundledLanguages, createHighlighter } from "shiki";
+import { AGENT_SITE, buildAgentFiles } from "../lib/agents.ts";
 import type { CodeFile, ExampleCode } from "../lib/code.ts";
 import type {
     ExamplesConfig,
@@ -212,6 +216,20 @@ write(
     `${JSON.stringify({ name: "fragiola", homepage: "https://fragiola.com", items }, null, 4)}\n`,
 );
 
+// ─── the agent index ─────────────────────────────────────────────────────────
+// /agents/index.json, a Markdown copy of every docs page, the overview and /llms.txt: what AI
+// agents read (fragiola/cli's `fragiola mcp`, docs/agent-index.md there is the contract).
+const AGENTS_OUT = join(PUBLIC, "agents");
+rmSync(AGENTS_OUT, { recursive: true, force: true });
+const agents = buildAgentFiles(reads, {
+    site: AGENT_SITE,
+    overview: readFileSync(
+        join(ROOT, "content", "agents", "overview.md"),
+        "utf8",
+    ),
+});
+for (const file of agents.files) write(join(PUBLIC, file.path), file.content);
+
 // ─── the site's theme ────────────────────────────────────────────────────────
 // Every item whose files land under styles/ (the theme and the palettes), written under
 // styles/fragiola/ with the path they would have in a consumer's app, plus an index.css that
@@ -268,5 +286,5 @@ write(
 
 const seconds = ((performance.now() - started) / 1000).toFixed(1);
 console.log(
-    `prepare:site — ${reads.map((r) => `${r.slug} (${[...r.manifests.keys()].join(", ")})`).join(", ")} · ${codeFiles} code files · ${items.length} registry items · ${imports.length} theme files · ${seconds}s`,
+    `prepare:site — ${reads.map((r) => `${r.slug} (${[...r.manifests.keys()].join(", ")})`).join(", ")} · ${codeFiles} code files · ${items.length} registry items · ${agents.files.length} agent files · ${imports.length} theme files · ${seconds}s`,
 );

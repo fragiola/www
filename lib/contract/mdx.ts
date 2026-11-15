@@ -481,3 +481,151 @@ export function scanPage(source: string): PageScan {
     });
     return scan;
 }
+
+// ─── lowering a page to plain Markdown (the agent index) ────────────────────
+
+/**
+ * How `lowerPage` turns what Markdown cannot say into Markdown: each component, given its props
+ * (static values only) and its children already lowered, and each link.
+ */
+export interface Lowering {
+    element(
+        name: string,
+        props: Record<string, unknown>,
+        children: string,
+        flow: boolean,
+    ): string;
+    link(href: string): string;
+}
+
+/** The smallest indentation of the non-blank lines of `text`. */
+function indentOf(text: string): number {
+    const indents = text
+        .split("\n")
+        .filter((line) => line.trim() !== "")
+        .map((line) => /^[ \t]*/.exec(line)?.[0].length ?? 0);
+    return indents.length > 0 ? Math.min(...indents) : 0;
+}
+
+/**
+ * A page's body as plain Markdown: the frontmatter dropped, the source kept as written, except
+ * the components (`lowering.element`), the links (`lowering.link`) and the `{/* comments *\/}`,
+ * which are replaced. Read with the same parser as `scanPage`, so it sees what the site compiles.
+ * Throws when the page does not parse (the checks have already failed the build then).
+ */
+export function lowerPage(source: string, lowering: Lowering): string {
+    const { body } = splitFrontmatter(source);
+    const tree = processor.parse(body) as Root;
+    const start = (node: Nodes) => node.position?.start.offset ?? 0;
+    const end = (node: Nodes) => node.position?.end.offset ?? 0;
+    const lineStart = (offset: number) =>
+        body.lastIndexOf("\n", offset - 1) + 1;
+
+    /**
+     * Source as written, without the indentation of the components it sits in (`indent`
+     * columns at most): MDX lets component children be indented, Markdown reads four spaces as
+     * code.
+     */
+    const raw = (from: number, to: number, indent: number): string => {
+        const text = body.slice(from, to);
+        if (indent === 0) return text;
+        const cut = new RegExp(`\\n[ \\t]{0,${indent}}`, "g");
+        const stripped = text.replace(cut, "\n");
+        return from === lineStart(from)
+            ? stripped.replace(new RegExp(`^[ \\t]{0,${indent}}`), "")
+            : stripped;
+    };
+    /** `body[from, to)` with each child (inside that range) replaced by its lowering. */
+    const splice = (
+        from: number,
+        to: number,
+        children: Nodes[],
+        indent: number,
+    ): string => {
+        let out = "";
+        let cursor = from;
+        for (const child of children) {
+            if (!child.position) continue;
+            out += raw(cursor, start(child), indent) + emit(child, indent);
+            cursor = end(child);
+        }
+        return out + raw(cursor, to, indent);
+    };
+    const childrenOf = (node: Nodes) =>
+        ("children" in node ? node.children : []) as Nodes[];
+    const emit = (node: Nodes, indent: number): string => {
+        switch (node.type) {
+            case "mdxJsxFlowElement":
+            case "mdxJsxTextElement": {
+                const props: Record<string, unknown> = {};
+                for (const [name, prop] of readProps(node).props) {
+                    if (prop.kind === "string") props[name] = prop.value;
+                    else if (prop.kind === "boolean") props[name] = true;
+                    else if (prop.static) props[name] = prop.value;
+                }
+                const flow = node.type === "mdxJsxFlowElement";
+                const children = childrenOf(node).filter(
+                    (child) => child.position,
+                );
+                const first = children[0];
+                const last = children.at(-1);
+                let text = "";
+                if (first && last) {
+                    // from the start of the first child's line when only indentation precedes it
+                    const from =
+                        flow &&
+                        /^[ \t]*$/.test(
+                            body.slice(lineStart(start(first)), start(first)),
+                        )
+                            ? lineStart(start(first))
+                            : start(first);
+                    const own = flow
+                        ? indentOf(body.slice(from, end(last)))
+                        : indent;
+                    text = splice(
+                        from,
+                        end(last),
+                        children,
+                        Math.max(own, indent),
+                    );
+                }
+                const lowered = lowering.element(
+                    node.name ?? "",
+                    props,
+                    flow ? text.trim() : text,
+                    flow,
+                );
+                // a block stays a block: blank lines around it (collapsed at the end)
+                return flow ? `\n\n${lowered}\n\n` : lowered;
+            }
+            case "link": {
+                const title = node.title ? ` "${node.title}"` : "";
+                const children = childrenOf(node);
+                const label =
+                    children.length > 0
+                        ? splice(
+                              start(children[0] as Nodes),
+                              end(children.at(-1) as Nodes),
+                              children,
+                              indent,
+                          )
+                        : "";
+                return `[${label}](${lowering.link(node.url)}${title})`;
+            }
+            case "definition":
+                return `[${node.label ?? node.identifier}]: ${lowering.link(node.url)}`;
+            case "mdxFlowExpression":
+            case "mdxTextExpression":
+            case "mdxjsEsm":
+                return "";
+            default:
+                return "children" in node
+                    ? splice(start(node), end(node), childrenOf(node), indent)
+                    : raw(start(node), end(node), indent);
+        }
+    };
+    return splice(0, body.length, tree.children as Nodes[], 0)
+        .replace(/^[ \t]+$/gm, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+}
