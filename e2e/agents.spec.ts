@@ -20,7 +20,7 @@ test("the agent index, the Markdown pages and llms.txt are served", {
     };
     expect(index.version).toBe(1);
     expect(index.projects.map((project) => project.slug)).toEqual(
-        PROJECTS.map((project) => project.slug),
+        PROJECTS.map(({ project }) => project.slug),
     );
     expect(index.projects.find((project) => project.slug === "ui")?.kind).toBe(
         "registry",

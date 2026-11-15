@@ -112,7 +112,7 @@ lib/seo.ts                  titles, meta descriptions, canonical URLs, Open Grap
 lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
-app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
+app/                        / (organization), /mcp/ (the MCP server for AI agents, organization-level), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
                             + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
                               og.png/ and [project]/og.png/ (the share images, next/og at build),
                               icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)

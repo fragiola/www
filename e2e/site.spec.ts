@@ -116,7 +116,7 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
         "React · Vue",
     );
 
-    // the idea, your stack, Fragiola UI, the projects
+    // the idea, your stack, Fragiola UI, the projects, then the MCP server for AI agents
     const titles = page
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
@@ -125,6 +125,7 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
         "Paint it with what you already use",
         UI.project.title,
         "What Fragiola ships today",
+        "Your coding agent knows Fragiola",
     ]);
     const spotlight = page.getByTestId("landing-section").filter({
         has: page.getByRole("heading", {

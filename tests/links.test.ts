@@ -36,6 +36,9 @@ test("isAppRoute: files leave the Next app", () => {
     expect(isAppRoute("/dockable/docs/x/")).toBe(true);
     expect(isAppRoute("/dockable/examples/x/")).toBe(true);
     expect(isAppRoute("/r/cn.json")).toBe(false);
+    expect(isAppRoute("/agents/index.json")).toBe(false);
+    expect(isAppRoute("/llms.txt")).toBe(false);
+    expect(isAppRoute("/mcp/")).toBe(true);
     expect(isAppRoute("/dockable/embed/react/index.html")).toBe(false);
     expect(isAppRoute("https://github.com")).toBe(false);
 });
