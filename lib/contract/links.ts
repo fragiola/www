@@ -101,7 +101,10 @@ export function siteHref(slug: string, href: string): string {
 /** Whether a site URL is served by the Next app (client-side navigation) rather than a file. */
 export function isAppRoute(href: string): boolean {
     if (!href.startsWith("/") || href.startsWith("//")) return false;
-    return !/^\/(r\/|api\/|[^/]+\/(embed|code)\/)/.test(href);
+    // the registry, the search index, the agent index and llms.txt, the embeds and code are files
+    return !/^\/(r\/|api\/|agents\/|llms\.txt|[^/]+\/(embed|code)\/)/.test(
+        href,
+    );
 }
 
 /** The docs URL of a page path of project `slug`. */

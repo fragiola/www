@@ -19,6 +19,9 @@ test.use({ javaScriptEnabled: false });
 
 const SITE = "https://fragiola.com";
 
+/** The organization-level pages, outside every project: the MCP server's (app/mcp/page.tsx). */
+const ORGANIZATION_PAGES = ["/mcp/"];
+
 async function sitemap(request: APIRequestContext): Promise<string[]> {
     const response = await request.get("sitemap.xml");
     expect(response.ok()).toBe(true);
@@ -41,8 +44,12 @@ async function meta(page: Page, key: string): Promise<string | null> {
 
 const chars = (text: string | null) => [...(text ?? "")].length;
 
-function kindOf(path: string): "home" | "landing" | "docs" | "example" {
+function kindOf(
+    path: string,
+): "home" | "page" | "landing" | "docs" | "example" {
     if (path === "/") return "home";
+    // the organization's own pages: an article of the site, in no project
+    if (ORGANIZATION_PAGES.includes(path)) return "page";
     if (/^\/[^/]+\/$/.test(path)) return "landing";
     return path.includes("/docs/") ? "docs" : "example";
 }
@@ -50,6 +57,7 @@ function kindOf(path: string): "home" | "landing" | "docs" | "example" {
 // every page carries the organization it names as publisher: a page is read on its own
 const EXPECTED_TYPES = {
     home: ["Organization", "WebSite"],
+    page: ["TechArticle", "BreadcrumbList", "Organization"],
     landing: ["SoftwareSourceCode", "BreadcrumbList", "Organization"],
     docs: ["TechArticle", "BreadcrumbList", "Organization"],
     example: ["BreadcrumbList", "Organization"],
@@ -76,6 +84,7 @@ test("the sitemap lists every indexable page and nothing else", {
     }
     const expected = [
         "/",
+        ...ORGANIZATION_PAGES,
         ...PROJECTS.flatMap(({ project, manifests }) => [
             `/${project.slug}/`,
             ...docsPaths(project.slug),
@@ -141,6 +150,7 @@ async function readPage(page: Page) {
 // titles: the landing's own, then · project, then · Fragiola when it fits
 const TITLES: Record<string, string> = {
     "/": "Fragiola — headless React components and a design system",
+    "/mcp/": "MCP server for AI agents · Fragiola",
     "/ui/": "Fragiola UI — React components on Base UI and Tailwind",
     "/dockable/": "Dockable — headless dockable panel layouts for React",
     "/ui/docs/atoms/clickable/": "Clickable · Fragiola UI",
@@ -272,11 +282,18 @@ function checkEntity(
     }
     if (item["@type"] === "TechArticle") {
         expect(item.url, where).toBe(url);
-        expect(item.isPartOf, where).toMatchObject({
-            "@type": "SoftwareSourceCode",
-            name: expect.any(String),
-            url: expect.stringMatching(/^https:\/\/fragiola\.com\/[^/]+\/$/),
-        });
+        // a docs page is part of its project; an organization page, of the site
+        expect(item.isPartOf, where).toMatchObject(
+            ORGANIZATION_PAGES.includes(new URL(url).pathname)
+                ? { "@id": `${SITE}/#website` }
+                : {
+                      "@type": "SoftwareSourceCode",
+                      name: expect.any(String),
+                      url: expect.stringMatching(
+                          /^https:\/\/fragiola\.com\/[^/]+\/$/,
+                      ),
+                  },
+        );
     }
     for (const key of ["description", "headline", "name"]) {
         if (typeof item[key] === "string") {

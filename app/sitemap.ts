@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { docsHref, exampleHref } from "@/lib/contract/links";
 import { getGallery, getProjects, pagePaths } from "@/lib/projects";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, MCP_PATH } from "@/lib/seo";
 
-// /sitemap.xml, written at build time: every indexable page and nothing else — `/`, each
+// /sitemap.xml, written at build time: every indexable page and nothing else — `/`, `/mcp/`, each
 // project's landing, every docs page and every example. Not the redirect pages
 // (/<slug>/docs/, /<slug>/examples/), the search index, the registry or the embeds. No lastmod:
 // the site does not know when a page's content changed, and a wrong date is worse than none.
@@ -12,6 +12,7 @@ export const dynamic = "force-static";
 export default function sitemap(): MetadataRoute.Sitemap {
     const paths = [
         "/",
+        MCP_PATH,
         ...getProjects().flatMap((project) => [
             `/${project.slug}/`,
             ...pagePaths(project)

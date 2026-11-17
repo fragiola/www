@@ -755,3 +755,19 @@ describe("registry (§7)", () => {
         );
     });
 });
+
+test.each(["agents", "llms.txt", "mcp", "r", "brand"])(
+    "the slug %s is reserved by the site",
+    (slug) => {
+        const read: ExportRead = {
+            slug,
+            dir,
+            manifests: new Map(),
+            registry: new Map(),
+            problems: [],
+        };
+        expect(
+            validateSite([read]).map((problem) => problem.message),
+        ).toContain(`slug "${slug}" is reserved by the site`);
+    },
+);

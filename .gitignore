@@ -33,7 +33,12 @@ public/*/code/
 public/*/.generated
 public/r/
 public/_sources.json
+public/agents/
+public/llms.txt
 
 # Playwright
 test-results/
 playwright-report/
+
+# Epic worktrees
+.worktrees/

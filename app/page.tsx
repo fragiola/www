@@ -19,6 +19,7 @@ import {
     type Project,
 } from "@/lib/projects";
 import {
+    MCP_PATH,
     organizationJsonLd,
     pageMetadata,
     SITE_DESCRIPTION,
@@ -26,8 +27,8 @@ import {
 } from "@/lib/seo";
 
 // The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
-// optional design system), bringing your own styles, Fragiola UI itself, then every project of
-// projects.json, from its own project.json. Built from the landing pieces every project's
+// optional design system), bringing your own styles, Fragiola UI itself, every project of
+// projects.json, from its own project.json, then the MCP server for AI agents (/mcp/). Built from the landing pieces every project's
 // landing uses (components/landing/).
 //
 // The copy says only what exists today: the projects are read, never listed by hand, and no
@@ -231,6 +232,22 @@ export default function Home() {
                         ))}
                     </ul>
                 </Section>
+
+                <Section
+                    id="agents"
+                    eyebrow="For AI agents"
+                    title="Your coding agent knows Fragiola"
+                    description="An MCP server gives Claude Code, Cursor, VS Code, Codex and OpenCode every component, docs page and API, and tells them what is source code to copy and what is a package to install."
+                >
+                    <div className="not-prose flex flex-wrap items-center gap-3">
+                        <ActionLink
+                            label="Set up the MCP server"
+                            href={MCP_PATH}
+                            variant="primary"
+                            icon="arrow"
+                        />
+                    </div>
+                </Section>
             </main>
             <footer
                 data-testid="site-footer"
@@ -261,6 +278,12 @@ export default function Home() {
                                 {project.title}
                             </Link>
                         ))}
+                        <Link
+                            href={MCP_PATH}
+                            className="rounded-sm text-palette-accent/85 transition-colors hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-palette-ring"
+                        >
+                            MCP server
+                        </Link>
                         <a
                             href={ORGANIZATION_URL}
                             className="rounded-sm text-palette-accent/85 transition-colors hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-palette-ring"

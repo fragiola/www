@@ -83,7 +83,7 @@ Do not "fix" these.
 | `pnpm install` | install dependencies |
 | `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project, the projects side by side (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
-| `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
+| `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the agent index → `public/agents/` + `public/llms.txt` (`lib/agents.ts`), the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
 | `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
 | `pnpm brand:icons` | draw every icon from the mark in `lib/brand.ts` with Playwright's Chromium: `public/brand/fragiola-mark.svg`, `app/icon.svg`, `app/favicon.ico` (16/32/48), `app/apple-icon.png`, the manifest's icons and the 512 px logo in `public/brand/`; the same machine gives the same bytes. Run it when the mark or the palette changes (`tests/brand.test.ts` fails then) |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
@@ -91,7 +91,7 @@ Do not "fix" these.
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
 | `pnpm check` / `pnpm check:fix` | Biome |
 | `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
-| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`) |
+| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`), the agent index against fragiola/cli's contract (`tests/agents.test.ts`) |
 | `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`): the whole suite served like Pages / the `@serve` tests (whose result depends on how a static server maps URLs, query strings, redirects and files) served by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
@@ -105,11 +105,14 @@ lib/projects.ts             build-time reads of .sources/ (server only), the sha
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
+lib/agents.ts               the agent index: /agents/index.json (fragiola/cli docs/agent-index.md v1), a
+                            Markdown copy of every docs page, /agents/overview.md, /llms.txt
+content/agents/overview.md  the ecosystem for AI agents, hand-written (served as /agents/overview.md)
 lib/seo.ts                  titles, meta descriptions, canonical URLs, Open Graph/Twitter, JSON-LD (rule 10)
 lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
-app/                        / (organization), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
+app/                        / (organization), /mcp/ (the MCP server for AI agents, organization-level), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
                             + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
                               og.png/ and [project]/og.png/ (the share images, next/og at build),
                               icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)

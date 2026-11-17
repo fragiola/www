@@ -12,6 +12,12 @@ import type { Project } from "@/lib/projects";
 /** The site's domain (README.md): canonical URLs, the sitemap and the structured data. */
 export const SITE_URL = "https://fragiola.com";
 export const SITE_NAME = "Fragiola";
+
+/** The MCP server's page (app/mcp/page.tsx): an organization-level page, not a project. */
+export const MCP_PATH = "/mcp/";
+export const MCP_TITLE = "MCP server for AI agents · Fragiola";
+export const MCP_DESCRIPTION =
+    "Give Claude Code, Cursor, VS Code, Codex and OpenCode Fragiola's components, docs and APIs with one command: npx fragiola@latest mcp.";
 /** The `<title>` of `/`, written for search. */
 export const SITE_TITLE =
     "Fragiola — headless React components and a design system";
@@ -223,6 +229,30 @@ const landingCrumb = (project: Project) => ({
     name: project.title,
     path: `/${project.slug}/`,
 });
+
+/**
+ * An organization-level page (/mcp/): an article of the site, under the organization's home.
+ * Not a project: it belongs to no project's breadcrumb.
+ */
+export function organizationPageJsonLd(page: {
+    path: string;
+    title: string;
+    description: string;
+}): Thing[] {
+    return [
+        {
+            "@type": "TechArticle",
+            headline: page.title,
+            description: plainText(page.description),
+            url: absoluteUrl(page.path),
+            inLanguage: "en",
+            isPartOf: { "@id": WEBSITE_ID },
+            publisher: { "@id": ORGANIZATION_ID },
+        },
+        breadcrumbs([home, { name: page.title, path: page.path }]),
+        organization(),
+    ];
+}
 
 /** A project's landing: the software, and where it sits. */
 export function projectJsonLd(project: Project, description: string): Thing[] {

@@ -481,3 +481,187 @@ export function scanPage(source: string): PageScan {
     });
     return scan;
 }
+
+// ─── lowering a page to plain Markdown (the agent index) ────────────────────
+
+/**
+ * How `lowerPage` turns what Markdown cannot say into Markdown: each component, given its props
+ * (static values only) and its children already lowered, and each link.
+ */
+export interface Lowering {
+    element(
+        name: string,
+        props: Record<string, unknown>,
+        children: string,
+        flow: boolean,
+    ): string;
+    link(href: string): string;
+}
+
+/** The smallest indentation of the non-blank lines of `text`. */
+function indentOf(text: string): number {
+    const indents = text
+        .split("\n")
+        .filter((line) => line.trim() !== "")
+        .map((line) => /^[ \t]*/.exec(line)?.[0].length ?? 0);
+    return indents.length > 0 ? Math.min(...indents) : 0;
+}
+
+/**
+ * A page's body as plain Markdown: the frontmatter dropped, the source kept as written, except
+ * the components (`lowering.element`), the links (`lowering.link`) and the `{/* comments *\/}`,
+ * which are replaced. Read with the same parser as `scanPage`, so it sees what the site compiles.
+ * Throws when the page does not parse (the checks have already failed the build then).
+ */
+export function lowerPage(source: string, lowering: Lowering): string {
+    const { body } = splitFrontmatter(source);
+    const tree = processor.parse(body) as Root;
+    const start = (node: Nodes) => node.position?.start.offset ?? 0;
+    const end = (node: Nodes) => node.position?.end.offset ?? 0;
+    const lineStart = (offset: number) =>
+        body.lastIndexOf("\n", offset - 1) + 1;
+
+    /**
+     * Source as written, without the indentation of the components it sits in (`indent`
+     * columns at most): MDX lets component children be indented, Markdown reads four spaces as
+     * code.
+     */
+    const raw = (from: number, to: number, indent: number): string => {
+        const text = body.slice(from, to);
+        if (indent === 0) return text;
+        const cut = new RegExp(`\\n[ \\t]{0,${indent}}`, "g");
+        const stripped = text.replace(cut, "\n");
+        return from === lineStart(from)
+            ? stripped.replace(new RegExp(`^[ \\t]{0,${indent}}`), "")
+            : stripped;
+    };
+    /** `body[from, to)` with each child (inside that range) replaced by its lowering. */
+    const splice = (
+        from: number,
+        to: number,
+        children: Nodes[],
+        indent: number,
+    ): string => {
+        let out = "";
+        let cursor = from;
+        for (const child of children) {
+            if (!child.position) continue;
+            out += raw(cursor, start(child), indent) + emit(child, indent);
+            cursor = end(child);
+        }
+        return out + raw(cursor, to, indent);
+    };
+    // code is kept verbatim: set aside during the clean-up below (behind private-use marks), put
+    // back after it
+    const code: string[] = [];
+    const keep = (text: string) => {
+        code.push(text);
+        return `\uE000${code.length - 1}\uE000`;
+    };
+    const titleOf = (title: string | null | undefined) =>
+        title ? ` "${title.replace(/"/g, '\\"')}"` : "";
+    const childrenOf = (node: Nodes) =>
+        ("children" in node ? node.children : []) as Nodes[];
+    const emit = (node: Nodes, indent: number): string => {
+        switch (node.type) {
+            case "mdxJsxFlowElement":
+            case "mdxJsxTextElement": {
+                const props: Record<string, unknown> = {};
+                for (const [name, prop] of readProps(node).props) {
+                    if (prop.kind === "string") props[name] = prop.value;
+                    else if (prop.kind === "boolean") props[name] = true;
+                    else if (prop.static) props[name] = prop.value;
+                }
+                const flow = node.type === "mdxJsxFlowElement";
+                const children = childrenOf(node).filter(
+                    (child) => child.position,
+                );
+                const first = children[0];
+                const last = children.at(-1);
+                let text = "";
+                if (first && last) {
+                    // from the start of the first child's line when only indentation precedes it
+                    const from =
+                        flow &&
+                        /^[ \t]*$/.test(
+                            body.slice(lineStart(start(first)), start(first)),
+                        )
+                            ? lineStart(start(first))
+                            : start(first);
+                    const own = flow
+                        ? indentOf(body.slice(from, end(last)))
+                        : indent;
+                    text = splice(
+                        from,
+                        end(last),
+                        children,
+                        Math.max(own, indent),
+                    );
+                }
+                const lowered = lowering.element(
+                    node.name ?? "",
+                    props,
+                    flow ? text.trim() : text,
+                    flow,
+                );
+                if (!flow) return lowered;
+                // inside a list item or a blockquote, every line keeps the container's prefix
+                // (a list marker counts as its width in spaces); elsewhere a block stays a block,
+                // blank lines around it (collapsed at the end)
+                const before = raw(lineStart(start(node)), start(node), indent);
+                if (
+                    before !== "" &&
+                    /^[ \t>]*(?:(?:[-*+]|\d+[.)])[ \t]+)?$/.test(before)
+                ) {
+                    const prefix = before.replace(
+                        /(?:[-*+]|\d+[.)])[ \t]+$/,
+                        (marker) => " ".repeat(marker.length),
+                    );
+                    return lowered
+                        .split("\n")
+                        .map((line, index) =>
+                            index === 0
+                                ? line
+                                : `${prefix}${line}`.replace(/[ \t]+$/, ""),
+                        )
+                        .join("\n");
+                }
+                return `\n\n${lowered}\n\n`;
+            }
+            case "link": {
+                const children = childrenOf(node);
+                const label =
+                    children.length > 0
+                        ? splice(
+                              start(children[0] as Nodes),
+                              end(children.at(-1) as Nodes),
+                              children,
+                              indent,
+                          )
+                        : "";
+                return `[${label}](${lowering.link(node.url)}${titleOf(node.title)})`;
+            }
+            case "definition":
+                return `[${node.label ?? node.identifier}]: ${lowering.link(node.url)}${titleOf(node.title)}`;
+            case "code":
+                return keep(raw(start(node), end(node), indent));
+            case "mdxFlowExpression":
+            case "mdxTextExpression":
+            case "mdxjsEsm":
+                return "";
+            default:
+                return "children" in node
+                    ? splice(start(node), end(node), childrenOf(node), indent)
+                    : raw(start(node), end(node), indent);
+        }
+    };
+    return splice(0, body.length, tree.children as Nodes[], 0)
+        .replace(/^[ \t]+$/gm, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/^(?:>\n){2,}/gm, ">\n")
+        .trim()
+        .replace(
+            /\uE000(\d+)\uE000/g,
+            (_match, index: string) => code[Number(index)] ?? "",
+        );
+}
