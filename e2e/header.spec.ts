@@ -221,7 +221,9 @@ test("small screens: the docs keep the page's full width; Escape or a press outs
     await page.mouse.click(below.x, below.y);
     await expect(site(page)).toBeHidden();
     await expect(page).toHaveURL(/\/ui\/docs\/atoms\/clickable\/$/);
-    await page.setViewportSize({ width: 375, height: 740 });
+    // a tall phone: the open menu lists every project and fills a 740px one, leaving no point of
+    // the example below it
+    await page.setViewportSize({ width: 375, height: 900 });
     await page.evaluate(() => window.scrollTo(0, 0));
     const example = await expectReady(page.locator("[data-example]").first());
     await button.click();
@@ -231,7 +233,7 @@ test("small screens: the docs keep the page's full width; Escape or a press outs
     const menu = await site(page).boundingBox();
     if (!frame || !menu) throw new Error("no example, or no menu");
     const y = Math.max(frame.y + 10, menu.y + menu.height + 10);
-    expect(y).toBeLessThan(Math.min(frame.y + frame.height, 740));
+    expect(y).toBeLessThan(Math.min(frame.y + frame.height, 900));
     const x = frame.x + frame.width / 2;
     expect(
         await page.evaluate(
