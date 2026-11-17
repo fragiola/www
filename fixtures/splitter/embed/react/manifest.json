@@ -1,0 +1,69 @@
+{
+    "files": {
+        "basic-horizontal/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Splitter } from \"@fragiola/splitter-react\";\n\n// Basic horizontal: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Splitter.Group>\n            <Splitter.Panel id=\"a\">A</Splitter.Panel>\n            <Splitter.Separator />\n            <Splitter.Panel id=\"b\">B</Splitter.Panel>\n        </Splitter.Group>\n    );\n}\n"
+        },
+        "nested-groups/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Splitter } from \"@fragiola/splitter-react\";\n\n// Nested groups: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Splitter.Group>\n            <Splitter.Panel id=\"a\">A</Splitter.Panel>\n            <Splitter.Separator />\n            <Splitter.Panel id=\"b\">B</Splitter.Panel>\n        </Splitter.Group>\n    );\n}\n"
+        },
+        "collapsible-sidebar/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Splitter } from \"@fragiola/splitter-react\";\n\n// Collapsible sidebar: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Splitter.Group>\n            <Splitter.Panel id=\"a\">A</Splitter.Panel>\n            <Splitter.Separator />\n            <Splitter.Panel id=\"b\">B</Splitter.Panel>\n        </Splitter.Group>\n    );\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "basic-horizontal",
+            "title": "Basic horizontal",
+            "description": "Three panels side by side: drag a separator to resize its neighbours, double click it to put its panel back to its default size.",
+            "level": "getting-started",
+            "order": 1,
+            "features": [
+                "Splitter.Group",
+                "Splitter.Panel",
+                "Splitter.Separator",
+                "defaultSize"
+            ],
+            "docs": "/docs/getting-started/first-split-view",
+            "layout": "fill",
+            "height": 420,
+            "files": ["basic-horizontal/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/splitter-react"]
+        },
+        {
+            "id": "nested-groups",
+            "title": "Nested groups",
+            "description": "A sidebar beside an editor that sits above a terminal: a group inside a panel joins its parent's model, and each separator resizes its own group only.",
+            "level": "layouts",
+            "order": 1,
+            "features": [
+                "nested Splitter.Group",
+                "one model",
+                "data-splitter-path"
+            ],
+            "docs": "/docs/getting-started/first-split-view",
+            "layout": "fill",
+            "height": 420,
+            "files": ["nested-groups/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/splitter-react"]
+        },
+        {
+            "id": "collapsible-sidebar",
+            "title": "Collapsible sidebar",
+            "description": "Drag the sidebar past its minimum and it collapses to a rail; drag it back or press Enter on the separator to expand it.",
+            "level": "collapsing",
+            "order": 1,
+            "features": ["collapsible", "collapsedSize", "data-collapsed"],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 420,
+            "files": ["collapsible-sidebar/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/splitter-react"]
+        }
+    ]
+}

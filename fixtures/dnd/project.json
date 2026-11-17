@@ -1,0 +1,10 @@
+{
+    "contract": 1,
+    "slug": "dnd",
+    "title": "DnD",
+    "description": "A headless drag and drop for React: wrappers that render no HTML, no provider, pointer and keyboard, one entry per capability, styled by you.",
+    "frameworks": ["react"],
+    "defaultFramework": "react",
+    "repository": "https://github.com/fragiola/dnd",
+    "keywords": ["drag and drop", "headless ui", "sortable"]
+}

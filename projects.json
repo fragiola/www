@@ -26,5 +26,26 @@
         "ref": "main",
         "localPath": "../grid-layout",
         "devUrl": "http://localhost:5182"
+    },
+    {
+        "slug": "dnd",
+        "repo": "https://github.com/fragiola/dnd.git",
+        "ref": "main",
+        "localPath": "../dnd",
+        "devUrl": "http://localhost:5183"
+    },
+    {
+        "slug": "tree",
+        "repo": "https://github.com/fragiola/tree.git",
+        "ref": "main",
+        "localPath": "../tree",
+        "devUrl": "http://localhost:5190"
+    },
+    {
+        "slug": "splitter",
+        "repo": "https://github.com/fragiola/splitter.git",
+        "ref": "main",
+        "localPath": "../splitter",
+        "devUrl": "http://localhost:5184"
     }
 ]

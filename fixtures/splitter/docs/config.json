@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Installation",
+                    "path": "getting-started/installation"
+                },
+                {
+                    "label": "Your first split view",
+                    "path": "getting-started/first-split-view"
+                }
+            ]
+        },
+        {
+            "label": "Community",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/splitter/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}

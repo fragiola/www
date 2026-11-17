@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Installation",
+                    "path": "getting-started/installation"
+                },
+                {
+                    "label": "Quick start",
+                    "path": "getting-started/quick-start"
+                }
+            ]
+        },
+        {
+            "label": "Community",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/dnd/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}
