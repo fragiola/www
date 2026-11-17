@@ -28,6 +28,8 @@ whose dependencies are all namespaced. Edit them by hand from now on.
 its examples with placeholder sources (no registry items), and the shared fixture embed app.
 `grid-layout` was written the same way when it joined.
 `dnd` was written the same way when it joined.
+`tree` was written the same way when it joined, with three frameworks (`react`, `vue`,
+`angular`), each an embed of the shared fixture app with the three examples.
 
 What is **not** the real projects':
 
