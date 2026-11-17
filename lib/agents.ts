@@ -429,7 +429,7 @@ export function llmsTxt(index: AgentIndex): string {
         "Two kinds of components, consumed differently:",
         "",
         `- **Fragiola UI** (source code): \`npx shadcn@latest add ${index.registry?.namespace ?? "@fragiola"}/<name>\` after adding the registry to components.json. The project owns the copied code.`,
-        "- **Libraries** (npm packages): install `@fragiola/<x>` and `@fragiola/<x>-react`, then import them. They ship behaviour and accessibility, never CSS.",
+        "- **Libraries** (npm packages): install only the adapter for the project's framework (`@fragiola/<x>-react`, `-vue`, `-angular`): it brings the core and re-exports it. They ship behaviour and accessibility, never CSS.",
         "",
         "## For agents",
         "",

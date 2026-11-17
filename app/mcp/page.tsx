@@ -135,7 +135,7 @@ const TOOLS: { name: string; answers: string }[] = [
     {
         name: "get_install_command",
         answers:
-            "The exact commands: the registry and shadcn add for Fragiola UI, npm install for the libraries.",
+            "The exact commands: the registry and shadcn add for Fragiola UI, and for a library the npm install of its adapter, one per framework (or only the one asked for).",
     },
 ];
 
@@ -231,7 +231,8 @@ export default function McpPage() {
                             {libraries.length > 0
                                 ? ` (${libraries.map((project) => project.title).join(", ")})`
                                 : ""}
-                            : a core and a React adapter you install and import.
+                            : install the adapter for your framework, which
+                            brings the core, and import everything from it.
                             Behaviour and accessibility, no CSS.
                         </Feature>
                     </Features>
