@@ -28,6 +28,7 @@ whose dependencies are all namespaced. Edit them by hand from now on.
 its examples with placeholder sources (no registry items), and the shared fixture embed app.
 `grid-layout` was written the same way when it joined.
 `dnd` was written the same way when it joined.
+`splitter` was written the same way when it joined.
 
 What is **not** the real projects':
 
