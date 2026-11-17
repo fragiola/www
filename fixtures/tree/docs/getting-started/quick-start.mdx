@@ -1,0 +1,16 @@
+---
+title: Quick start
+description: From a JSON model to a tree view that expands, selects and moves with the keyboard, in a few parts you render yourself.
+---
+
+## A tree from a model
+
+```tsx title="files.tsx"
+<Tree.Root model={model}>
+    <Tree.Items render={(item) => <Tree.Item item={item}>{item.label}</Tree.Item>} />
+</Tree.Root>
+```
+
+<Example id="file-explorer" />
+
+See [checkboxes](/examples/checkboxes) and [drag and drop](/examples/drag-and-drop).

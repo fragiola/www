@@ -44,8 +44,9 @@ export const UI = fixture("ui");
 export const DATA_GRID = fixture("data-grid");
 export const GRID_LAYOUT = fixture("grid-layout");
 export const DND = fixture("dnd");
+export const TREE = fixture("tree");
 /** Every project, in projects.json order. */
-export const PROJECTS = [UI, DOCKABLE, DATA_GRID, GRID_LAYOUT, DND];
+export const PROJECTS = [UI, DOCKABLE, DATA_GRID, GRID_LAYOUT, DND, TREE];
 
 /** Records the `fragiola:example:*` messages every window of the page receives. */
 export async function recordMessages(page: Page) {

@@ -33,5 +33,12 @@
         "ref": "main",
         "localPath": "../dnd",
         "devUrl": "http://localhost:5183"
+    },
+    {
+        "slug": "tree",
+        "repo": "https://github.com/fragiola/tree.git",
+        "ref": "main",
+        "localPath": "../tree",
+        "devUrl": "http://localhost:5190"
     }
 ]
