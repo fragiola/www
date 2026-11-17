@@ -292,7 +292,32 @@ describe("the agent index", () => {
         expect(llms).toContain("**Fragiola UI** (source code)");
         expect(llms).toContain("**Libraries** (npm packages)");
         expect(llms).toContain(
+            "install only the adapter for the project's framework",
+        );
+        expect(llms).toContain(
             "(https://fragiola.com/agents/dockable/getting-started/installation.md)",
+        );
+    });
+});
+
+describe("installing a library", () => {
+    test("is the adapter alone everywhere agents read, never the core with it", () => {
+        const files = build().files.filter(
+            (file) =>
+                file.path === "/llms.txt" ||
+                file.path === "/agents/overview.md",
+        );
+        expect(files).toHaveLength(2);
+        for (const { content } of files) {
+            expect(content).not.toMatch(/install both/i);
+            expect(content).not.toContain(
+                "`@fragiola/<x>` and `@fragiola/<x>-react`",
+            );
+        }
+        expect(
+            files.find((file) => file.path === "/agents/overview.md")?.content,
+        ).toContain(
+            "Install **only the adapter\nfor the project's framework**",
         );
     });
 });

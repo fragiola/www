@@ -23,6 +23,9 @@ test("the MCP page: header, the two kinds, a tab per client, the tools", async (
     ).toBeVisible();
     await expect(main).toContainText("source code");
     await expect(main).toContainText("npm packages");
+    await expect(main).toContainText(
+        "install the adapter for your framework, which brings the core",
+    );
 
     for (const [label, id, file] of CLIENTS) {
         await main.getByRole("tab", { name: label, exact: true }).click();

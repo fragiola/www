@@ -12,7 +12,7 @@ Fragiola ships components in **two different ways**. Before you use one, know wh
 | --- | --- | --- |
 | what it is | components as **source code** | headless **npm packages** |
 | examples | select, dialog, sidebar, tabs, chart, … | `@fragiola/dockable`, `@fragiola/data-grid`, `@fragiola/grid-layout` |
-| how it is added | the shadcn CLI copies the files into the project | `npm install` the core and the framework adapter |
+| how it is added | the shadcn CLI copies the files into the project | `npm install` the adapter for the project's framework (it brings the core) |
 | who owns the code | the project: edit it freely | the package: use its API, do not copy it |
 | styling | Tailwind v4 with six palette roles | none shipped: style the `data-*` and ARIA state, or with Fragiola UI |
 
@@ -43,9 +43,11 @@ Rules the code follows, and that changes should keep:
 
 ### Libraries: headless npm packages
 
-Each library has a framework-free **core**, `@fragiola/<x>`, and **adapters**, such as
-`@fragiola/<x>-react`. Install both, then import from the adapter in components and from the core
-for the model.
+Each library has a framework-free **core**, `@fragiola/<x>`, and one **adapter** per framework:
+`@fragiola/<x>-react`, `@fragiola/<x>-vue`, `@fragiola/<x>-angular`, … Install **only the adapter
+for the project's framework** (`npm install @fragiola/<x>-react`): it depends on the core and
+re-exports it, so the app imports everything from the adapter, the model included. Never install
+several adapters, nor the core next to an adapter. The core alone is for framework-free use.
 
 - **Headless**: a library ships behaviour, keyboard support and accessibility, never CSS, icons or
   text. Its state is exposed as `data-*` attributes and ARIA, so any styling approach works.
