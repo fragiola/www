@@ -221,20 +221,34 @@ test("small screens: the docs keep the page's full width; Escape or a press outs
     await page.mouse.click(below.x, below.y);
     await expect(site(page)).toBeHidden();
     await expect(page).toHaveURL(/\/ui\/docs\/atoms\/clickable\/$/);
-    // a tall phone: the open menu lists every project and fills a 740px one, leaving no point of
-    // the example below it
-    await page.setViewportSize({ width: 375, height: 900 });
-    await page.evaluate(() => window.scrollTo(0, 0));
-    const example = await expectReady(page.locator("[data-example]").first());
+    // a tall phone: the open menu lists every project (seven, and growing) and ends near 850px,
+    // below this page's example, so the press goes to a page whose example reaches further down
+    // (data-grid's first grid, about 650 to 1130px), on the first frame showing below the menu
+    const tall = 1400;
+    await page.setViewportSize({ width: 375, height: tall });
+    await page.goto("data-grid/docs/getting-started/first-grid/");
     await button.click();
     await expect(site(page)).toBeVisible();
-    // a point of the page's first example, below the open menu
-    const frame = await example.locator("iframe").boundingBox();
     const menu = await site(page).boundingBox();
-    if (!frame || !menu) throw new Error("no example, or no menu");
-    const y = Math.max(frame.y + 10, menu.y + menu.height + 10);
-    expect(y).toBeLessThan(Math.min(frame.y + frame.height, 900));
-    const x = frame.x + frame.width / 2;
+    if (!menu) throw new Error("no menu");
+    const floor = menu.y + menu.height + 10;
+    let point: { x: number; y: number } | null = null;
+    for (const example of await page.locator("[data-example]").all()) {
+        const top = await example.boundingBox();
+        if (!top || top.y >= tall - 10) break;
+        // its frame takes its height once ready
+        await expectReady(example);
+        const frame = await example.locator("iframe").boundingBox();
+        if (!frame || frame.y + frame.height - 10 <= floor) continue;
+        point = {
+            x: frame.x + frame.width / 2,
+            y: Math.max(frame.y + 10, floor),
+        };
+        break;
+    }
+    if (!point) throw new Error("no example's frame shows below the open menu");
+    const { x, y } = point;
+    expect(y).toBeLessThan(tall);
     expect(
         await page.evaluate(
             ([px, py]) => document.elementFromPoint(px ?? 0, py ?? 0)?.tagName,

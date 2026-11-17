@@ -1,0 +1,10 @@
+{
+    "contract": 1,
+    "slug": "splitter",
+    "title": "Splitter",
+    "description": "Headless resizable panel groups: drag, keyboard and collapse, nested groups, a saved JSON layout, RTL ready and styled by you.",
+    "frameworks": ["react"],
+    "defaultFramework": "react",
+    "repository": "https://github.com/fragiola/splitter",
+    "keywords": ["resizable panels", "split view", "headless ui"]
+}

@@ -1,0 +1,18 @@
+---
+title: Your first split view
+description: From two elements you already render to a split view you resize by pointer and keyboard, with a group, two panels and a separator.
+---
+
+## A group, two panels and a separator
+
+```tsx title="workbench.tsx"
+<Splitter.Group orientation="horizontal">
+    <Splitter.Panel id="sidebar" defaultSize="25%">Sidebar</Splitter.Panel>
+    <Splitter.Separator />
+    <Splitter.Panel id="editor">Editor</Splitter.Panel>
+</Splitter.Group>
+```
+
+<Example id="basic-horizontal" />
+
+See [a collapsible sidebar](/examples/collapsible-sidebar) and [nested groups](/examples/nested-groups).
