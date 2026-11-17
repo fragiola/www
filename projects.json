@@ -35,6 +35,13 @@
         "devUrl": "http://localhost:5183"
     },
     {
+        "slug": "tree",
+        "repo": "https://github.com/fragiola/tree.git",
+        "ref": "main",
+        "localPath": "../tree",
+        "devUrl": "http://localhost:5190"
+    },
+    {
         "slug": "splitter",
         "repo": "https://github.com/fragiola/splitter.git",
         "ref": "main",

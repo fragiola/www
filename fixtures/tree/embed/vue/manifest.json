@@ -1,0 +1,60 @@
+{
+    "files": {
+        "file-explorer/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\n// File explorer: a placeholder source of the www fixture.\nimport { TreeRoot } from \"@fragiola/tree-vue\";\n</script>\n\n<template>\n    <TreeRoot :model=\"model\" />\n</template>\n"
+        },
+        "checkboxes/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\n// Checkboxes: a placeholder source of the www fixture.\nimport { TreeRoot } from \"@fragiola/tree-vue\";\n</script>\n\n<template>\n    <TreeRoot :model=\"model\" />\n</template>\n"
+        },
+        "drag-and-drop/App.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\n// Drag and drop: a placeholder source of the www fixture.\nimport { TreeRoot } from \"@fragiola/tree-vue\";\n</script>\n\n<template>\n    <TreeRoot :model=\"model\" />\n</template>\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "file-explorer",
+            "title": "File explorer",
+            "description": "A file explorer with folders that expand and collapse, a selection and the WAI-ARIA keyboard.",
+            "level": "getting-started",
+            "order": 1,
+            "features": ["Expand and collapse", "Selection", "Keyboard"],
+            "docs": "/docs/getting-started/quick-start",
+            "layout": "fill",
+            "height": 420,
+            "files": ["file-explorer/App.vue"],
+            "registry": [],
+            "packages": ["@fragiola/tree-vue"]
+        },
+        {
+            "id": "checkboxes",
+            "title": "Checkboxes",
+            "description": "Tri-state checkboxes: a folder is checked, unchecked or mixed from the items under it.",
+            "level": "selection",
+            "order": 1,
+            "features": ["Checkbox", "Tri-state", "Cascade"],
+            "docs": "/docs/getting-started/quick-start",
+            "layout": "fill",
+            "height": 420,
+            "files": ["checkboxes/App.vue"],
+            "registry": [],
+            "packages": ["@fragiola/tree-vue"]
+        },
+        {
+            "id": "drag-and-drop",
+            "title": "Drag and drop",
+            "description": "Move items between folders with the pointer or the keyboard, with a drop indicator you style.",
+            "level": "drag-and-drop",
+            "order": 1,
+            "features": ["Pointer drag", "Keyboard drag", "DropIndicator"],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 420,
+            "files": ["drag-and-drop/App.vue"],
+            "registry": [],
+            "packages": ["@fragiola/tree-vue"]
+        }
+    ]
+}
