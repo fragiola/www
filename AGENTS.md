@@ -27,8 +27,12 @@ Do not "fix" these.
    `lib/contract/mdx.ts` (a real MDX parse with positions, never regexes over the source).
 3. **A project's examples never run in the site's page.** Examples are the project's embed app in
    an `<iframe>` (§5): hidden until `fragiola:example:ready`, sized by `layout`/`height`/`resize`,
-   themed by `?theme=` and the `theme` message. The iframe is created only after hydration
-   (a frame loaded before hydration could say ready before anyone listens). Reset remounts it.
+   themed by `?theme=` and the `theme` message, its `color-scheme` the example theme's. The
+   iframe is created only after hydration (a frame loaded before hydration could say ready
+   before anyone listens). Reset remounts it. While the example has a modal overlay open, the
+   frame is **promoted** over the whole page (§5.4, `components/example-promotion.ts`): into the
+   top layer with `popover="manual"`, never moved in the DOM (a moved iframe reloads), the page's
+   scroll held still, the embed keeping its example in place. Still the embed's own document.
    This is about examples only: the Fragiola UI components the site itself is built with (the
    header's navigation menu, the gallery's sidebar) are copied from ui's registry into this
    repo, the way a consumer installs them (`pnpm registry:copy`), and are the site's own code
@@ -98,7 +102,7 @@ Do not "fix" these.
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.2)
+CONTRACT.md                 the site export contract (v1.3)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the checks (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client
@@ -121,17 +125,18 @@ components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's re
 components/gallery/         the gallery: chrome (layout, the list on ui's Sidebar), example view (page)
 components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one
 components/example-frame.tsx  the iframe side of §5
+components/example-promotion.ts  overlay promotion's geometry and the page's held scroll (§5.4)
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
-components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2)
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 and v1.3)
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
 public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.2 export per project (fixtures/README.md)
+fixtures/<slug>/            a minimal v1.3 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```

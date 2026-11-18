@@ -131,6 +131,7 @@ export function ExampleBlock({
             id={id}
             title={variant.title}
             theme={theme}
+            scheme={themes.find((t) => t.name === theme)?.scheme}
             layout={variant.layout}
             height={height ?? variant.height}
             lazy
