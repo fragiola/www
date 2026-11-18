@@ -333,6 +333,7 @@ export function ExampleView({ id }: { id: string }) {
                                         id={id}
                                         title={variant.title}
                                         theme={theme}
+                                        scheme={selectedTheme?.scheme}
                                         layout={variant.layout}
                                         height={variant.height}
                                         fill

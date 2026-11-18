@@ -1,10 +1,10 @@
-// The site export contract, v1.2 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 and v1.2
-// keep the file format: `project.json` still says `"contract": 1`.
+// The site export contract, v1.3 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1, v1.2 and
+// v1.3 keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.2";
+export const CONTRACT_REVISION = "1.3";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {

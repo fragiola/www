@@ -1,4 +1,4 @@
-# Site export contract, v1.2
+# Site export contract, v1.3
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -273,6 +273,9 @@ One static app per framework, built with base `<base>/embed/<framework>/`.
 - Anything the app opens (a popout window) lives under the same base.
 - Every `.html` file under `embed/<framework>/` carries `<meta name="robots" content="noindex">`
   (v1.2), outside any HTML comment. An example is a fragment of a page, not a page for search engines.
+- The root's `color-scheme` is the example theme's `scheme` (v1.3). `www` sets the same
+  `color-scheme` on the iframe: when the two differ, browsers paint an opaque canvas behind the
+  frame instead of a transparent one, and a promoted frame (§5.4) would cover the page with it.
 
 ### 5.2 Messages
 
@@ -283,8 +286,47 @@ Same origin; always `postMessage(message, location.origin)`.
 | embed → site | `{ type: "fragiola:example:ready", id }` | once, after the example's first render (lazy parts mounted) |
 | embed → site | `{ type: "fragiola:example:resize", id, height }` | after `ready`, whenever the content height changes (not for `layout: "fill"`) |
 | site → embed | `{ type: "fragiola:example:theme", theme }` | the user changes the theme; the embed applies it without reloading |
+| site → embed | `{ type: "fragiola:example:host", overlay: true }` | once, after `ready` (v1.3): the site can promote the frame (§5.4) |
+| embed → site | `{ type: "fragiola:example:overlay", id, open: true }` | a modal overlay is about to open (v1.3, §5.4) |
+| site → embed | `{ type: "fragiola:example:promote", rect, viewport }` | the site is about to promote the frame (v1.3, §5.4) |
+| embed → site | `{ type: "fragiola:example:armed", id }` | the embed is ready to be promoted (v1.3, §5.4) |
+| site → embed | `{ type: "fragiola:example:promoted", rect, viewport }` | the frame covers the viewport; again whenever `rect` or `viewport` changes (v1.3, §5.4) |
+| embed → site | `{ type: "fragiola:example:overlay", id, open: false }` | every modal overlay has finished closing (v1.3, §5.4) |
 
 `www` keeps the iframe hidden until `ready`. Reset reloads the iframe.
+
+### 5.4 Overlay promotion (v1.3)
+
+An example's modal overlay (a dialog, an alert dialog, a drawer) belongs over the whole page, as it
+would be in an app, not inside the frame's box. The frame is **promoted** for as long as one is
+open: it covers the site's viewport, above the site's header, and the embed keeps its example
+exactly where it was, so the reader sees nothing move but the overlay. The example still runs in
+its own document: nothing of it runs in the site's page.
+
+1. The embed asks before the overlay mounts: `overlay` with `open: true`. It holds the overlay
+   back until `promoted`, so the overlay's opening animation plays in the viewport it ends in.
+   An embed sends nothing before `host`: a site older than v1.3 never promotes, and the embed
+   opens its overlays in place, as in v1.2.
+2. The site answers with `promote`: `rect` (`{ x, y, width, height }`, CSS pixels) is where the
+   frame is, in the coordinates of the viewport the frame is about to fill, and `viewport`
+   (`{ width, height }`) is that viewport's size. The frame has not moved yet.
+3. The embed arms the way it keeps the example in place — e.g. a stylesheet under
+   `@media (width: <viewport.width>px) and (height: <viewport.height>px)` that pins its stage to
+   `rect` and clears its root's background — and says `armed`. The arming must not depend on
+   any later message: the frame's new size takes effect in the same rendering update as the
+   promotion, so whatever the embed does after the next message is one frame late.
+4. The site promotes the frame (it covers the viewport from its top-left corner, `viewport` in
+   size), pins its own scroll position (the page under the frame does not move) and says
+   `promoted` with the same `rect` and `viewport`. The embed then lets the overlay open. While
+   promoted, a viewport resize sends `promoted` again with the new values.
+5. Once the last modal overlay has finished closing — its exit animation played to the end —
+   the embed sends `overlay` with `open: false`. The site puts the frame back in place and
+   releases its scroll. The embed's armed rule stops matching with the viewport it was armed for.
+
+While promoted, the embed paints nothing outside `rect` but its overlays: its root and `body` are
+transparent. A frame the site does not promote (no `armed` within half a second) is promoted
+anyway. An embed that never sends `overlay` is never promoted. Popups that are not modal (menus,
+popovers, selects, tooltips) are not promoted: the manifest's `height` gives them room (§5.3).
 
 ### 5.3 `manifest.json`
 
@@ -356,6 +398,15 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.3
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.2 export
+stays valid. An embed that sends none of the new messages behaves as in v1.2.
+
+- Overlay promotion: the `host`, `overlay`, `promote`, `armed` and `promoted` messages (§5.2), and
+  how a frame covers the page while an example's modal overlay is open (§5.4).
+- The embed's root `color-scheme` is its theme's `scheme`; `www` sets it on the iframe (§5.1).
 
 ## Changes in v1.2
 

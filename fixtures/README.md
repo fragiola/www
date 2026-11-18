@@ -1,6 +1,6 @@
 # Fixtures
 
-One minimal site export per project of `projects.json`, following the contract v1.2
+One minimal site export per project of `projects.json`, following the contract v1.3
 (`../CONTRACT.md`). `pnpm sources:fixtures` copies them into `.sources-fixtures/` (never
 `.sources/`, which holds the projects' exports), and the tests build the site from them
 (`pnpm e2e:build`), so the suite needs no project repo and runs against content it controls.
@@ -42,6 +42,12 @@ What is **not** the real projects':
   `popout.html?…`). Each example renders a counter (the Reset tests), a
   textarea, and its framework and id. `readyDelay` in the JSON block of `index.html` holds
   `ready` back (`slow-start`: the frame must stay hidden until then).
+  Since v1.3 it also sets its root's `color-scheme` to the theme's scheme, and an example with
+  `"overlay": true` in that JSON block (`ui`'s `clickable`) has an "Open dialog" button: a modal
+  overlay that follows overlay promotion (§5.4) — it waits for `host`, asks, arms on `promote`
+  (a stylesheet under a media query of the promoted viewport), opens on `promoted`, slides in
+  from the viewport's inline-end edge, and says it has closed once its exit transition has
+  ended (`e2e/promotion.spec.ts`).
 - **`dockable` has a `vue` framework** with three of its examples, so the framework switcher, the
   framework-only sidebar section and "an example missing in the selected framework" are tested.
   Dockable has no Vue adapter yet.

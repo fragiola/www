@@ -17,6 +17,7 @@
                 const html = document.documentElement;
                 html.dataset.theme = schemes[theme];
                 html.classList.toggle("dark", schemes[theme] === "dark");
+                html.style.colorScheme = schemes[theme];
                 html.dataset.exampleTheme = theme;
             })();
         </script>

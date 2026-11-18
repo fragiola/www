@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Fragiola UI examples (react, fixture)</title>
         <script id="fixture-config" type="application/json">
-            {"framework":"react","themes":{"light":"light","dark":"dark"},"examples":{"clickable":{"title":"Clickable","layout":"flow","rows":2},"text":{"title":"Text","layout":"flow","rows":1},"dropdown-menu":{"title":"Dropdown Menu","layout":"flow","rows":3}}}
+            {"framework":"react","themes":{"light":"light","dark":"dark"},"examples":{"clickable":{"title":"Clickable","layout":"flow","rows":2,"overlay":true},"text":{"title":"Text","layout":"flow","rows":1},"dropdown-menu":{"title":"Dropdown Menu","layout":"flow","rows":3}}}
         </script>
         <script>
             (() => {
@@ -17,6 +17,7 @@
                 const html = document.documentElement;
                 html.dataset.theme = schemes[theme];
                 html.classList.toggle("dark", schemes[theme] === "dark");
+                html.style.colorScheme = schemes[theme];
                 html.dataset.exampleTheme = theme;
             })();
         </script>
