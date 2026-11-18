@@ -649,7 +649,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.2)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.3)",
         ]);
     });
 

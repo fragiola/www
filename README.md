@@ -5,7 +5,7 @@ Each project lives in its own repo and exposes a **site export**; this repo chec
 against the contract and assembles them into one static Next.js + Fumadocs site, published on
 GitHub Pages.
 
-- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.2).
+- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.3).
 - **How this repo works**, its rules and commands: [`AGENTS.md`](AGENTS.md).
 
 ## For AI agents
@@ -84,7 +84,7 @@ order:
    Store it as the **`WWW_DISPATCH_TOKEN`** Actions secret in each project repo (or once as an
    organization secret shared with `ui` and `dockable`). Set an expiry and a reminder to rotate it.
 5. **The refs.** `projects.json` builds `main` of every project. A project's `main` must export
-   contract v1.2 (`project.json` → `"contract": 1`, and the v1.2 rules of `CONTRACT.md`), or the
+   contract v1.3 (`project.json` → `"contract": 1`, and the v1.3 rules of `CONTRACT.md`), or the
    build fails on it.
 6. **Search engines** (manual, once the domain is live). In
    [Google Search Console](https://search.google.com/search-console), add `https://fragiola.com`
