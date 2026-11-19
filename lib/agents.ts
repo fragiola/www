@@ -119,6 +119,7 @@ export interface AgentFile {
 export const OVERVIEW_PATH = "/agents/overview.md";
 export const INDEX_PATH = "/agents/index.json";
 export const MCP_PAGE = "/mcp/";
+export const SKILLS_PAGE = "/skills/";
 
 const readJson = <T>(file: string): T =>
     JSON.parse(readFileSync(file, "utf8")) as T;
@@ -434,6 +435,7 @@ export function llmsTxt(index: AgentIndex): string {
         "## For agents",
         "",
         `- [MCP server](${site}${MCP_PAGE}): \`npx fragiola@latest mcp\` gives AI agents every component, page and API below`,
+        `- [Agent skills](${site}${SKILLS_PAGE}): \`npx skills add fragiola/skills\` teaches AI agents Fragiola's rules (palettes, composition, the libraries)`,
         `- [Agent index](${site}${INDEX_PATH}): every project, page, example and component as JSON`,
         `- [Overview](${site}${OVERVIEW_PATH}): the ecosystem, written for agents`,
     ];

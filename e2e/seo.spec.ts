@@ -19,8 +19,9 @@ test.use({ javaScriptEnabled: false });
 
 const SITE = "https://fragiola.com";
 
-/** The organization-level pages, outside every project: the MCP server's (app/mcp/page.tsx). */
-const ORGANIZATION_PAGES = ["/mcp/"];
+/** The organization-level pages, outside every project: the MCP server's (app/mcp/page.tsx) and
+ * the agent skills' (app/skills/page.tsx). */
+const ORGANIZATION_PAGES = ["/mcp/", "/skills/"];
 
 async function sitemap(request: APIRequestContext): Promise<string[]> {
     const response = await request.get("sitemap.xml");
@@ -151,6 +152,7 @@ async function readPage(page: Page) {
 const TITLES: Record<string, string> = {
     "/": "Fragiola — headless React components and a design system",
     "/mcp/": "MCP server for AI agents · Fragiola",
+    "/skills/": "Agent skills for AI coding agents · Fragiola",
     "/ui/": "Fragiola UI — React components on Base UI and Tailwind",
     "/dockable/": "Dockable — headless dockable panel layouts for React",
     "/ui/docs/atoms/clickable/": "Clickable · Fragiola UI",

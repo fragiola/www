@@ -61,10 +61,12 @@ const RESERVED_SLUGS = new Set([
     "examples",
     // public/brand: the icons and the logo (pnpm brand:icons)
     "brand",
-    // the agent index (lib/agents.ts) and the MCP server's page (app/mcp/)
+    // the agent index (lib/agents.ts), the MCP server's page (app/mcp/) and the agent skills'
+    // page (app/skills/)
     "agents",
     "llms.txt",
     "mcp",
+    "skills",
 ]);
 
 /**
