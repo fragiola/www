@@ -142,6 +142,48 @@
     --fd-banner-height: var(--site-header-height);
 }
 
+/* The inset layout (from md): the header, the sidebar and the gutters are one
+   frame, the screen's own surface, and the page sits over it on a raised,
+   rounded panel (.docs-inset-panel, app/[project]/docs/layout.tsx), the way
+   shadcn's inset sidebar and fumadocs.dev do. The frame is a step towards the
+   soft role: in dark it is lighter than the panel, in light a grey around a
+   white page. The header keeps its content and behaviour (rule 9); only its
+   surface is the frame's here. Below md the docs stay one flat surface, the
+   sidebar a drawer. Nothing here transforms, filters or contains: a promoted
+   example (§5.4) still covers the page. */
+.docs-inset-panel {
+    display: none;
+}
+
+@media (min-width: 48rem) {
+    .site-docs {
+        --docs-frame: color-mix(
+            in oklch,
+            var(--palette-soft) 55%,
+            var(--palette-base)
+        );
+        background-color: var(--docs-frame);
+    }
+    .site-docs [data-testid="site-header"] {
+        background-color: var(--docs-frame);
+        border-bottom-color: transparent;
+    }
+    .docs-inset-panel {
+        display: block;
+        grid-column: 3 / -1;
+        /* Fumadocs' three rows, then the project footer's */
+        grid-row: 1 / span 4;
+        margin-block: 0 0.5rem;
+        margin-inline: 0 0.5rem;
+        border: 1px solid var(--palette-line);
+        border-radius: 0.75rem;
+        background-color: var(--palette-base);
+        box-shadow: 0 1px 3px
+            color-mix(in oklch, var(--palette-contrast) 8%, transparent);
+        pointer-events: none;
+    }
+}
+
 /* A heading scrolled to (a #hash, the table of contents) clears the bars
    stacked above it: Fumadocs' own margin (scroll-m-28) plus the header. */
 .site-docs :where(h1, h2, h3, h4, h5, h6)[id] {
@@ -315,7 +357,12 @@
         ),
         transparent 70%
     );
-    mask-image: linear-gradient(to bottom, black 40%, transparent);
+    /* faded on every side, so no edge of its box shows on the panel */
+    mask-image: radial-gradient(
+        ellipse 50% 50% at 50% 40%,
+        black 35%,
+        transparent 100%
+    );
 }
 .dark .docs-header-glow {
     --docs-glow: 16%;

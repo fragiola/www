@@ -56,6 +56,11 @@ function Layout({
             themeSwitch={{ enabled: false }}
             sidebar={{
                 components: docsSidebarComponents,
+                // inset (app/globals.css, .site-docs): while open, the sidebar is the frame
+                // itself, no surface or edge of its own; collapsed, the sidebar that peeks on
+                // hover keeps Fumadocs' card
+                className:
+                    "data-[collapsed=false]:border-e-0 data-[collapsed=false]:bg-transparent",
                 ...(frameworks.length > 1
                     ? { banner: <FrameworkSelect frameworks={frameworks} /> }
                     : {}),
