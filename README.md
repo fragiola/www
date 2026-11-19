@@ -20,9 +20,10 @@ Next to the site, the build publishes what AI agents read (`lib/agents.ts`):
 
 `fragiola mcp`, the MCP server of [fragiola/cli](https://github.com/fragiola/cli), reads them. Its
 [`docs/agent-index.md`](https://github.com/fragiola/cli/blob/main/docs/agent-index.md) is the
-contract `tests/agents.test.ts` checks. The `/mcp/` page tells people how to set it up, and the
-`/skills/` page how to install the agent skills of [fragiola/skills](https://github.com/fragiola/skills).
-Every docs page links both from the top of its sidebar.
+contract `tests/agents.test.ts` checks. The AI agents docs (`/ai/docs/`, written in `content/ai/`)
+tell people how to set it up, and how to install the agent skills of
+[fragiola/skills](https://github.com/fragiola/skills). Every docs page links both from the top of
+its sidebar; `/mcp/` and `/skills/` redirect there.
 
 ## Working on it
 
