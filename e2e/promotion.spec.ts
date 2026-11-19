@@ -138,7 +138,7 @@ test("a docs example's overlay covers the page, the example stays in place, and 
     const panel = embed(block).getByTestId("overlay-panel");
     await expect(panel).toHaveAttribute("data-open", "");
 
-    // the frame covers the viewport, the site's header included
+    // the frame covers the viewport, the docs' sidebar (their navigation, rule 9) included
     const size = await viewport(page);
     const backdrop = await embed(block)
         .getByTestId("overlay-backdrop")
@@ -148,12 +148,12 @@ test("a docs example's overlay covers the page, the example stays in place, and 
         y: 0,
         ...size,
     });
-    const header = await page.locator("header").first().boundingBox();
+    const switcher = await page.getByTestId("project-switcher").boundingBox();
     expect(
         await topAt(
             page,
-            (header?.x ?? 0) + 20,
-            (header?.y ?? 0) + (header?.height ?? 0) / 2,
+            (switcher?.x ?? 0) + 20,
+            (switcher?.y ?? 0) + (switcher?.height ?? 0) / 2,
         ),
     ).toBe("IFRAME");
     // the panel sits at the page's inline-end edge, and opened from there: its first frame
@@ -230,7 +230,9 @@ test("a docs example's overlay covers the page, the example stays in place, and 
         ),
     ).toHaveLength(1);
 
-    // the page scrolls again
+    // the page scrolls again (the wheel over the page's own header: over an example's frame it
+    // would stay the frame's)
+    await page.locator("[data-docs-header]").first().hover();
     await page.mouse.wheel(0, 300);
     await expect
         .poll(() => page.evaluate(() => window.scrollY))
@@ -364,8 +366,8 @@ test("Reset while promoted gives the page back; a frame that never arms is promo
         await page.evaluate(() => document.querySelector(":popover-open")),
     ).toBeNull();
     const scrollY = await page.evaluate(() => window.scrollY);
-    const size = await viewport(page);
-    await page.mouse.move(size.width / 2, size.height / 2);
+    // the wheel over the page's own header: over an example's frame it would stay the frame's
+    await page.locator("[data-docs-header]").first().hover();
     await page.mouse.wheel(0, 300);
     await expect
         .poll(() => page.evaluate(() => window.scrollY))
