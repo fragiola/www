@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import { collectErrors, DOCKABLE, expectReady, PROJECTS, UI } from "./helpers";
 
 // The pages (§3), ported from dockable's docs e2e/docs.spec.ts: the static search, the pages
@@ -333,8 +333,8 @@ test("small screens: a wide table scrolls inside its frame, the page does not", 
 }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("dockable/docs/getting-started/installation/");
-    const table = page.locator(".docs-body table").first();
-    const { scroll, client } = await table.evaluate((node) => ({
+    const frame = page.locator(".docs-body .docs-table").first();
+    const { scroll, client } = await frame.evaluate((node) => ({
         scroll: node.scrollWidth,
         client: node.clientWidth,
     }));
@@ -343,6 +343,83 @@ test("small screens: a wide table scrolls inside its frame, the page does not", 
         () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(pageOverflow).toBeLessThanOrEqual(0);
+});
+
+test("a table fills its frame: the border wraps the rows, with no empty room beside them", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const frame = page.locator(".docs-body .docs-table").first();
+    const { frameWidth, tableWidth, rowWidth, border } = await frame.evaluate(
+        (node) => {
+            const table = node.querySelector("table") as HTMLTableElement;
+            const row = table.rows[0] as HTMLTableRowElement;
+            return {
+                frameWidth: node.clientWidth,
+                tableWidth: table.getBoundingClientRect().width,
+                rowWidth: row.getBoundingClientRect().width,
+                border: getComputedStyle(node).borderTopWidth,
+            };
+        },
+    );
+    expect(border).toBe("1px");
+    expect(Math.abs(tableWidth - frameWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(rowWidth - frameWidth)).toBeLessThanOrEqual(1);
+    // the table itself draws no second frame
+    const tableBorder = await frame
+        .locator("table")
+        .evaluate((node) => getComputedStyle(node).borderTopWidth);
+    expect(tableBorder).toBe("0px");
+});
+
+test("the install command: a terminal with a tab per package manager, shared by the page and remembered", async ({
+    page,
+    context,
+}) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("ui/docs/atoms/clickable/");
+    const block = page.getByTestId("install-command").first();
+    await expect(block).toHaveAttribute("data-package-manager", "npm");
+    const panel = block.getByRole("tabpanel");
+    await expect(panel).toContainText(
+        "npx shadcn@latest add @fragiola/clickable",
+    );
+
+    const commands = {
+        pnpm: "pnpm dlx shadcn@latest add @fragiola/clickable",
+        yarn: "yarn dlx shadcn@latest add @fragiola/clickable",
+        bun: "bunx --bun shadcn@latest add @fragiola/clickable",
+    };
+    for (const [manager, command] of Object.entries(commands)) {
+        await block.getByRole("tab", { name: manager, exact: true }).click();
+        await expect(
+            block.getByRole("tab", { name: manager, exact: true }),
+        ).toHaveAttribute("aria-selected", "true");
+        await expect(panel).toContainText(command);
+    }
+
+    // the keyboard moves between the tabs
+    await block.getByRole("tab", { name: "bun", exact: true }).focus();
+    await page.keyboard.press("Home");
+    await expect(
+        block.getByRole("tab", { name: "pnpm", exact: true }),
+    ).toBeFocused();
+    await expect(block).toHaveAttribute("data-package-manager", "pnpm");
+
+    // copy gives the chosen manager's command
+    await block.getByRole("button", { name: "Copy the command" }).click();
+    await expect(block.getByRole("button", { name: "Copied" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+        commands.pnpm,
+    );
+
+    // every install command on the site follows, after a reload too
+    await page.goto("ui/docs/menus/dropdown-menu/");
+    await expect(page.getByTestId("install-command").first()).toHaveAttribute(
+        "data-package-manager",
+        "pnpm",
+    );
 });
 
 // The inset layout (from md, .site-docs in app/globals.css): the header, the sidebar and the
@@ -531,6 +608,47 @@ test("the sidebar's top: search, Docs | Examples; its footer: the project's GitH
     ).toHaveAttribute("href", "https://github.com/fragiola");
 });
 
+test("the sidebar's top: the AI agents block, between the title row and the switcher, fixed while the list scrolls", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const sidebar = page.locator("#nd-sidebar");
+    const agents = sidebar.getByTestId("docs-agent-links");
+    await expect(agents).toBeVisible();
+    await expect(
+        agents.getByRole("link", { name: /Agent skills/ }),
+    ).toHaveAttribute("href", "/skills/");
+    await expect(
+        agents.getByRole("link", { name: /MCP server/ }),
+    ).toHaveAttribute("href", "/mcp/");
+
+    const top = async (locator: Locator) =>
+        (await locator.boundingBox())?.y ?? Number.NaN;
+    const title = sidebar.getByRole("link", { name: "Fragiola", exact: true });
+    const switcher = sidebar.getByTestId("project-switcher");
+    const [t, a, s] = await Promise.all([
+        top(title),
+        top(agents),
+        top(switcher),
+    ]);
+    expect(t).toBeLessThan(a);
+    expect(a).toBeLessThan(s);
+
+    // the list scrolls under it; the block stays put
+    const before = await top(agents);
+    await sidebar
+        .locator("[data-radix-scroll-area-viewport], .overflow-y-auto")
+        .first()
+        .evaluate((node) => {
+            node.scrollTop = node.scrollHeight;
+        });
+    expect(await top(agents)).toBe(before);
+
+    await agents.getByRole("link", { name: /Agent skills/ }).click();
+    await expect(page).toHaveURL(/\/skills\/$/);
+});
+
 test("the theme toggle sits in the panel's top-right corner and switches the theme", async ({
     page,
 }) => {
@@ -587,6 +705,7 @@ test("small screens: the bar carries the wordmark, search and the theme; the dra
         .click();
     const drawer = page.locator("#nd-sidebar-mobile");
     await expect(drawer.getByTestId("project-switcher")).toBeVisible();
+    await expect(drawer.getByTestId("docs-agent-links")).toBeVisible();
     await expect(
         drawer.getByRole("link", { name: "Fragiola on GitHub" }),
     ).toBeVisible();
