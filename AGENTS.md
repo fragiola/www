@@ -133,6 +133,9 @@ components/landing/         Hero, Action, Section, Features/Feature, Pills, the 
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
 components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/contract/icons.ts
+components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
+                            current page as a filled pill, folding sections behind a guide line
+components/docs-page-header.tsx  a docs page's header: the section as an eyebrow, the title, the lead, the glow
 components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.4)
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
