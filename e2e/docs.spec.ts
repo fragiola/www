@@ -25,13 +25,13 @@ async function search(page: Page, query: string) {
 test('search finds "palette-danger" across projects', async ({ page }) => {
     const errors = collectErrors(page);
     const dialog = await search(page, "palette-danger");
-    await expect(
-        dialog
-            .getByRole("button")
-            .filter({ hasText: /palette-danger/i })
-            .first(),
-    ).toBeVisible();
-    await page.keyboard.press("Enter");
+    const result = dialog
+        .getByRole("button")
+        .filter({ hasText: /palette-danger/i })
+        .first();
+    await expect(result).toBeVisible();
+    // the AI agents docs may rank first for the words; the result is ui's term
+    await result.click();
     await expect(page).toHaveURL(/\/ui\/docs\/.+\//);
     await expect(page.getByRole("dialog")).toBeHidden();
     await expect(page.locator("body")).toContainText(/palette-danger/i);
@@ -241,7 +241,9 @@ test("the sidebar draws the icons a project names, and none for a project that n
     // dockable names no icon: its rows draw none, an external link only its trailing mark
     await page.goto("dockable/docs/getting-started/installation/");
     // the page rows (Fumadocs' items, data-active), not the chrome above and below them
-    const rows = page.locator("#nd-sidebar a[data-active]");
+    const rows = page.locator(
+        '#nd-sidebar a[data-active]:not([data-testid="docs-agent-links"] a)',
+    );
     await expect(rows.first()).toBeVisible();
     await expect(rows.locator("svg:not(.lucide-external-link)")).toHaveCount(0);
     await expect(
@@ -608,7 +610,7 @@ test("the sidebar's top: search, Docs | Examples; its footer: the project's GitH
     ).toHaveAttribute("href", "https://github.com/fragiola");
 });
 
-test("the sidebar's top: the AI agents block, between the title row and the switcher, fixed while the list scrolls", async ({
+test("the sidebar's top: the AI agents links, between the title row and the switcher, fixed while the list scrolls", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1280, height: 600 });
@@ -617,11 +619,14 @@ test("the sidebar's top: the AI agents block, between the title row and the swit
     const agents = sidebar.getByTestId("docs-agent-links");
     await expect(agents).toBeVisible();
     await expect(
-        agents.getByRole("link", { name: /Agent skills/ }),
-    ).toHaveAttribute("href", "/skills/");
+        sidebar.getByRole("navigation", { name: "Built for AI agents" }),
+    ).toBeVisible();
     await expect(
-        agents.getByRole("link", { name: /MCP server/ }),
-    ).toHaveAttribute("href", "/mcp/");
+        agents.getByRole("link", { name: "Agent skills" }),
+    ).toHaveAttribute("href", "/ai/docs/skills/");
+    await expect(
+        agents.getByRole("link", { name: "MCP server" }),
+    ).toHaveAttribute("href", "/ai/docs/mcp/");
 
     const top = async (locator: Locator) =>
         (await locator.boundingBox())?.y ?? Number.NaN;
@@ -644,9 +649,71 @@ test("the sidebar's top: the AI agents block, between the title row and the swit
             node.scrollTop = node.scrollHeight;
         });
     expect(await top(agents)).toBe(before);
+});
 
-    await agents.getByRole("link", { name: /Agent skills/ }).click();
-    await expect(page).toHaveURL(/\/skills\/$/);
+test("the AI agents links are plain sidebar rows: no box, drawn like a page of the list", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const sidebar = page.locator("#nd-sidebar");
+    const agents = sidebar.getByTestId("docs-agent-links");
+    const box = await agents.evaluate((node) => {
+        const style = getComputedStyle(node);
+        return {
+            border: style.borderTopWidth,
+            background: style.backgroundColor,
+        };
+    });
+    expect(box.border).toBe("0px");
+    expect(box.background).toBe("rgba(0, 0, 0, 0)");
+
+    const look = (node: Element) => {
+        const style = getComputedStyle(node);
+        return {
+            height: Math.round(node.getBoundingClientRect().height),
+            padding: `${style.paddingTop} ${style.paddingInlineStart}`,
+            radius: style.borderTopLeftRadius,
+            font: style.fontSize,
+        };
+    };
+    const link = await agents
+        .getByRole("link", { name: "MCP server" })
+        .evaluate(look);
+    const row = await sidebar
+        .locator('a[data-active]:not([data-testid="docs-agent-links"] a)')
+        .filter({ hasText: "Installation" })
+        .first()
+        .evaluate(look);
+    expect(link).toEqual(row);
+});
+
+test("from a project's docs, an AI agents link stays in the docs: it switches the project, and shows as current", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const agents = page.locator("#nd-sidebar").getByTestId("docs-agent-links");
+    await agents.getByRole("link", { name: "MCP server" }).click();
+    await expect(page).toHaveURL(/\/ai\/docs\/mcp\/$/);
+    await expect(page.getByTestId("site-header")).toHaveCount(0);
+    await expect(page.getByTestId("project-switcher")).toContainText(
+        "AI agents",
+    );
+    const current = page
+        .locator("#nd-sidebar")
+        .getByTestId("docs-agent-links")
+        .getByRole("link", { name: "MCP server" });
+    await expect(current).toHaveAttribute("aria-current", "page");
+    await expect(current).toHaveAttribute("data-active", "true");
+    // a page deeper in the server's part keeps it current
+    await page.goto("ai/docs/mcp/tools/");
+    await expect(
+        page
+            .locator("#nd-sidebar")
+            .getByTestId("docs-agent-links")
+            .getByRole("link", { name: "MCP server" }),
+    ).toHaveAttribute("aria-current", "page");
 });
 
 test("the theme toggle sits in the panel's top-right corner and switches the theme", async ({
