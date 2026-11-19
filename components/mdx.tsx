@@ -123,6 +123,12 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
         Features,
         Feature,
         Pills,
+        // the table's frame is its wrapper, so the border fits the rows (.docs-table, app/globals.css)
+        table: (props: ComponentProps<"table">) => (
+            <div className="docs-table">
+                <table {...props} />
+            </div>
+        ),
         InstallCommand: ({ item }: { item: string }) => (
             <InstallCommand command={installCommand([item])} />
         ),

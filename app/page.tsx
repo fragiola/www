@@ -24,6 +24,7 @@ import {
     pageMetadata,
     SITE_DESCRIPTION,
     SITE_TITLE,
+    SKILLS_PATH,
 } from "@/lib/seo";
 
 // The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
@@ -237,7 +238,7 @@ export default function Home() {
                     id="agents"
                     eyebrow="For AI agents"
                     title="Your coding agent knows Fragiola"
-                    description="An MCP server gives Claude Code, Cursor, VS Code, Codex and OpenCode every component, docs page and API, and tells them what is source code to copy and what is a package to install."
+                    description="Agent skills teach Claude Code, Codex, Cursor and OpenCode Fragiola's rules, and an MCP server gives them every component, docs page and API, and tells them what is source code to copy and what is a package to install."
                 >
                     <div className="not-prose flex flex-wrap items-center gap-3">
                         <ActionLink
@@ -245,6 +246,11 @@ export default function Home() {
                             href={MCP_PATH}
                             variant="primary"
                             icon="arrow"
+                        />
+                        <ActionLink
+                            label="Install the agent skills"
+                            href={SKILLS_PATH}
+                            variant="secondary"
                         />
                     </div>
                 </Section>
@@ -283,6 +289,12 @@ export default function Home() {
                             className="rounded-sm text-palette-accent/85 transition-colors hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-palette-ring"
                         >
                             MCP server
+                        </Link>
+                        <Link
+                            href={SKILLS_PATH}
+                            className="rounded-sm text-palette-accent/85 transition-colors hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-palette-ring"
+                        >
+                            Agent skills
                         </Link>
                         <a
                             href={ORGANIZATION_URL}

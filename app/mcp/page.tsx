@@ -15,6 +15,7 @@ import {
     MCP_TITLE,
     organizationPageJsonLd,
     pageMetadata,
+    SKILLS_PATH,
 } from "@/lib/seo";
 
 // /mcp/: Fragiola's MCP server for AI agents (fragiola/cli, `npx fragiola@latest mcp`). An
@@ -381,6 +382,27 @@ export default function McpPage() {
                             : the ecosystem, written for agents.
                         </li>
                     </ul>
+                </Section>
+
+                <Section
+                    eyebrow="Better together"
+                    title="Pair it with the agent skills"
+                    description="The server answers what exists; the fragiola skill teaches the agent how to build with it: palettes, composition and the libraries."
+                >
+                    <Prose>
+                        Install it with{" "}
+                        <code className={inlineCode}>
+                            npx skills add fragiola/skills
+                        </code>
+                        . More on the{" "}
+                        <a
+                            href={SKILLS_PATH}
+                            className="font-medium text-palette-contrast underline underline-offset-4"
+                        >
+                            agent skills page
+                        </a>
+                        .
+                    </Prose>
                 </Section>
 
                 <Section

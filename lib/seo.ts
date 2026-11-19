@@ -4,6 +4,8 @@ import { LIMITS, plainText } from "@/lib/contract/types";
 import { ORGANIZATION_URL } from "@/lib/layout.shared";
 import type { Project } from "@/lib/projects";
 
+export { MCP_PATH, SKILLS_PATH, SKILLS_REPO_URL } from "@/lib/site-paths";
+
 // What search engines and link previews read, built in one place (AGENTS.md, "Search and
 // sharing"): the titles, the canonical URLs, the Open Graph and Twitter cards and the JSON-LD.
 // Pages call these builders; nothing else writes them. What a project's export provides for it,
@@ -13,11 +15,12 @@ import type { Project } from "@/lib/projects";
 export const SITE_URL = "https://fragiola.com";
 export const SITE_NAME = "Fragiola";
 
-/** The MCP server's page (app/mcp/page.tsx): an organization-level page, not a project. */
-export const MCP_PATH = "/mcp/";
 export const MCP_TITLE = "MCP server for AI agents · Fragiola";
 export const MCP_DESCRIPTION =
     "Give Claude Code, Cursor, VS Code, Codex and OpenCode Fragiola's components, docs and APIs with one command: npx fragiola@latest mcp.";
+export const SKILLS_TITLE = "Agent skills for AI coding agents · Fragiola";
+export const SKILLS_DESCRIPTION =
+    "Teach Claude Code, Codex, Cursor and OpenCode to build with Fragiola UI and the headless Fragiola libraries: npx skills add fragiola/skills.";
 /** The `<title>` of `/`, written for search. */
 export const SITE_TITLE =
     "Fragiola — headless React components and a design system";
