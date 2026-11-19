@@ -343,3 +343,97 @@ test("small screens: a wide table scrolls inside its frame, the page does not", 
     );
     expect(pageOverflow).toBeLessThanOrEqual(0);
 });
+
+// The inset layout (from md, .site-docs in app/globals.css): the header, the sidebar and the
+// gutters are one frame, the page sits on a raised, rounded panel; phones keep a flat page.
+
+async function box(page: Page, selector: string) {
+    return page
+        .locator(selector)
+        .first()
+        .evaluate((node) => {
+            const rect = node.getBoundingClientRect();
+            const style = getComputedStyle(node);
+            return {
+                left: rect.left,
+                right: rect.right,
+                top: rect.top,
+                background: style.backgroundColor,
+                radius: Number.parseFloat(style.borderTopLeftRadius),
+            };
+        });
+}
+
+test("inset: the header and the sidebar are the frame, the page a rounded panel inset into it", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const frame = await box(page, ".site-docs");
+    const header = await box(page, '[data-testid="site-header"]');
+    const sidebar = await box(page, "#nd-sidebar");
+    const panel = await box(page, ".docs-inset-panel");
+    expect(header.background).toBe(frame.background);
+    // the sidebar has no surface of its own: the frame shows through it
+    expect(sidebar.background).toBe("rgba(0, 0, 0, 0)");
+    expect(
+        await page
+            .locator("#nd-sidebar")
+            .evaluate((node) => getComputedStyle(node).borderInlineEndWidth),
+    ).toBe("0px");
+    expect(panel.background).not.toBe(frame.background);
+    expect(panel.radius).toBeGreaterThan(0);
+    // after the sidebar, below the header, short of the viewport's end
+    expect(panel.left).toBeGreaterThanOrEqual(sidebar.right - 1);
+    const headerBottom = await page
+        .locator('[data-testid="site-header"]')
+        .evaluate((node) => node.getBoundingClientRect().bottom);
+    expect(panel.top).toBeGreaterThanOrEqual(headerBottom - 1);
+    expect(1280 - panel.right).toBeGreaterThan(4);
+
+    // collapsed: still inset from the frame
+    await page
+        .locator("#nd-sidebar")
+        .getByRole("button", { name: /collapse sidebar/i })
+        .click();
+    await expect(page.locator("#nd-sidebar")).toHaveAttribute(
+        "data-collapsed",
+        "true",
+    );
+    await expect
+        .poll(async () => (await box(page, ".docs-inset-panel")).left)
+        .toBeGreaterThan(4);
+    expect(1280 - (await box(page, ".docs-inset-panel")).right).toBeGreaterThan(
+        4,
+    );
+});
+
+test("inset: the sidebar's rows are square-ish, not pills", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("ui/docs/atoms/clickable/");
+    const current = page
+        .locator("#nd-sidebar")
+        .getByRole("link", { name: "Clickable" });
+    const radius = await current.evaluate((node) =>
+        Number.parseFloat(getComputedStyle(node).borderTopLeftRadius),
+    );
+    expect(radius).toBeGreaterThan(0);
+    expect(radius).toBeLessThanOrEqual(8);
+});
+
+test("small screens: no frame and no panel, the page is one surface", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    await expect(page.locator(".docs-inset-panel")).toBeHidden();
+    const [frame, body] = await Promise.all([
+        box(page, ".site-docs"),
+        box(page, "body"),
+    ]);
+    // the docs paint nothing over the page's own surface
+    expect(frame.background).toBe("rgba(0, 0, 0, 0)");
+    expect(body.background).not.toBe("rgba(0, 0, 0, 0)");
+});
