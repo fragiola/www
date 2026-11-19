@@ -3,7 +3,6 @@
 import {
     Bot,
     Check,
-    ChevronRight,
     ChevronsUpDown,
     LayoutGrid,
     type LucideIcon,
@@ -11,7 +10,9 @@ import {
     Sparkles,
 } from "lucide-react";
 import NextLink from "next/link";
-import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { type ReactNode, useId } from "react";
+import { SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE } from "@/components/docs-sidebar";
 import { FrameworkSelect } from "@/components/framework";
 import {
     GitHubIcon,
@@ -22,14 +23,14 @@ import {
 import type { HeaderContext, HeaderProject } from "@/components/site-header";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/cn";
-import { MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
+import { AI_SPACE, MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 
 // The docs' chrome (rule 9): the docs have no site header, its navigation lives in the sidebar,
 // the same for every project, as on fumadocs.dev.
 //
 // - the sidebar's first row: the wordmark (→ /), then Fumadocs' collapse toggle;
-// - its top: the AI agents block (the agent skills and the MCP server, the same on every page, so
-//   it is plain that agents can build with Fragiola), the project switcher (every project of projects.json, Fragiola UI's dropdown-menu,
+// - its top: the AI agents links (a subtitle and two sidebar rows into the AI agents docs, the
+//   same on every page, so it is plain that agents can build with Fragiola), the project switcher (every project of projects.json, Fragiola UI's dropdown-menu,
 //   copied from ui's registry), the search field, the project's Docs | Examples, the framework
 //   select when the project has several;
 // - its footer: the project's GitHub and Fragiola's;
@@ -70,10 +71,17 @@ function ProjectSwitcher({
                 aria-label={`Project: ${current.title}. Switch project`}
                 className={cn(ROW, "data-popup-open:bg-fd-accent/60")}
             >
-                <LayoutGrid
-                    aria-hidden
-                    className="size-4 shrink-0 text-fd-primary"
-                />
+                {current.slug === AI_SPACE.slug ? (
+                    <Bot
+                        aria-hidden
+                        className="size-4 shrink-0 text-fd-primary"
+                    />
+                ) : (
+                    <LayoutGrid
+                        aria-hidden
+                        className="size-4 shrink-0 text-fd-primary"
+                    />
+                )}
                 <span className="min-w-0 flex-1 truncate font-medium text-fd-foreground">
                     {current.title}
                 </span>
@@ -129,38 +137,42 @@ const AGENT_LINKS: { href: string; title: string; icon: LucideIcon }[] = [
     { href: MCP_PATH, title: "MCP server", icon: Plug },
 ];
 
-/** The AI agents block: Fragiola's agent skills and MCP server, on every docs page. */
+/**
+ * The AI agents links: a subtitle and two sidebar rows into the AI agents docs (/ai/docs/), on
+ * every docs page. They stay in the docs: following one only switches the "project". A row is
+ * the current one while the page is in its part of the space (/ai/docs/mcp/** for the server).
+ */
 function DocsAgentLinks() {
+    const pathname = usePathname();
+    // an id per instance: the drawer draws the block too
+    const title = useId();
     return (
         <nav
             data-testid="docs-agent-links"
-            aria-label="For AI agents"
-            className="flex flex-col gap-0.5 rounded-md border border-fd-primary/25 bg-fd-primary/5 p-1"
+            aria-labelledby={title}
+            className="flex flex-col gap-0.5"
         >
             <p
-                aria-hidden
-                className="flex items-center gap-1.5 px-1.5 pt-1 pb-0.5 font-medium text-fd-muted-foreground text-xs"
+                id={title}
+                className="px-2.5 pb-1 font-medium text-fd-foreground/80 text-xs"
             >
-                <Bot aria-hidden className="size-3.5 text-fd-primary" />
                 Built for AI agents
             </p>
-            {AGENT_LINKS.map(({ href, title, icon: Icon }) => (
-                <NextLink
-                    key={href}
-                    href={href}
-                    className="group flex items-center gap-2.5 rounded-sm px-1.5 py-1 text-fd-foreground text-sm transition-colors hover:bg-fd-primary/10 focus-visible:outline-2 focus-visible:outline-fd-ring"
-                >
-                    <Icon
-                        aria-hidden
-                        className="size-4 shrink-0 text-fd-primary"
-                    />
-                    <span className="flex-1 truncate font-medium">{title}</span>
-                    <ChevronRight
-                        aria-hidden
-                        className="size-3.5 shrink-0 text-fd-muted-foreground transition-transform group-hover:translate-x-0.5"
-                    />
-                </NextLink>
-            ))}
+            {AGENT_LINKS.map(({ href, title, icon: Icon }) => {
+                const active = pathname.startsWith(href.replace(/\/$/, ""));
+                return (
+                    <NextLink
+                        key={href}
+                        href={href}
+                        data-active={active}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE)}
+                    >
+                        <Icon aria-hidden />
+                        <span className="min-w-0 flex-1">{title}</span>
+                    </NextLink>
+                );
+            })}
         </nav>
     );
 }
