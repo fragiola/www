@@ -1,10 +1,10 @@
-// The site export contract, v1.5 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.5
+// The site export contract, v1.6 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.6
 // keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.5";
+export const CONTRACT_REVISION = "1.6";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -24,6 +24,18 @@ export interface ProjectInfo {
      * the framework-free core); every entry of `frameworks` is one. Absent: its `frameworks`.
      */
     adapters?: string[];
+    /** v1.6: a Create page, `embed/<framework>/create.html`, served at /<slug>/create/ (§5.5) */
+    create?: CreatePage;
+}
+
+/** `project.json` `create` (v1.6, §2, §5.5): the project's full-page tool. */
+export interface CreatePage {
+    /** at most 60 characters: the page's `<title>` head (§3.6) */
+    title: string;
+    /** 50–160 characters, as plain text: its meta description */
+    description: string;
+    /** one of `frameworks`: the embed app that holds `create.html` */
+    framework: string;
 }
 
 /** An entry of a sidebar section: a page of the export, or an external link. */

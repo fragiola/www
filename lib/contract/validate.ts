@@ -6,7 +6,8 @@
 //                               vocabulary, links, <Example>/<InstallCommand> and manifest
 //                               references, levels and themes, registry namespacing, and
 //                               v1.2's search and sharing rules (lengths, keywords, the
-//                               landing's title, headings, images, noindex embeds)
+//                               landing's title, headings, images, noindex embeds), v1.5's
+//                               adapters and v1.6's Create page
 //   validateSite(exports)       across exports: slugs, registry duplicates, the registry items
 //                               the examples name
 //
@@ -262,6 +263,7 @@ function checkProject(
     }
     if (info.keywords !== undefined) checkKeywords(project, problems);
     if (info.adapters !== undefined) checkAdapters(project, problems);
+    if (info.create !== undefined) checkCreate(project, problems);
     if (!isStringArray(info.frameworks) || info.frameworks.length === 0) {
         problems.push({
             file,
@@ -359,6 +361,87 @@ function checkAdapters(project: JsonFile<ProjectInfo>, problems: Problem[]) {
             });
         }
     }
+}
+
+/**
+ * `create` (v1.6, §2): `{ title, description, framework }`, the title at most 60 characters, the
+ * description 50–160 as plain text, the framework one of `frameworks`. Its file is checked with
+ * the embeds (checkCreateFile).
+ */
+function checkCreate(project: JsonFile<ProjectInfo>, problems: Problem[]) {
+    const file = "project.json";
+    const line = project.lineOf("create");
+    const { create, frameworks } = project.value;
+    const fail = (message: string) =>
+        problems.push({ file, line, message: `create: ${message} (§2)` });
+    if (
+        typeof create !== "object" ||
+        create === null ||
+        Array.isArray(create)
+    ) {
+        fail(
+            `${JSON.stringify(create)} is not { "title", "description", "framework" }`,
+        );
+        return;
+    }
+    for (const key of Object.keys(create)) {
+        if (!["title", "description", "framework"].includes(key)) {
+            fail(`"${key}" is not a field: title, description and framework`);
+        }
+    }
+    // as read from the file: any value, until checked
+    const { title, description, framework } = create as unknown as Record<
+        string,
+        unknown
+    >;
+    if (!isString(title)) {
+        fail("title is required");
+    } else if (length(title) > LIMITS.title) {
+        fail(`title is ${length(title)} characters: at most ${LIMITS.title}`);
+    }
+    if (!isString(description)) {
+        fail("description is required");
+    } else {
+        const tooShortOrLong = descriptionLength(description);
+        if (tooShortOrLong) fail(tooShortOrLong);
+    }
+    if (!isString(framework)) {
+        fail("framework is required");
+    } else if (isStringArray(frameworks) && !frameworks.includes(framework)) {
+        fail(`framework "${framework}" is not in frameworks`);
+    }
+}
+
+/** The Create page's file (v1.6, §5.5), when `create` names a framework of `frameworks`. */
+function createFile(project: ProjectInfo): string | undefined {
+    const framework = project.create?.framework;
+    return isString(framework) && project.frameworks.includes(framework)
+        ? `embed/${framework}/create.html`
+        : undefined;
+}
+
+/**
+ * `embed/<framework>/create.html` exists when `create` is declared, and is built with the embed's
+ * base (§5.5); its noindex is checkNoindex's, with the embed's other HTML files.
+ */
+function checkCreateFile(context: Context) {
+    const file = createFile(context.project);
+    if (!file) return;
+    if (!existsSync(join(context.dir, file))) {
+        context.problems.push({
+            file,
+            message:
+                "is missing: project.json declares create, and the Create page is this file (§5.5)",
+        });
+        return;
+    }
+    // its links out (to the docs) are site URLs (§5.5): only what it loads is under the base
+    checkBase(
+        context,
+        file,
+        `/${context.slug}/embed/${context.project.create?.framework}/`,
+        "src",
+    );
 }
 
 /** `keywords` (v1.2, §2): 1–8 unique topics, lowercase, at most 40 characters each. */
@@ -511,19 +594,7 @@ function checkEmbed(context: Context, framework: string) {
     if (!existsSync(join(dir, index))) {
         problems.push({ file: index, message: "is missing" });
     } else {
-        // an absolute asset URL outside the base: the app was built for another base (§5)
-        const html = readFileSync(join(dir, index), "utf-8");
-        for (const match of html.matchAll(/\b(?:src|href)="(\/[^"]*)"/g)) {
-            const url = match[1] ?? "";
-            if (!url.startsWith("//") && !url.startsWith(base)) {
-                problems.push({
-                    file: index,
-                    line: html.slice(0, match.index).split("\n").length,
-                    message: `"${url}" is outside ${base}: the embed app must be built with base ${base} (§5)`,
-                });
-                break;
-            }
-        }
+        checkBase(context, index, base);
     }
     checkNoindex(context, framework);
     const manifestFile = `embed/${framework}/manifest.json`;
@@ -623,6 +694,28 @@ function checkEmbed(context: Context, framework: string) {
     context.manifests.set(framework, value);
 }
 
+/** An absolute asset URL outside the base: the app was built for another base (§5). */
+function checkBase(
+    context: Context,
+    file: string,
+    base: string,
+    attributes = "src|href",
+) {
+    const html = readFileSync(join(context.dir, file), "utf-8");
+    const pattern = new RegExp(`\\b(?:${attributes})="(\\/[^"]*)"`, "g");
+    for (const match of html.matchAll(pattern)) {
+        const url = match[1] ?? "";
+        if (!url.startsWith("//") && !url.startsWith(base)) {
+            context.problems.push({
+                file,
+                line: html.slice(0, match.index).split("\n").length,
+                message: `"${url}" is outside ${base}: the embed app must be built with base ${base} (§5)`,
+            });
+            break;
+        }
+    }
+}
+
 /** `<meta name="robots" content="noindex">`, whatever the order and quoting of its attributes. */
 function isNoindex(tag: string): boolean {
     return (
@@ -650,13 +743,16 @@ function checkNoindex(context: Context, framework: string) {
             continue;
         }
         const head = /<head\b/i.exec(html);
+        const file = posix(relative(context.dir, path));
         context.problems.push({
-            file: posix(relative(context.dir, path)),
+            file,
             line: head
                 ? html.slice(0, head.index).split("\n").length
                 : undefined,
             message:
-                'needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)',
+                file === createFile(context.project)
+                    ? 'needs <meta name="robots" content="noindex">: the Create page\'s app is not a page for search engines, /<slug>/create/ is (§5.5)'
+                    : 'needs <meta name="robots" content="noindex">: an example is not a page for search engines (§5.1)',
         });
     }
 }
@@ -925,6 +1021,13 @@ function brokenLink(
             return context.exampleIds.has(target.id)
                 ? undefined
                 : `/examples/${target.id}: no example "${target.id}"`;
+        case "create":
+            if (!context.project.create) {
+                return "/create: the project declares no Create page (project.json create, §2)";
+            }
+            return target.hash === undefined
+                ? undefined
+                : "/create takes no anchor: the Create page is the project's app (§3.3)";
         case "page":
             if (target.path === "index" || !context.pages.has(target.path)) {
                 return `/docs/${target.path}: no such page`;
@@ -1492,6 +1595,7 @@ export function validateExport(dir: string, slug: string): ExportRead {
         context.examples = checkExamplesConfig(examplesFile, problems);
     }
     for (const framework of project.frameworks) checkEmbed(context, framework);
+    checkCreateFile(context);
     if (existsSync(join(dir, "embed"))) {
         for (const name of readdirSync(join(dir, "embed"))) {
             if (!project.frameworks.includes(name)) {

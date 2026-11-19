@@ -7,6 +7,7 @@
 //   /examples/add-tabs         → /<slug>/examples/add-tabs/
 //   /examples                  → /<slug>/examples/
 //   /                          → /<slug>/
+//   /create                    → /<slug>/create/ (v1.6: only when project.json declares create)
 //   #anchor                    → #anchor (this page)
 //   https://…, mailto:…        → unchanged
 
@@ -18,6 +19,7 @@ export type LinkTarget =
     | { kind: "page"; path: string; hash?: string }
     | { kind: "gallery"; hash?: string }
     | { kind: "example"; id: string; hash?: string }
+    | { kind: "create"; hash?: string }
     | { kind: "invalid"; reason: string };
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
@@ -52,6 +54,7 @@ export function parseLink(href: string): LinkTarget {
     const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, "") : rawPath;
     if (path === "/") return withHash({ kind: "landing" as const });
     if (path === "/examples") return withHash({ kind: "gallery" as const });
+    if (path === "/create") return withHash({ kind: "create" as const });
     const example = /^\/examples\/([^/]+)$/.exec(path);
     if (example?.[1]) {
         return withHash({ kind: "example" as const, id: example[1] });
@@ -62,7 +65,7 @@ export function parseLink(href: string): LinkTarget {
     }
     return {
         kind: "invalid",
-        reason: `"${href}" is not a base-free link to a page (/docs/…), an example (/examples/…) or the landing (/)`,
+        reason: `"${href}" is not a base-free link to a page (/docs/…), an example (/examples/…), the Create page (/create) or the landing (/)`,
     };
 }
 
@@ -84,6 +87,8 @@ export function targetHref(slug: string, target: LinkTarget): string {
             return `/${slug}/examples/${target.id}/${suffix(target.hash)}`;
         case "page":
             return `/${slug}/docs/${target.path}/${suffix(target.hash)}`;
+        case "create":
+            return `${createHref(slug)}${suffix(target.hash)}`;
         case "invalid":
             return "#";
     }
@@ -115,6 +120,24 @@ export function docsHref(slug: string, path: string): string {
 /** The gallery URL of an example of project `slug`. */
 export function exampleHref(slug: string, id: string): string {
     return `/${slug}/examples/${id}/`;
+}
+
+/** The Create page of project `slug` (v1.6, §5.5). */
+export function createHref(slug: string): string {
+    return `/${slug}/create/`;
+}
+
+/**
+ * The URL of a project's Create page app (§5.5): `create.html` itself, the theme in the query for
+ * the first paint (a "clean URLs" server may drop it; the `theme` message after `ready` follows).
+ */
+export function createAppHref(
+    slug: string,
+    framework: string,
+    theme: string,
+): string {
+    const query = new URLSearchParams({ theme });
+    return `/${slug}/embed/${framework}/create.html?${query}`;
 }
 
 /**

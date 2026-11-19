@@ -113,7 +113,7 @@ Do not "fix" these.
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.5)
+CONTRACT.md                 the site export contract (v1.6)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts
@@ -158,12 +158,12 @@ components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/cont
 components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
                             current page as a filled pill, folding sections behind a guide line
 components/docs-page-header.tsx  a docs page's header: the section as an eyebrow, the title, the lead, the glow
-components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.5)
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.6)
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
 public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.5 export per project (fixtures/README.md)
+fixtures/<slug>/            a minimal v1.6 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```
