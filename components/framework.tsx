@@ -1,5 +1,6 @@
 "use client";
 
+import { CodeXml } from "lucide-react";
 import {
     createContext,
     type ReactNode,
@@ -73,11 +74,12 @@ export function useFramework(): string {
 export function FrameworkSelect({ frameworks }: { frameworks: string[] }) {
     const framework = useFramework();
     return (
-        <label className="flex items-center justify-between gap-2 rounded-md border border-fd-border px-2 py-1.5 text-sm">
+        <label className="flex items-center gap-2.5 rounded-lg border border-fd-border bg-fd-secondary/50 px-2.5 py-1.5 text-sm transition-colors focus-within:border-fd-ring hover:bg-fd-accent/60">
+            <CodeXml aria-hidden className="size-4 shrink-0 text-fd-primary" />
             <span className="text-fd-muted-foreground">Framework</span>
             <select
                 data-testid="framework-select"
-                className="bg-transparent text-fd-foreground"
+                className="ms-auto cursor-pointer bg-transparent font-medium text-fd-foreground outline-none"
                 value={framework}
                 onChange={(event) => setFramework(event.target.value)}
             >
