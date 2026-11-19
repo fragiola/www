@@ -1,0 +1,26 @@
+---
+title: "Tools"
+description: "The tools of Fragiola's MCP server: the overview, the projects, the components, search, docs, APIs and the exact install commands."
+---
+
+Every answer is Markdown written for an agent, and names the next tool or command to run.
+
+| Tool | Answers |
+| --- | --- |
+| `get_fragiola_overview` | What Fragiola is, its two kinds of components and every project. Where an agent starts. |
+| `list_projects` | Every project, its kind, its packages and how to install it. |
+| `list_components` | Fragiola UI's components and the libraries' API entries, filtered by kind, project or group. |
+| `search_fragiola` | A fuzzy search over the components and every docs page. |
+| `get_component` | A component or library by name: its install command, dependencies, files, docs and, for Fragiola UI, its source. |
+| `get_docs` | A project's pages, or one page as Markdown. |
+| `get_api` | A library's API reference: primitives, model, commands. |
+| `get_install_command` | The exact commands: the registry and shadcn add for Fragiola UI, and for a library the npm install of its adapter, one per framework (or only the one asked for). |
+
+## Ask your agent
+
+Once the server is running, ask in plain words. The agent picks the tools:
+
+- "Which Fragiola components exist for forms?"
+- "Add a Fragiola select to this form, styled with the palette roles."
+- "Which Fragiola library gives me dockable panels, and how do I install it?"
+- "Show me the API of Dockable's Tab primitive."

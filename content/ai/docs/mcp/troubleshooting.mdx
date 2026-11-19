@@ -1,0 +1,11 @@
+---
+title: "Troubleshooting"
+description: "What to check when Fragiola's MCP server does not answer: Node.js 24 on the client's PATH, the server enabled, and hand-edited configs."
+---
+
+- Run `npx fragiola@latest mcp` in a terminal. It should wait silently for input. Check that
+  Node.js 24 or later is on the client's PATH, then restart the client.
+- No tools listed: enable the fragiola server in the client, and restart it after `mcp init`.
+- A config file with comments (JSONC) is never overwritten: add the entry by hand
+  ([the configs](/docs/mcp#set-it-up-in-your-client)).
+- The source and the issues are on [GitHub](https://github.com/fragiola/cli).

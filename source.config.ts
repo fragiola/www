@@ -14,6 +14,15 @@ export const docs = defineDocs({
     meta: { files: ["*/docs/**/meta.json"] },
 });
 
+// The docs www writes itself (AGENTS.md): content/<slug>/docs/**/*.mdx, the AI agents space
+// (content/ai/). The same shape as an export's docs, checked by the same rules
+// (lib/contract/validate.ts, validateDocsSpace); its paths are `<slug>/docs/<path>` too.
+export const spaces = defineDocs({
+    dir: "content",
+    docs: { files: ["*/docs/**/*.mdx"] },
+    meta: { files: ["*/docs/**/meta.json"] },
+});
+
 export default defineConfig({
     mdxOptions: {
         providerImportSource: "@/components/mdx",

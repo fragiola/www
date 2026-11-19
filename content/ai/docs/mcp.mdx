@@ -1,0 +1,139 @@
+---
+title: "MCP server"
+description: "Give Claude Code, Cursor, VS Code, Codex and OpenCode Fragiola's components, docs and APIs with one command: npx fragiola@latest mcp."
+---
+
+`fragiola mcp` is an MCP server that gives your coding agent every Fragiola component, docs page
+and API. It also knows which ones are source code to copy and which are npm packages to install.
+
+## Two kinds of components, never mixed up
+
+Fragiola ships components in two ways, and the server says which one every item is:
+
+- **Fragiola UI: source code.** Components on Base UI and Tailwind v4, copied into your project
+  with `npx shadcn@latest add @fragiola/<name>`. The code is yours, styled with six palette roles.
+- **Libraries: npm packages.** Headless libraries: install the adapter for your framework, which
+  brings the core, and import everything from it. Behaviour and accessibility, no CSS.
+
+## Set it up in your client
+
+Run one command in your project. It writes the client's config, keeps your other servers, and
+changes nothing on a second run.
+
+<Tabs items={["Claude Code", "Cursor", "VS Code", "Codex", "OpenCode"]}>
+<Tab value="Claude Code">
+
+```bash
+npx fragiola@latest mcp init --client claude
+```
+
+Restart Claude Code and approve the fragiola server: `/mcp` shows its status. Or configure it by
+hand:
+
+```json title=".mcp.json"
+{
+  "mcpServers": {
+    "fragiola": {
+      "command": "npx",
+      "args": ["fragiola@latest", "mcp"]
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Cursor">
+
+```bash
+npx fragiola@latest mcp init --client cursor
+```
+
+Open Cursor Settings → MCP and enable the fragiola server. Or configure it by hand:
+
+```json title=".cursor/mcp.json"
+{
+  "mcpServers": {
+    "fragiola": {
+      "command": "npx",
+      "args": ["fragiola@latest", "mcp"]
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="VS Code">
+
+```bash
+npx fragiola@latest mcp init --client vscode
+```
+
+Open `.vscode/mcp.json`, click Start next to the fragiola server, then use Copilot Chat in agent
+mode. Or configure it by hand:
+
+```json title=".vscode/mcp.json"
+{
+  "servers": {
+    "fragiola": {
+      "command": "npx",
+      "args": ["fragiola@latest", "mcp"]
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Codex">
+
+```bash
+npx fragiola@latest mcp init --client codex
+```
+
+Codex keeps its servers outside the project: init prints this block for you to paste. Then
+restart Codex.
+
+```toml title="~/.codex/config.toml"
+[mcp_servers.fragiola]
+command = "npx"
+args = ["fragiola@latest", "mcp"]
+```
+
+</Tab>
+<Tab value="OpenCode">
+
+```bash
+npx fragiola@latest mcp init --client opencode
+```
+
+Restart OpenCode. Or configure it by hand:
+
+```json title="opencode.json"
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "fragiola": {
+      "type": "local",
+      "command": ["npx", "fragiola@latest", "mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
+Every client runs `npx fragiola@latest mcp`, so the server is always the latest one, and nothing
+is added to your dependencies. It needs Node.js 24 or later.
+
+<Callout type="info" title="Pair it with the agent skills">
+  The server answers what exists; the [fragiola skill](/docs/skills) teaches the agent how to build
+  with it: palettes, composition and the libraries.
+</Callout>
+
+## Next
+
+<Cards>
+  <Card title="Tools" href="/docs/mcp/tools" description="What the agent can ask, and prompts to try." />
+  <Card title="Troubleshooting" href="/docs/mcp/troubleshooting" description="If the server does not answer." />
+</Cards>

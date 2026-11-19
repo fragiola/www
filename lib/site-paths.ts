@@ -1,10 +1,22 @@
-// The organization-level pages, outside every project, and where the agent skills live. Plain
-// constants with no imports, so client components (components/docs-chrome.tsx) can read them
-// without pulling the server-side modules lib/seo.ts depends on.
+// The AI agents docs space and its two entry pages. Plain constants with no imports,
+// so client components (components/docs-chrome.tsx) can read them without pulling the server-side
+// modules lib/seo.ts depends on.
 
-/** The MCP server's page (app/mcp/page.tsx): an organization-level page, not a project. */
-export const MCP_PATH = "/mcp/";
-/** The agent skills' page (app/skills/page.tsx): an organization-level page, like /mcp/. */
-export const SKILLS_PATH = "/skills/";
-/** The skills' repository (fragiola/skills). */
-export const SKILLS_REPO_URL = "https://github.com/fragiola/skills";
+/**
+ * The AI agents docs space (content/ai/, lib/projects.ts): served at /ai/docs/**. Here, with no
+ * imports, so scripts/prepare-site.ts checks it too (validateDocsSpace).
+ */
+export const AI_SPACE = {
+    slug: "ai",
+    title: "AI agents",
+    description:
+        "Fragiola for AI coding agents: the agent skills and the MCP server give Claude Code, Codex, Cursor, VS Code and OpenCode every component, docs page and API.",
+} as const;
+/** The docs spaces www writes itself, in content/<slug>/. */
+export const DOCS_SPACES = [AI_SPACE] as const;
+
+export const AI_DOCS_PATH = "/ai/docs/";
+/** The MCP server's docs: its setup page. */
+export const MCP_PATH = "/ai/docs/mcp/";
+/** The agent skills' docs. */
+export const SKILLS_PATH = "/ai/docs/skills/";

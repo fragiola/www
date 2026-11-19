@@ -1,0 +1,39 @@
+{
+    "sections": [
+        {
+            "label": "Agent skills",
+            "icon": "sparkles",
+            "pages": [
+                {
+                    "label": "Overview",
+                    "path": "skills",
+                    "icon": "book-open"
+                }
+            ]
+        },
+        {
+            "label": "MCP server",
+            "icon": "plug",
+            "pages": [
+                { "label": "Set up the server", "path": "mcp", "icon": "plug" },
+                { "label": "Tools", "path": "mcp/tools", "icon": "terminal" },
+                {
+                    "label": "Troubleshooting",
+                    "path": "mcp/troubleshooting",
+                    "icon": "life-buoy"
+                }
+            ]
+        },
+        {
+            "label": "Any agent",
+            "icon": "file-text",
+            "pages": [
+                {
+                    "label": "llms.txt and the agent index",
+                    "path": "llms",
+                    "icon": "file-text"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,85 @@
+---
+title: "Agent skills"
+description: "The fragiola skill teaches Claude Code, Codex, Cursor and OpenCode to build with Fragiola UI and the headless libraries: npx skills add fragiola/skills."
+---
+
+The `fragiola` skill is loaded by your coding agent when it works with Fragiola. It teaches the
+components, the palettes, the composition rules and the headless libraries, so the code your agent
+writes follows the same rules as ours. It uses the open [Agent Skills](https://agentskills.io)
+format: the agent reads it only when the task is about Fragiola.
+
+## Install
+
+Run the [skills CLI](https://github.com/vercel-labs/skills) from your project:
+
+```bash
+npx skills add fragiola/skills
+```
+
+Add `-g` to install it for every project, or `-a <agent>` to pick the agent.
+
+To install it without the CLI, copy `skills/fragiola/` from the
+[repository](https://github.com/fragiola/skills) into your agent's skills folder:
+
+<Tabs items={["Claude Code", "Other agents"]}>
+<Tab value="Claude Code">
+
+```bash
+cp -r skills/fragiola .claude/skills/
+```
+
+</Tab>
+<Tab value="Other agents">
+
+Codex, Cursor, OpenCode and any other agent that reads `.agents/skills/`:
+
+```bash
+cp -r skills/fragiola .agents/skills/
+```
+
+</Tab>
+</Tabs>
+
+## What the agent learns
+
+<Cards>
+  <Card title="Fragiola UI" href="/docs/skills#fragiola-ui" description="Which components exist, how to add them with the shadcn CLI, and how to compose them." />
+  <Card title="Palettes" href="/docs/skills#palettes" description="Colour from palettes and their six roles, never from raw colours." />
+  <Card title="Headless libraries" href="/docs/skills#headless-libraries" description="Which adapter to install, what to import and how to style it." />
+</Cards>
+
+### Fragiola UI
+
+Which components exist and how to add them with `npx shadcn@latest add @fragiola/<name>`. How to
+compose them: one namespace per component, `render` instead of `asChild`, complete dialogs and
+fields.
+
+### Palettes
+
+Colour comes from palettes and their six roles (`base`, `soft`, `line`, `contrast`, `accent`,
+`ring`), never from raw colours. The skill covers fields, invalid states, secondary text and themes
+the way the design system expects.
+
+### Headless libraries
+
+The npm packages (Dockable, Data Grid and Grid Layout): which adapter to install, what to import
+and how to style them through their state.
+
+## Works with
+
+Claude Code, Codex, Cursor and OpenCode, and any other agent that supports skills.
+
+## Ask your agent
+
+Once the skill is installed, ask in plain words. The agent loads it when the task is about
+Fragiola:
+
+- "Build a settings form with Fragiola fields and a danger palette for errors."
+- "Port this shadcn dialog to Fragiola UI."
+- "Add a dockable layout with tabs and a side panel."
+- "Show a million rows with the Fragiola data grid."
+
+<Callout type="info" title="Better with the MCP server">
+  The skill teaches the rules. The [MCP server](/docs/mcp) gives the agent the current components,
+  docs and APIs on demand, and the skill tells the agent when to use each tool.
+</Callout>
