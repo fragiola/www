@@ -13,9 +13,11 @@ import { SIDEBAR_ICONS } from "../lib/contract/icons.ts";
 import {
     type ExportRead,
     formatProblem,
+    validateDocsSpace,
     validateExport,
     validateSite,
 } from "../lib/contract/validate.ts";
+import { AI_SPACE, DOCS_SPACES } from "../lib/site-paths.ts";
 
 // The contract checks (§8) on the fixtures, and on copies of them broken one way at a time: each
 // problem must name its file and, where there is one, its line.
@@ -811,7 +813,7 @@ describe("registry (§7)", () => {
     });
 });
 
-test.each(["agents", "llms.txt", "mcp", "r", "brand"])(
+test.each(["agents", "llms.txt", "ai", "mcp", "skills", "r", "brand"])(
     "the slug %s is reserved by the site",
     (slug) => {
         const read: ExportRead = {
@@ -826,3 +828,33 @@ test.each(["agents", "llms.txt", "mcp", "r", "brand"])(
         ).toContain(`slug "${slug}" is reserved by the site`);
     },
 );
+
+describe("the docs spaces www writes itself (content/<slug>/)", () => {
+    const space = (slug: string) => {
+        const copy = join(dir, `space-${slug}`);
+        cpSync(join(import.meta.dirname, "..", "content", slug), copy, {
+            recursive: true,
+        });
+        return copy;
+    };
+
+    test.each(DOCS_SPACES.map((s) => [s.slug, s] as const))(
+        "content/%s follows the contract's docs rules, with no landing",
+        (slug, info) => {
+            expect(validateDocsSpace(space(slug), info)).toEqual([]);
+        },
+    );
+
+    test("a broken link or a component outside the vocabulary fails it", () => {
+        const copy = space("ai");
+        appendFileSync(
+            join(copy, "docs", "skills.mdx"),
+            "\n[nowhere](/docs/missing)\n\n<Marquee />\n",
+        );
+        const messages = validateDocsSpace(copy, AI_SPACE).map(
+            (problem) => problem.message,
+        );
+        expect(messages.some((m) => m.includes('"/docs/missing"'))).toBe(true);
+        expect(messages.some((m) => m.includes("Marquee"))).toBe(true);
+    });
+});

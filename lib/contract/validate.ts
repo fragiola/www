@@ -61,10 +61,11 @@ const RESERVED_SLUGS = new Set([
     "examples",
     // public/brand: the icons and the logo (pnpm brand:icons)
     "brand",
-    // the agent index (lib/agents.ts), the MCP server's page (app/mcp/) and the agent skills'
-    // page (app/skills/)
+    // the agent index (lib/agents.ts); the AI agents docs (content/ai/, app/ai/) and the pages
+    // that moved into them (app/mcp/, app/skills/: redirects)
     "agents",
     "llms.txt",
+    "ai",
     "mcp",
     "skills",
 ]);
@@ -1303,9 +1304,9 @@ function checkStructure(context: Context, page: string, scan: PageScan) {
     }
 }
 
-function checkPages(context: Context) {
+function checkPages(context: Context, { landing = true } = {}) {
     const { problems } = context;
-    if (!context.pages.has("index")) {
+    if (landing && !context.pages.has("index")) {
         problems.push({
             file: "docs/index.mdx",
             message: "is missing: it is the project's landing (§3.5)",
@@ -1460,6 +1461,45 @@ export function validateExport(dir: string, slug: string): ExportRead {
     if (config) checkConfig(context, config);
     checkPages(context);
     return read;
+}
+
+/**
+ * Checks a docs space www writes itself (content/<slug>/, lib/projects.ts): its docs/ as an
+ * export's (§3: config.json, frontmatter, the vocabulary, the links), with no landing, examples,
+ * embeds or registry. A broken page fails the build like an export's (rule 1).
+ */
+export function validateDocsSpace(
+    dir: string,
+    space: { slug: string; title: string; description: string },
+): Problem[] {
+    const problems: Problem[] = [];
+    if (!existsSync(join(dir, "docs"))) {
+        problems.push({ file: "docs", message: "is missing" });
+        return problems;
+    }
+    const context: Context = {
+        slug: space.slug,
+        dir,
+        problems,
+        project: {
+            contract: CONTRACT,
+            slug: space.slug,
+            title: space.title,
+            description: space.description,
+            frameworks: ["react"],
+            defaultFramework: "react",
+        },
+        examples: { levels: [], themes: [] },
+        manifests: new Map(),
+        exampleIds: new Map(),
+        registry: new Map(),
+        pages: new Map(),
+    };
+    readPages(context);
+    const config = readJsonFile<DocsConfig>(dir, "docs/config.json", problems);
+    if (config) checkConfig(context, config);
+    checkPages(context, { landing: false });
+    return problems;
 }
 
 // ─── across exports ──────────────────────────────────────────────────────────

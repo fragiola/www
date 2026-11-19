@@ -41,7 +41,12 @@ import type {
     RegistryItem,
     SourceFile,
 } from "../lib/contract/types.ts";
-import { validateAll } from "../lib/contract/validate.ts";
+import {
+    formatProblem,
+    validateAll,
+    validateDocsSpace,
+} from "../lib/contract/validate.ts";
+import { DOCS_SPACES } from "../lib/site-paths.ts";
 import {
     label,
     ROOT,
@@ -54,6 +59,7 @@ import {
 
 /** The project whose registry paints the site. */
 const THEME_PROJECT = "ui";
+
 const PUBLIC = join(ROOT, "public");
 const STYLES = join(ROOT, "styles", "fragiola");
 const GENERATED = ".generated";
@@ -98,6 +104,16 @@ const reads = validateAll(
     label,
 );
 if (!reads) process.exit(1);
+
+// the docs www writes itself (content/<slug>/, lib/projects.ts): the same docs checks
+for (const space of DOCS_SPACES) {
+    const dir = join(ROOT, "content", space.slug);
+    const problems = validateDocsSpace(dir, space);
+    for (const problem of problems) {
+        console.error(`✗ ${formatProblem(label(dir), problem)}`);
+    }
+    if (problems.length > 0) process.exit(1);
+}
 if (mode.check) {
     console.log(`prepare:site --check — ${label(SOURCES)} can be built`);
     process.exit(0);
