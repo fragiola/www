@@ -74,7 +74,7 @@ export function useFramework(): string {
 export function FrameworkSelect({ frameworks }: { frameworks: string[] }) {
     const framework = useFramework();
     return (
-        <label className="flex items-center gap-2.5 rounded-lg border border-fd-border bg-fd-secondary/50 px-2.5 py-1.5 text-sm transition-colors focus-within:border-fd-ring hover:bg-fd-accent/60">
+        <label className="flex items-center gap-2.5 rounded-md border border-fd-border bg-fd-secondary/50 px-2.5 py-1.5 text-sm transition-colors focus-within:border-fd-ring hover:bg-fd-accent/60">
             <CodeXml aria-hidden className="size-4 shrink-0 text-fd-primary" />
             <span className="text-fd-muted-foreground">Framework</span>
             <select

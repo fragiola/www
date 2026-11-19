@@ -69,7 +69,11 @@ Do not "fix" these.
    Docs and Examples; search, the theme and GitHub on the right. What it shows is computed at
    build time (`siteHeader()`, `lib/layout.shared.tsx`). In the docs it sits above Fumadocs'
    grid, which `--fd-banner-height` pushes down (`.site-docs`, `app/globals.css`); the docs
-   sidebar carries no title, links, search or theme of its own. Its specs: `e2e/header.spec.ts`.
+   sidebar carries no title, links, search or theme of its own. From `md` the docs are **inset**
+   (`.site-docs`, `app/globals.css`): the header, the sidebar and the gutters share one frame
+   surface (the header's only difference on those pages), and the page sits on a rounded panel
+   (`.docs-inset-panel`, a grid item of `app/[project]/docs/layout.tsx`). Its specs:
+   `e2e/header.spec.ts`, the inset ones in `e2e/docs.spec.ts`.
 10. **Search and sharing is built by `lib/seo.ts` only.** Titles (the landing's own, then
     `· <project>`, then `· Fragiola` while it fits in 60), meta descriptions (plain text, 50–160),
     canonical URLs (absolute, trailing slash, no query), the Open Graph and Twitter cards (one

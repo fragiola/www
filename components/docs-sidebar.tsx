@@ -28,7 +28,7 @@ import { cn } from "@/lib/cn";
 const IconColumn = createContext(false);
 
 const ROW =
-    "relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start text-sm text-fd-muted-foreground transition-colors wrap-anywhere hover:bg-fd-accent/60 hover:text-fd-foreground hover:transition-none focus-visible:outline-2 focus-visible:outline-fd-ring [&_svg]:size-4 [&_svg]:shrink-0";
+    "relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-start text-sm text-fd-muted-foreground transition-colors wrap-anywhere hover:bg-fd-accent/60 hover:text-fd-foreground hover:transition-none focus-visible:outline-2 focus-visible:outline-fd-ring [&_svg]:size-4 [&_svg]:shrink-0";
 
 function Icon({ icon }: { icon: ReactNode }) {
     const column = useContext(IconColumn);

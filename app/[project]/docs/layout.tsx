@@ -32,6 +32,10 @@ export default async function Layout({
                 }}
                 trees={trees}
             >
+                {/* the inset panel the page sits on (.docs-inset-panel, app/globals.css): an empty
+                    grid item behind the main column, the table of contents and the footer, first
+                    in the grid so the page paints over it */}
+                <div aria-hidden className="docs-inset-panel" />
                 {children}
                 {/* under the page and its table of contents: a fourth row of Fumadocs' docs grid,
                     whose three named rows the sidebar, the header and the page take. Its width
