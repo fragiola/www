@@ -5,7 +5,7 @@ Each project lives in its own repo and exposes a **site export**; this repo chec
 against the contract and assembles them into one static Next.js + Fumadocs site, published on
 GitHub Pages.
 
-- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.5).
+- **The contract** a project implements: [`CONTRACT.md`](CONTRACT.md) (v1.6).
 - **How this repo works**, its rules and commands: [`AGENTS.md`](AGENTS.md).
 
 ## For AI agents

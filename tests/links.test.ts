@@ -10,6 +10,8 @@ describe("siteHref", () => {
         ["/examples/add-tabs", "/dockable/examples/add-tabs/"],
         ["/examples", "/dockable/examples/"],
         ["/", "/dockable/"],
+        ["/create", "/dockable/create/"],
+        ["/create/", "/dockable/create/"],
         ["/#what-it-ships", "/dockable/#what-it-ships"],
         ["#anchor", "#anchor"],
         ["https://github.com/fragiola", "https://github.com/fragiola"],

@@ -16,5 +16,10 @@
         "base ui",
         "tailwind css",
         "theming"
-    ]
+    ],
+    "create": {
+        "title": "Create",
+        "description": "Build a Fragiola UI theme: pick a colour and the five design axes, see the components live and copy the CSS.",
+        "framework": "react"
+    }
 }

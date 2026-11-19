@@ -444,7 +444,7 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
         const notAnId = (value: string) =>
             `dockable/project.json:11: adapters: ${value} is not an id: lowercase letters, digits and dashes, like "vanilla" or "react" (§2)`;
         expect(problems()).toEqual([
-            "ui/project.json:22: adapters must list 1–12 adapters (§2)",
+            "ui/project.json:27: adapters must list 1–12 adapters (§2)",
             notAnId('"React"'),
             'dockable/project.json:11: adapters: "vanilla" is listed twice (§2)',
             notAnId("3"),
@@ -455,7 +455,7 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
             project.adapters = ["vanilla", "svelte"];
         });
         expect(problems()).toContain(
-            'ui/project.json:22: adapters: "react" is in frameworks but not in adapters (§2)',
+            'ui/project.json:27: adapters: "react" is in frameworks but not in adapters (§2)',
         );
     });
 
@@ -626,6 +626,127 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
     });
 });
 
+describe("the Create page (v1.6, §2, §3.3, §5.5)", () => {
+    const createHtml = "ui/embed/react/create.html";
+    /** ui without `create`, its file and its link: a v1.5 export */
+    function withoutCreate() {
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            delete project.create;
+        });
+        rmSync(path(createHtml));
+        const landing = "ui/docs/index.mdx";
+        writeFileSync(
+            path(landing),
+            readFileSync(path(landing), "utf-8").replace(
+                /^ *\{ label: "Create a theme".*\n/m,
+                "",
+            ),
+        );
+    }
+
+    test("a v1.5 export, with no create, stays valid", () => {
+        withoutCreate();
+        expect(problems()).toEqual([]);
+    });
+
+    test("create: the shape, the lengths and the framework", () => {
+        const at = (message: string) =>
+            `ui/project.json:22: create: ${message} (§2)`;
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.create = "Create";
+        });
+        expect(problems()).toEqual([
+            at('"Create" is not { "title", "description", "framework" }'),
+        ]);
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.create = {
+                title: "C".repeat(61),
+                description: "Too short.",
+                framework: "vue",
+                href: "/create",
+            };
+        });
+        expect(problems()).toEqual([
+            at('"href" is not a field: title, description and framework'),
+            at("title is 61 characters: at most 60"),
+            at("description is 10 characters: 50–160"),
+            at('framework "vue" is not in frameworks'),
+        ]);
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.create = {};
+        });
+        expect(problems()).toEqual([
+            at("title is required"),
+            at("description is required"),
+            at("framework is required"),
+        ]);
+    });
+
+    test("create.html exists and is noindex", () => {
+        rmSync(path(createHtml));
+        expect(problems()).toEqual([
+            `${createHtml}: is missing: project.json declares create, and the Create page is this file (§5.5)`,
+        ]);
+        cpSync(join(FIXTURES, "ui/embed/react/create.html"), path(createHtml));
+        writeFileSync(
+            path(createHtml),
+            readFileSync(path(createHtml), "utf-8").replace(
+                / *<meta name="robots"[^>]*>\n/,
+                "",
+            ),
+        );
+        const head = readFileSync(path(createHtml), "utf-8")
+            .split("\n")
+            .findIndex((line) => line.includes("<head>"));
+        expect(problems()).toEqual([
+            `${createHtml}:${head + 1}: needs <meta name="robots" content="noindex">: the Create page's app is not a page for search engines, /<slug>/create/ is (§5.5)`,
+        ]);
+    });
+
+    test("create.html loads what it needs from the embed's base; its links out are site URLs", () => {
+        writeFileSync(
+            path(createHtml),
+            readFileSync(path(createHtml), "utf-8").replace(
+                "</body>",
+                '<script src="/assets/create.js"></script></body>',
+            ),
+        );
+        expect(problems()).toEqual([
+            expect.stringMatching(
+                /^ui\/embed\/react\/create\.html:\d+: "\/assets\/create\.js" is outside \/ui\/embed\/react\/: the embed app must be built with base \/ui\/embed\/react\/ \(§5\)$/,
+            ),
+        ]);
+    });
+
+    test("a /create link only when create is declared, and with no anchor", () => {
+        const page = "dockable/docs/getting-started/installation.mdx";
+        const line = append(page, "\n[Create](/create)\n");
+        expect(problems()).toEqual([
+            `${page}:${line + 1}:1: broken link (markdown) "/create": /create: the project declares no Create page (project.json create, §2)`,
+        ]);
+        rmSync(path(page));
+        cpSync(join(FIXTURES, page), path(page));
+        const uiPage = "ui/docs/getting-started/installation.mdx";
+        const uiLine = append(uiPage, "\n[Create](/create#colours)\n");
+        expect(problems()).toEqual([
+            `${uiPage}:${uiLine + 1}:1: broken link (markdown) "/create#colours": /create takes no anchor: the Create page is the project's app (§3.3)`,
+        ]);
+    });
+
+    test("without create, the landing's /create action is a broken link", () => {
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            delete project.create;
+        });
+        const landing = readFileSync(path("ui/docs/index.mdx"), "utf-8");
+        const line = landing
+            .split("\n")
+            .findIndex((text) => text.includes('href: "/create"'));
+        expect(problems()).toEqual([
+            `ui/docs/index.mdx:${line + 1}:9: broken link (<Hero actions>) "/create": /create: the project declares no Create page (project.json create, §2)`,
+        ]);
+    });
+});
+
 describe("frontmatter and config ↔ files (§3.1, §3.2)", () => {
     test("title and description are required; only the landing takes a layout", () => {
         const page = "ui/docs/atoms/clickable.mdx";
@@ -736,7 +857,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.5)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.6)",
         ]);
     });
 

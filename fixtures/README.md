@@ -1,6 +1,6 @@
 # Fixtures
 
-One minimal site export per project of `projects.json`, following the contract v1.5
+One minimal site export per project of `projects.json`, following the contract v1.6
 (`../CONTRACT.md`). `pnpm sources:fixtures` copies them into `.sources-fixtures/` (never
 `.sources/`, which holds the projects' exports), and the tests build the site from them
 (`pnpm e2e:build`), so the suite needs no project repo and runs against content it controls.
@@ -16,6 +16,12 @@ For v1.2 (search and sharing) the landings' titles are search titles that name t
 characters, headings do not skip a level, ui's `project.json` has `keywords` (dockable's has
 none, so both cases are built), and every embed HTML file carries
 `<meta name="robots" content="noindex">`.
+
+For v1.6 ui's `project.json` declares `create` (React) and ships `embed/react/create.html`, a
+stand-in Create page (its own header linking to the docs, a main area that scrolls inside it,
+`ready` with id `create`, and the `host` and `theme` it receives recorded on its root for the
+tests); its landing's `Hero` has a `/create` action. No other fixture declares one, so both cases
+are built.
 
 For v1.5 every library lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.

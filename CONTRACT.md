@@ -1,4 +1,4 @@
-# Site export contract, v1.5
+# Site export contract, v1.6
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.6, v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -44,6 +44,7 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
   embed/<framework>/          one static app per framework (§5)
     index.html
     manifest.json
+    create.html               v1.6, optional: the Create page's app (§5.5)
     popout.html …             anything else the app needs, under its own base
   r/                          optional: the project's registry items (§7)
     index.json
@@ -63,7 +64,12 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
     "adapters": ["vanilla", "react", "vue", "angular"],   // v1.5, optional: the landing's adapters row
     "registry": { "namespace": "@fragiola" },  // only when r/ is present
     "repository": "https://github.com/fragiola/dockable",  // v1.1: header and footer links
-    "keywords": ["dockable layout", "docking panels"]    // v1.2, optional: structured data only
+    "keywords": ["dockable layout", "docking panels"],   // v1.2, optional: structured data only
+    "create": {                                          // v1.6, optional: a Create page (§5.5)
+        "title": "Create",
+        "description": "One sentence, 50–160 characters.",
+        "framework": "react"
+    }
 }
 ```
 
@@ -80,6 +86,12 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
   adapter without an embed app (no docs in it yet) may be listed too. `www` shows them as a row
   of logos above the landing's showcase example (§3.4), each framework of `frameworks` linking to
   the docs in it. Absent, the adapters are the `frameworks`.
+- `create` (v1.6, optional): the project ships a **Create page**, a full-page tool of its own
+  (Fragiola UI's theme builder), served by `www` at `/<slug>/create/`. `title` (at most 60
+  characters) gives the page's `<title>` like a docs page's (§3.6), `description` (50–160
+  characters, as plain text) its meta description, and `framework`, one of `frameworks`, the
+  embed app that holds it: `embed/<framework>/create.html` (§5.5). Absent, the project has no
+  Create page, no `/<slug>/create/` route and no link to one.
 
 ## 3. Pages
 
@@ -144,9 +156,11 @@ Pages link **base-free**, as if the project were at the root:
 | `/docs/guides/tabs#anchor` | `/<slug>/docs/guides/tabs#anchor` |
 | `/examples/add-tabs` | `/<slug>/examples/add-tabs` (the gallery, §4) |
 | `/` | `/<slug>` (the landing) |
+| `/create` | `/<slug>/create` (the Create page, v1.6: only when `project.json` declares `create`, §5.5) |
 
 Relative file links (`../x.mdx`) are not allowed. `www` rewrites links and **fails the build on a
-link to a page, anchor or example that does not exist**.
+link to a page, anchor or example that does not exist**, and on a `/create` link (which takes no
+anchor) from a project that declares no `create`.
 
 ### 3.4 Vocabulary
 
@@ -381,6 +395,33 @@ popovers, selects, tooltips) are not promoted: the manifest's `height` gives the
   without the component shrinking them.
 - The code panel shows the files **verbatim** (§6).
 
+### 5.5 The Create page (v1.6)
+
+A project that declares `create` (§2) ships `embed/<framework>/create.html`, a page of that
+framework's embed app built with the same base, and `www` serves it full-page at
+`/<slug>/create/`: the viewport is the frame, at 100% × 100%, and nothing of `www` is drawn over
+or around it. The page is the project's own tool, built from its own components: it draws its
+own chrome (a header in the docs' style, with a link back to the project's docs) and scrolls
+inside itself, never the site's page.
+
+- `www` addresses it as `<base>/embed/<framework>/create.html?theme=<name>`. The theme is applied
+  before the first paint as in §5.1 (an inline script; missing or unknown → the first `light`
+  theme), the root's `color-scheme` is the theme's `scheme`, and the file is `noindex` like every
+  embed HTML file. It never reads the site's `localStorage`.
+- It speaks the messages of an example frame (§5.2), with `id` `"create"`: it sends
+  `fragiola:example:ready` once, after its first render; after `ready` it receives
+  `{ type: "fragiola:example:host", overlay: false }` once, then `fragiola:example:theme` with
+  the site's current theme, and again whenever it changes, applying it without reloading (a
+  static server with "clean URLs" may drop the query of `create.html?…`: the message still
+  brings the theme). It never sends `resize` (it fills the viewport), and overlay promotion
+  (§5.4) does not apply: the frame is already the whole page, so it opens its overlays in place
+  and never sends `overlay`.
+- Links out of it (to the docs, the landing) are site URLs (`/<slug>/docs/…`) opened in the top
+  window (`target="_top"`).
+
+`www` keeps the frame hidden until `ready`, like an example's, and links to the page from the
+project's docs and header when `create` is declared.
+
 ## 6. Code shown to readers
 
 Examples import a project's internal modules through **`#/…`** (`#/components/ui/select`,
@@ -414,6 +455,10 @@ v1.4 adds: a sidebar `icon` is one of the names of §3.1.
 
 v1.5 adds: `project.json` `adapters`, when present, is 1–12 unique ids and holds every framework.
 
+v1.6 adds: `project.json` `create`, when present, has a `title` of at most 60 characters, a
+`description` of 50–160 and a `framework` of `frameworks`; `embed/<framework>/create.html` exists
+and is `noindex`; a `/create` link only in a project that declares `create`.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -422,6 +467,16 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.6
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.5 export
+stays valid.
+
+- `project.json` may declare `create`, a Create page (§2): a full-page tool of the project's own,
+  `embed/<framework>/create.html` (§5.5), served at `/<slug>/create/` and linked from the
+  project's docs and header.
+- `/create` is a base-free link to it, valid only when `create` is declared (§3.3).
 
 ## Changes in v1.5
 

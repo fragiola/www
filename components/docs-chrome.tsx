@@ -31,7 +31,8 @@ import { AI_SPACE, MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 // - the sidebar's first row: the wordmark (→ /), then Fumadocs' collapse toggle;
 // - its top: the AI agents links (a subtitle and two sidebar rows into the AI agents docs, the
 //   same on every page, so it is plain that agents can build with Fragiola), the project switcher (every project of projects.json, Fragiola UI's dropdown-menu,
-//   copied from ui's registry), the search field, the project's Docs | Examples, the framework
+//   copied from ui's registry), the search field, the project's Docs | Examples (| Create, when
+//   it declares a Create page, v1.6: beside its other sections, as in the header), the framework
 //   select when the project has several;
 // - its footer: the project's GitHub and Fragiola's;
 // - the theme toggle in the panel's top-right corner (DocsCorner), and on small screens in
@@ -204,6 +205,17 @@ function DocsTabs({ current }: { current: HeaderContext }) {
                     )}
                 >
                     Examples
+                </NextLink>
+            ) : null}
+            {current.createUrl ? (
+                <NextLink
+                    href={current.createUrl}
+                    className={cn(
+                        tab,
+                        "text-fd-muted-foreground hover:bg-fd-accent/60 hover:text-fd-foreground",
+                    )}
+                >
+                    Create
                 </NextLink>
             ) : null}
         </nav>
