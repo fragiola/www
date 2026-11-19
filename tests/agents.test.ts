@@ -285,9 +285,11 @@ describe("the agent index", () => {
             build().files.find((file) => file.path === "/llms.txt")?.content ??
             "";
         expect(llms.startsWith("# Fragiola\n\n> ")).toBe(true);
-        expect(llms).toContain("[MCP server](https://fragiola.com/mcp/)");
         expect(llms).toContain(
-            "[Agent skills](https://fragiola.com/skills/): `npx skills add fragiola/skills`",
+            "[MCP server](https://fragiola.com/ai/docs/mcp/)",
+        );
+        expect(llms).toContain(
+            "[Agent skills](https://fragiola.com/ai/docs/skills/): `npx skills add fragiola/skills`",
         );
         expect(llms).toContain(
             "[Agent index](https://fragiola.com/agents/index.json)",

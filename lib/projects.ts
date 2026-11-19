@@ -4,6 +4,10 @@ import type { Root } from "fumadocs-core/page-tree";
 import { docsIcon } from "@/components/docs-icon";
 import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
 import { readFrontmatter } from "@/lib/contract/mdx";
+import { DOCS_SPACES } from "@/lib/site-paths";
+
+export { AI_SPACE } from "@/lib/site-paths";
+
 import type {
     DocsConfig,
     ExamplesConfig,
@@ -26,6 +30,10 @@ function readJson<T>(file: string): T {
 }
 
 export interface Project extends ProjectInfo {
+    /** the folder its docs/ is read from: the export, or content/<slug> for a docs space */
+    dir: string;
+    /** a docs space www writes itself (content/<slug>/): docs only, no landing, no gallery */
+    space?: true;
     docs: DocsConfig;
     examples: ExamplesConfig;
     manifests: Map<string, Manifest>;
@@ -44,6 +52,7 @@ export function getProjects(): Project[] {
             const info = readJson<ProjectInfo>(join(dir, "project.json"));
             return {
                 ...info,
+                dir,
                 docs: readJson<DocsConfig>(join(dir, "docs", "config.json")),
                 examples: readJson<ExamplesConfig>(join(dir, "examples.json")),
                 manifests: new Map(
@@ -64,6 +73,49 @@ export function getProjects(): Project[] {
 
 export function getProject(slug: string): Project | undefined {
     return getProjects().find((project) => project.slug === slug);
+}
+
+// ─── docs spaces (content/<slug>/) ───────────────────────────────────────────
+//
+// Docs www writes itself, served at /<slug>/docs/** by the same layout as a project's docs: the
+// AI agents space (content/ai/: the agent skills and the MCP server). Docs only: no landing (its
+// /<slug>/ goes to the first page), no gallery, no frameworks to choose from. Its docs/ has the
+// shape of an export's (§3.1) and passes the same checks (validateDocsSpace, run by
+// scripts/prepare-site.ts). Never in getProjects(): the landings, the gallery, the sitemap's
+// project pages and the agent index list projects only.
+
+/** The docs spaces' folder: content/ in the repository, whatever the sources. */
+export const SPACES = join(ROOT, "content");
+
+let spaces: Project[] | undefined;
+
+export function getSpaces(): Project[] {
+    if (spaces && CACHE) return spaces;
+    spaces = DOCS_SPACES.map((space) => {
+        const dir = join(SPACES, space.slug);
+        return {
+            contract: 1,
+            ...space,
+            // one tree key: a space has no framework to choose
+            frameworks: ["react"],
+            defaultFramework: "react",
+            dir,
+            space: true as const,
+            docs: readJson<DocsConfig>(join(dir, "docs", "config.json")),
+            examples: { levels: [], themes: [] },
+            manifests: new Map(),
+        };
+    });
+    return spaces;
+}
+
+/** Every docs the site serves at /<slug>/docs/**: the projects', then the spaces'. */
+export function getDocsSpaces(): Project[] {
+    return [...getProjects(), ...getSpaces()];
+}
+
+export function getDocsSpace(slug: string): Project | undefined {
+    return getDocsSpaces().find((project) => project.slug === slug);
 }
 
 /** The first page of the sidebar: where the project's "Docs" link goes. */
@@ -88,8 +140,8 @@ export function pageSection(
 }
 
 /** A page's frontmatter description: the page footer's next/previous links show it. */
-function pageDescription(slug: string, path: string): string | undefined {
-    const file = join(SOURCES, slug, "docs", `${path}.mdx`);
+function pageDescription(project: Project, path: string): string | undefined {
+    const file = join(project.dir, "docs", `${path}.mdx`);
     const description = readFrontmatter(
         readFileSync(file, "utf-8"),
     )?.description;
@@ -137,10 +189,7 @@ export function getPageTree(project: Project, framework: string): Root {
                             external: true,
                         };
                     }
-                    const description = pageDescription(
-                        project.slug,
-                        entry.path,
-                    );
+                    const description = pageDescription(project, entry.path);
                     return {
                         type: "page" as const,
                         name: entry.label,
@@ -327,7 +376,7 @@ export function firstExampleUrl(project: Project): string | undefined {
 
 /** The pages of a project, for the static params: every `.mdx` path but the landing. */
 export function pagePaths(project: Project): string[] {
-    const docs = join(SOURCES, project.slug, "docs");
+    const docs = join(project.dir, "docs");
     const walk = (dir: string, prefix: string): string[] =>
         readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
             entry.isDirectory()

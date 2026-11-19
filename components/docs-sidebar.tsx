@@ -27,8 +27,15 @@ import { cn } from "@/lib/cn";
 /** Whether a row of this list has an icon: then a row without one keeps the icon's room. */
 const IconColumn = createContext(false);
 
-const ROW =
+/** A sidebar row (a page, a folder's trigger): the docs' chrome draws its links with it too. */
+export const SIDEBAR_ROW =
     "relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-start text-sm text-fd-muted-foreground transition-colors wrap-anywhere hover:bg-fd-accent/60 hover:text-fd-foreground hover:transition-none focus-visible:outline-2 focus-visible:outline-fd-ring [&_svg]:size-4 [&_svg]:shrink-0";
+
+/** The current page's row: a filled pill in the primary role. */
+export const SIDEBAR_ROW_ACTIVE =
+    "data-[active=true]:bg-fd-primary/10 data-[active=true]:font-medium data-[active=true]:text-fd-primary data-[active=true]:hover:bg-fd-primary/15";
+
+const ROW = SIDEBAR_ROW;
 
 function Icon({ icon }: { icon: ReactNode }) {
     const column = useContext(IconColumn);
@@ -55,10 +62,7 @@ function Item({ item }: { item: PageTree.Item }) {
             // always an element, so the base item draws no external-link icon in its place: the
             // row ends with one instead
             icon={<Icon icon={item.icon} />}
-            className={cn(
-                ROW,
-                "data-[active=true]:bg-fd-primary/10 data-[active=true]:font-medium data-[active=true]:text-fd-primary data-[active=true]:hover:bg-fd-primary/15",
-            )}
+            className={cn(ROW, SIDEBAR_ROW_ACTIVE)}
         >
             <span className="min-w-0 flex-1">{item.name}</span>
             {item.external ? (

@@ -19,9 +19,14 @@ test.use({ javaScriptEnabled: false });
 
 const SITE = "https://fragiola.com";
 
-/** The organization-level pages, outside every project: the MCP server's (app/mcp/page.tsx) and
- * the agent skills' (app/skills/page.tsx). */
-const ORGANIZATION_PAGES = ["/mcp/", "/skills/"];
+/** A docs space's pages (content/<slug>/docs, the AI agents docs): docs of the site, in no project. */
+function spacePaths(slug: string): string[] {
+    const docs = join(import.meta.dirname, "..", "content", slug, "docs");
+    return readdirSync(docs, { recursive: true, encoding: "utf-8" })
+        .filter((file) => file.endsWith(".mdx"))
+        .map((file) => `/${slug}/docs/${file.replace(/\.mdx$/, "")}/`);
+}
+const SPACE_PAGES = spacePaths("ai");
 
 async function sitemap(request: APIRequestContext): Promise<string[]> {
     const response = await request.get("sitemap.xml");
@@ -45,12 +50,8 @@ async function meta(page: Page, key: string): Promise<string | null> {
 
 const chars = (text: string | null) => [...(text ?? "")].length;
 
-function kindOf(
-    path: string,
-): "home" | "page" | "landing" | "docs" | "example" {
+function kindOf(path: string): "home" | "landing" | "docs" | "example" {
     if (path === "/") return "home";
-    // the organization's own pages: an article of the site, in no project
-    if (ORGANIZATION_PAGES.includes(path)) return "page";
     if (/^\/[^/]+\/$/.test(path)) return "landing";
     return path.includes("/docs/") ? "docs" : "example";
 }
@@ -58,7 +59,6 @@ function kindOf(
 // every page carries the organization it names as publisher: a page is read on its own
 const EXPECTED_TYPES = {
     home: ["Organization", "WebSite"],
-    page: ["TechArticle", "BreadcrumbList", "Organization"],
     landing: ["SoftwareSourceCode", "BreadcrumbList", "Organization"],
     docs: ["TechArticle", "BreadcrumbList", "Organization"],
     example: ["BreadcrumbList", "Organization"],
@@ -85,7 +85,7 @@ test("the sitemap lists every indexable page and nothing else", {
     }
     const expected = [
         "/",
-        ...ORGANIZATION_PAGES,
+        ...SPACE_PAGES,
         ...PROJECTS.flatMap(({ project, manifests }) => [
             `/${project.slug}/`,
             ...docsPaths(project.slug),
@@ -151,8 +151,8 @@ async function readPage(page: Page) {
 // titles: the landing's own, then · project, then · Fragiola when it fits
 const TITLES: Record<string, string> = {
     "/": "Fragiola — headless React components and a design system",
-    "/mcp/": "MCP server for AI agents · Fragiola",
-    "/skills/": "Agent skills for AI coding agents · Fragiola",
+    "/ai/docs/mcp/": "MCP server · AI agents · Fragiola",
+    "/ai/docs/skills/": "Agent skills · AI agents · Fragiola",
     "/ui/": "Fragiola UI — React components on Base UI and Tailwind",
     "/dockable/": "Dockable — headless dockable panel layouts for React",
     "/ui/docs/atoms/clickable/": "Clickable · Fragiola UI",
@@ -284,9 +284,9 @@ function checkEntity(
     }
     if (item["@type"] === "TechArticle") {
         expect(item.url, where).toBe(url);
-        // a docs page is part of its project; an organization page, of the site
+        // a docs page is part of its project; a docs space's page (the AI agents docs), of the site
         expect(item.isPartOf, where).toMatchObject(
-            ORGANIZATION_PAGES.includes(new URL(url).pathname)
+            SPACE_PAGES.includes(new URL(url).pathname)
                 ? { "@id": `${SITE}/#website` }
                 : {
                       "@type": "SoftwareSourceCode",
@@ -345,6 +345,11 @@ test("redirect pages and the 404 are noindex; the embeds say noindex themselves"
         "ui/examples/",
         "dockable/docs/",
         "dockable/examples/",
+        // the AI agents docs have no landing; /mcp/ and /skills/ moved into them
+        "ai/",
+        "ai/docs/",
+        "mcp/",
+        "skills/",
     ]) {
         await page.goto(path);
         expect(await meta(page, "robots"), path).toMatch(/\bnoindex\b/);

@@ -1,0 +1,14 @@
+---
+title: "llms.txt and the agent index"
+description: "Files any agent or tool can read without MCP: llms.txt, the agent index with every project and component, and the ecosystem overview."
+---
+
+The MCP server reads files the site publishes for agents. Any agent or tool can read them too:
+
+| File | What it holds |
+| --- | --- |
+| [`/llms.txt`](https://fragiola.com/llms.txt) | The entry point, with every docs page linked as Markdown. |
+| [`/agents/index.json`](https://fragiola.com/agents/index.json) | Every project, its kind, packages, pages, examples and components. |
+| [`/agents/overview.md`](https://fragiola.com/agents/overview.md) | The ecosystem, written for agents. |
+
+Every docs page also has a Markdown copy at `/agents/<project>/<path>.md`.

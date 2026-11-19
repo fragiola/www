@@ -1,13 +1,13 @@
 import { createFromSource } from "fumadocs-core/search/server";
-import { getProjects } from "@/lib/projects";
+import { getDocsSpaces } from "@/lib/projects";
 import { source } from "@/lib/source";
 
-// One index for every project, exported as a file at build time and queried in the browser.
+// One index for every project and docs space (the AI agents docs), exported as a file at build time and queried in the browser.
 // Each entry is tagged with its project's slug and breadcrumbed with the project's title and the
 // config.json section. A project's landing (docs/index.mdx) is indexed at /<slug>/.
 export const revalidate = false;
 
-const projects = getProjects();
+const projects = getDocsSpaces();
 
 export const { staticGET: GET } = createFromSource(source, {
     buildIndex(page) {

@@ -19,17 +19,16 @@ import {
     type Project,
 } from "@/lib/projects";
 import {
-    MCP_PATH,
     organizationJsonLd,
     pageMetadata,
     SITE_DESCRIPTION,
     SITE_TITLE,
-    SKILLS_PATH,
 } from "@/lib/seo";
+import { MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 
 // The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
 // optional design system), bringing your own styles, Fragiola UI itself, every project of
-// projects.json, from its own project.json, then the MCP server for AI agents (/mcp/). Built from the landing pieces every project's
+// projects.json, from its own project.json, then the AI agents docs (/ai/docs/: the MCP server and the agent skills). Built from the landing pieces every project's
 // landing uses (components/landing/).
 //
 // The copy says only what exists today: the projects are read, never listed by hand, and no
