@@ -1,6 +1,15 @@
 "use client";
 
-import { Check, ChevronsUpDown, LayoutGrid } from "lucide-react";
+import {
+    Bot,
+    Check,
+    ChevronRight,
+    ChevronsUpDown,
+    LayoutGrid,
+    type LucideIcon,
+    Plug,
+    Sparkles,
+} from "lucide-react";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
 import { FrameworkSelect } from "@/components/framework";
@@ -13,12 +22,14 @@ import {
 import type { HeaderContext, HeaderProject } from "@/components/site-header";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/cn";
+import { MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 
 // The docs' chrome (rule 9): the docs have no site header, its navigation lives in the sidebar,
 // the same for every project, as on fumadocs.dev.
 //
 // - the sidebar's first row: the wordmark (→ /), then Fumadocs' collapse toggle;
-// - its top: the project switcher (every project of projects.json, Fragiola UI's dropdown-menu,
+// - its top: the AI agents block (the agent skills and the MCP server, the same on every page, so
+//   it is plain that agents can build with Fragiola), the project switcher (every project of projects.json, Fragiola UI's dropdown-menu,
 //   copied from ui's registry), the search field, the project's Docs | Examples, the framework
 //   select when the project has several;
 // - its footer: the project's GitHub and Fragiola's;
@@ -113,6 +124,47 @@ function ProjectSwitcher({
     );
 }
 
+const AGENT_LINKS: { href: string; title: string; icon: LucideIcon }[] = [
+    { href: SKILLS_PATH, title: "Agent skills", icon: Sparkles },
+    { href: MCP_PATH, title: "MCP server", icon: Plug },
+];
+
+/** The AI agents block: Fragiola's agent skills and MCP server, on every docs page. */
+function DocsAgentLinks() {
+    return (
+        <nav
+            data-testid="docs-agent-links"
+            aria-label="For AI agents"
+            className="flex flex-col gap-0.5 rounded-md border border-fd-primary/25 bg-fd-primary/5 p-1"
+        >
+            <p
+                aria-hidden
+                className="flex items-center gap-1.5 px-1.5 pt-1 pb-0.5 font-medium text-fd-muted-foreground text-xs"
+            >
+                <Bot aria-hidden className="size-3.5 text-fd-primary" />
+                Built for AI agents
+            </p>
+            {AGENT_LINKS.map(({ href, title, icon: Icon }) => (
+                <NextLink
+                    key={href}
+                    href={href}
+                    className="group flex items-center gap-2.5 rounded-sm px-1.5 py-1 text-fd-foreground text-sm transition-colors hover:bg-fd-primary/10 focus-visible:outline-2 focus-visible:outline-fd-ring"
+                >
+                    <Icon
+                        aria-hidden
+                        className="size-4 shrink-0 text-fd-primary"
+                    />
+                    <span className="flex-1 truncate font-medium">{title}</span>
+                    <ChevronRight
+                        aria-hidden
+                        className="size-3.5 shrink-0 text-fd-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    />
+                </NextLink>
+            ))}
+        </nav>
+    );
+}
+
 function DocsTabs({ current }: { current: HeaderContext }) {
     const tab =
         "flex flex-1 items-center justify-center rounded-sm px-2 py-1 font-medium text-sm transition-colors focus-visible:outline-2 focus-visible:outline-fd-ring";
@@ -154,6 +206,7 @@ export function DocsSidebarTop({
 }: DocsChromeProps) {
     return (
         <div data-testid="docs-sidebar-top" className="flex flex-col gap-2">
+            <DocsAgentLinks />
             <ProjectSwitcher projects={projects} current={current} />
             <SearchButton variant="field" />
             <DocsTabs current={current} />
