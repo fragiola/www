@@ -50,9 +50,12 @@ async function meta(page: Page, key: string): Promise<string | null> {
 
 const chars = (text: string | null) => [...(text ?? "")].length;
 
-function kindOf(path: string): "home" | "landing" | "docs" | "example" {
+function kindOf(
+    path: string,
+): "home" | "landing" | "docs" | "example" | "create" {
     if (path === "/") return "home";
     if (/^\/[^/]+\/$/.test(path)) return "landing";
+    if (/^\/[^/]+\/create\/$/.test(path)) return "create";
     return path.includes("/docs/") ? "docs" : "example";
 }
 
@@ -62,6 +65,7 @@ const EXPECTED_TYPES = {
     landing: ["SoftwareSourceCode", "BreadcrumbList", "Organization"],
     docs: ["TechArticle", "BreadcrumbList", "Organization"],
     example: ["BreadcrumbList", "Organization"],
+    create: ["BreadcrumbList", "Organization"],
 };
 
 /** The fixtures' pages, as the sitemap must list them: every .mdx but the landing. */
@@ -96,6 +100,8 @@ test("the sitemap lists every indexable page and nothing else", {
                     ),
                 ),
             ].map((id) => `/${project.slug}/examples/${id}/`),
+            // v1.6: its Create page, when it declares one
+            ...(project.create ? [`/${project.slug}/create/`] : []),
         ]),
     ];
     expect([...paths].sort()).toEqual([...expected].sort());
@@ -159,6 +165,7 @@ const TITLES: Record<string, string> = {
     "/dockable/docs/guides/popouts/": "Popouts · Dockable · Fragiola",
     "/ui/examples/text/": "Text · Fragiola UI examples",
     "/dockable/examples/add-tabs/": "Add tabs · Dockable examples · Fragiola",
+    "/ui/create/": "Create · Fragiola UI",
 };
 
 test("every sitemap URL: title, description, canonical, cards, one h1, headings, JSON-LD", async ({
