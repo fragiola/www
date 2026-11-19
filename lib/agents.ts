@@ -118,8 +118,9 @@ export interface AgentFile {
 
 export const OVERVIEW_PATH = "/agents/overview.md";
 export const INDEX_PATH = "/agents/index.json";
-export const MCP_PAGE = "/mcp/";
-export const SKILLS_PAGE = "/skills/";
+/** The MCP server's and the agent skills' docs (the AI agents space, lib/site-paths.ts). */
+export const MCP_PAGE = "/ai/docs/mcp/";
+export const SKILLS_PAGE = "/ai/docs/skills/";
 
 const readJson = <T>(file: string): T =>
     JSON.parse(readFileSync(file, "utf8")) as T;

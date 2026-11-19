@@ -82,4 +82,4 @@ several adapters, nor the core next to an adapter. The core alone is for framewo
   as Markdown under `https://fragiola.com/agents/<project>/<page>.md`. The full index is
   `https://fragiola.com/agents/index.json`.
 - The MCP server gives agents all of this through tools: `npx fragiola@latest mcp`
-  (https://fragiola.com/mcp/).
+  (https://fragiola.com/ai/docs/mcp/).

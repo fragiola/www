@@ -4,8 +4,6 @@ import { LIMITS, plainText } from "@/lib/contract/types";
 import { ORGANIZATION_URL } from "@/lib/layout.shared";
 import type { Project } from "@/lib/projects";
 
-export { MCP_PATH, SKILLS_PATH, SKILLS_REPO_URL } from "@/lib/site-paths";
-
 // What search engines and link previews read, built in one place (AGENTS.md, "Search and
 // sharing"): the titles, the canonical URLs, the Open Graph and Twitter cards and the JSON-LD.
 // Pages call these builders; nothing else writes them. What a project's export provides for it,
@@ -15,12 +13,6 @@ export { MCP_PATH, SKILLS_PATH, SKILLS_REPO_URL } from "@/lib/site-paths";
 export const SITE_URL = "https://fragiola.com";
 export const SITE_NAME = "Fragiola";
 
-export const MCP_TITLE = "MCP server for AI agents · Fragiola";
-export const MCP_DESCRIPTION =
-    "Give Claude Code, Cursor, VS Code, Codex and OpenCode Fragiola's components, docs and APIs with one command: npx fragiola@latest mcp.";
-export const SKILLS_TITLE = "Agent skills for AI coding agents · Fragiola";
-export const SKILLS_DESCRIPTION =
-    "Teach Claude Code, Codex, Cursor and OpenCode to build with Fragiola UI and the headless Fragiola libraries: npx skills add fragiola/skills.";
 /** The `<title>` of `/`, written for search. */
 export const SITE_TITLE =
     "Fragiola — headless React components and a design system";
@@ -137,10 +129,12 @@ export function pageMetadata({
 }): Metadata {
     const url = absoluteUrl(canonicalPath(path));
     const text = metaDescription(description);
+    // a docs space (the AI agents docs) has no share image of its own: the site's
+    const owner = project?.space ? undefined : project;
     const image = {
-        url: absoluteUrl(shareImagePath(project?.slug)),
+        url: absoluteUrl(shareImagePath(owner?.slug)),
         ...SHARE_IMAGE,
-        alt: project ? `${project.title}. ${project.description}` : SITE_TITLE,
+        alt: owner ? `${owner.title}. ${owner.description}` : SITE_TITLE,
     };
     return {
         title: { absolute: title },
@@ -164,7 +158,7 @@ export function pageMetadata({
     };
 }
 
-/** What a redirect page (`/<slug>/docs/`, `/<slug>/examples/`) says to search engines. */
+/** What a redirect page (`/<slug>/docs/`, `/<slug>/examples/`, `/ai/`, `/mcp/`, `/skills/`) says to search engines. */
 export const REDIRECT_METADATA: Metadata = {
     robots: { index: false, follow: true },
 };
@@ -192,13 +186,16 @@ const organization = (): Thing => ({
     sameAs: [ORGANIZATION_URL],
 });
 
-/** The project a docs page belongs to, as its `isPartOf`. */
-const projectRef = (project: Project): Thing => ({
-    "@type": "SoftwareSourceCode",
-    "@id": projectId(project),
-    name: project.title,
-    url: absoluteUrl(`/${project.slug}/`),
-});
+/** The project a docs page belongs to, as its `isPartOf`; a docs space's page is the site's. */
+const projectRef = (project: Project): Thing =>
+    project.space
+        ? { "@id": WEBSITE_ID }
+        : {
+              "@type": "SoftwareSourceCode",
+              "@id": projectId(project),
+              name: project.title,
+              url: absoluteUrl(`/${project.slug}/`),
+          };
 
 export function organizationJsonLd(): Thing[] {
     return [
@@ -228,33 +225,19 @@ function breadcrumbs(items: { name: string; path: string }[]): Thing {
 }
 
 const home = { name: SITE_NAME, path: "/" };
+/** A project's crumb leads to its landing; a docs space has none, so to its first page. */
 const landingCrumb = (project: Project) => ({
     name: project.title,
-    path: `/${project.slug}/`,
+    path: project.space ? firstDocsPath(project) : `/${project.slug}/`,
 });
 
-/**
- * An organization-level page (/mcp/): an article of the site, under the organization's home.
- * Not a project: it belongs to no project's breadcrumb.
- */
-export function organizationPageJsonLd(page: {
-    path: string;
-    title: string;
-    description: string;
-}): Thing[] {
-    return [
-        {
-            "@type": "TechArticle",
-            headline: page.title,
-            description: plainText(page.description),
-            url: absoluteUrl(page.path),
-            inLanguage: "en",
-            isPartOf: { "@id": WEBSITE_ID },
-            publisher: { "@id": ORGANIZATION_ID },
-        },
-        breadcrumbs([home, { name: page.title, path: page.path }]),
-        organization(),
-    ];
+function firstDocsPath(project: Project): string {
+    for (const section of project.docs.sections) {
+        for (const entry of section.pages) {
+            if ("path" in entry) return docsHref(project.slug, entry.path);
+        }
+    }
+    return "/";
 }
 
 /** A project's landing: the software, and where it sits. */
@@ -315,12 +298,22 @@ export function docsJsonLd(
             isPartOf: projectRef(project),
             publisher: { "@id": ORGANIZATION_ID },
         },
-        breadcrumbs([
-            home,
-            landingCrumb(project),
-            ...(sectionItem && sectionItem.path !== path ? [sectionItem] : []),
-            { name: page.title, path },
-        ]),
+        breadcrumbs(
+            [
+                home,
+                landingCrumb(project),
+                ...(sectionItem ? [sectionItem] : []),
+                { name: page.title, path },
+            ].filter(
+                // a crumb leading to the page itself is left out: a section's crumb on its first
+                // page, a docs space's (it has no landing) on the space's first page
+                (crumb, index, crumbs) =>
+                    index === crumbs.length - 1 ||
+                    (crumb.path !== path &&
+                        crumbs.findIndex((c) => c.path === crumb.path) ===
+                            index),
+            ),
+        ),
         organization(),
     ];
 }
