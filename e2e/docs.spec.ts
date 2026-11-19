@@ -212,3 +212,64 @@ test("the export has no broken internal link", () => {
     }
     expect(broken).toEqual([]);
 });
+
+// The docs sidebar (components/docs-sidebar.tsx): inset rows, the current page a filled pill, the
+// icons a project names (§3.1, v1.4), the "Documentation" label level with the collapse toggle.
+
+test("the sidebar draws the icons a project names, and none for a project that names none", async ({
+    page,
+}) => {
+    await page.goto("ui/docs/atoms/clickable/");
+    const sidebar = page.locator("#nd-sidebar");
+    for (const icon of ["rocket", "download", "atom", "menu"]) {
+        await expect(sidebar.locator(`svg.lucide-${icon}`)).toHaveCount(1);
+    }
+    // the current page: aria-current, a filled pill, no indicator line
+    const current = sidebar.getByRole("link", { name: "Clickable" });
+    await expect(current).toHaveAttribute("aria-current", "page");
+    const pill = await current.evaluate((link) => {
+        const style = getComputedStyle(link);
+        const line = getComputedStyle(link, "::before");
+        return {
+            background: style.backgroundColor,
+            line: line.content,
+        };
+    });
+    expect(pill.background).not.toBe("rgba(0, 0, 0, 0)");
+    expect(pill.line).toBe("none");
+
+    // dockable names no icon: its rows draw none, an external link only its trailing mark
+    await page.goto("dockable/docs/getting-started/installation/");
+    const rows = page.locator("#nd-sidebar a");
+    await expect(rows.first()).toBeVisible();
+    await expect(rows.locator("svg:not(.lucide-external-link)")).toHaveCount(0);
+    await expect(
+        page
+            .locator("#nd-sidebar")
+            .getByRole("link", { name: "Found a problem?" })
+            .locator("svg.lucide-external-link"),
+    ).toHaveCount(1);
+});
+
+test("the sidebar's label and its collapse toggle share a row, the toggle at its end", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("ui/docs/getting-started/installation/");
+    const sidebar = page.locator("#nd-sidebar");
+    const label = sidebar.locator("[data-sidebar-title]");
+    const toggle = sidebar.getByRole("button", { name: /collapse sidebar/i });
+    const [l, t, s] = await Promise.all([
+        label.evaluate((node) => node.getBoundingClientRect().toJSON()),
+        toggle.evaluate((node) => node.getBoundingClientRect().toJSON()),
+        sidebar.evaluate((node) => node.getBoundingClientRect().toJSON()),
+    ]);
+    const centre = (r: { top: number; height: number }) => r.top + r.height / 2;
+    expect(Math.abs(centre(l) - centre(t))).toBeLessThanOrEqual(1);
+    // the toggle ends the row, well away from the label
+    expect(t.left - (l.left + l.width)).toBeGreaterThan(24);
+    expect(s.right - (t.left + t.width)).toBeLessThan(24);
+
+    await toggle.click();
+    await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+});
