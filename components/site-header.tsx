@@ -16,7 +16,8 @@ import { cn } from "@/lib/cn";
 
 // The site header, the same on every page (the organization's landing, a project's landing, its
 // docs, its gallery): the wordmark (→ /), the Projects menu (every project of projects.json), then,
-// under /<slug>/**, the project's own context: its title (→ its landing), Docs and Examples. On
+// under /<slug>/**, the project's own context: its title (→ its landing), Docs, Examples and,
+// when the project declares one (v1.6), Create (its full-page tool, /<slug>/create/). On
 // the right: search, the site theme, GitHub (the project's repository, the organization's on /).
 //
 // The Projects menu is Fragiola UI's navigation-menu (components/ui/, copied from ui's registry
@@ -37,6 +38,8 @@ export interface HeaderContext {
     title: string;
     docsUrl: string;
     examplesUrl?: string;
+    /** v1.6: the project's Create page, when it declares one */
+    createUrl?: string;
 }
 
 export interface SiteHeaderProps {
@@ -45,7 +48,7 @@ export interface SiteHeaderProps {
     repoUrl: string;
 }
 
-type Section = "landing" | "docs" | "examples" | undefined;
+type Section = "landing" | "docs" | "examples" | "create" | undefined;
 
 function sectionOf(pathname: string, current?: HeaderContext): Section {
     if (!current) return undefined;
@@ -54,6 +57,7 @@ function sectionOf(pathname: string, current?: HeaderContext): Section {
     if (path === base) return "landing";
     if (path.startsWith(`${base}docs/`)) return "docs";
     if (path.startsWith(`${base}examples/`)) return "examples";
+    if (path.startsWith(`${base}create/`)) return "create";
     return undefined;
 }
 
@@ -176,6 +180,19 @@ function DesktopNav({
                                 </NavigationMenu.Link>
                             </NavigationMenu.Item>
                         ) : null}
+                        {current.createUrl ? (
+                            <NavigationMenu.Item>
+                                <NavigationMenu.Link
+                                    active={section === "create"}
+                                    render={
+                                        <NextLink href={current.createUrl} />
+                                    }
+                                    className={item}
+                                >
+                                    Create
+                                </NavigationMenu.Link>
+                            </NavigationMenu.Item>
+                        ) : null}
                     </>
                 ) : null}
             </NavigationMenu.List>
@@ -261,6 +278,22 @@ function MobileNav({
                                     onClick={onNavigate}
                                 >
                                     Examples
+                                </NextLink>
+                            </li>
+                        ) : null}
+                        {current.createUrl ? (
+                            <li>
+                                <NextLink
+                                    href={current.createUrl}
+                                    aria-current={
+                                        section === "create"
+                                            ? "page"
+                                            : undefined
+                                    }
+                                    className={link(section === "create")}
+                                    onClick={onNavigate}
+                                >
+                                    Create
                                 </NextLink>
                             </li>
                         ) : null}
