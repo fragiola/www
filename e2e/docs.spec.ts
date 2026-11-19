@@ -273,3 +273,73 @@ test("the sidebar's label and its collapse toggle share a row, the toggle at its
     await toggle.click();
     await expect(sidebar).toHaveAttribute("data-collapsed", "true");
 });
+
+// A docs page's look (components/docs-page-header.tsx, .docs-* in app/globals.css): the section
+// as an eyebrow with its icon, the entrance that never hides anything, tables that scroll inside
+// their frame on a phone.
+
+test("the page header: the section as an eyebrow, with its icon when the section names one", async ({
+    page,
+}) => {
+    await page.goto("ui/docs/getting-started/installation/");
+    const eyebrow = page.locator("#nd-page [data-docs-eyebrow]");
+    await expect(eyebrow).toHaveText("Getting Started");
+    await expect(eyebrow.locator("svg.lucide-rocket")).toHaveCount(1);
+    // no breadcrumb besides it
+    await expect(page.locator("#nd-page")).not.toContainText(
+        "Getting StartedGetting Started",
+    );
+
+    await page.goto("dockable/docs/getting-started/installation/");
+    await expect(page.locator("#nd-page [data-docs-eyebrow]")).toHaveText(
+        "Getting started",
+    );
+    await expect(page.locator("#nd-page [data-docs-eyebrow] svg")).toHaveCount(
+        0,
+    );
+});
+
+test.describe("with reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+    test("the page does not animate in", async ({ page }) => {
+        await page.goto("dockable/docs/getting-started/installation/");
+        for (const selector of ["[data-docs-header]", ".docs-body"]) {
+            const animation = await page
+                .locator(selector)
+                .evaluate((node) => getComputedStyle(node).animationName);
+            expect(animation).toBe("none");
+        }
+    });
+});
+
+test("after the entrance, nothing of the page is left transformed or hidden", async ({
+    page,
+}) => {
+    await page.goto("dockable/docs/getting-started/installation/");
+    const body = page.locator(".docs-body");
+    await expect
+        .poll(() =>
+            body.evaluate((node) => {
+                const style = getComputedStyle(node);
+                return `${style.opacity} ${style.transform}`;
+            }),
+        )
+        .toBe("1 none");
+});
+
+test("small screens: a wide table scrolls inside its frame, the page does not", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("dockable/docs/getting-started/installation/");
+    const table = page.locator(".docs-body table").first();
+    const { scroll, client } = await table.evaluate((node) => ({
+        scroll: node.scrollWidth,
+        client: node.clientWidth,
+    }));
+    expect(scroll).toBeGreaterThanOrEqual(client);
+    const pageOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(pageOverflow).toBeLessThanOrEqual(0);
+});
