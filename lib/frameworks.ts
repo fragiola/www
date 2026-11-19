@@ -4,6 +4,8 @@ const NAMES: Record<string, string> = {
     angular: "Angular",
     svelte: "Svelte",
     solid: "Solid",
+    preact: "Preact",
+    vanilla: "Vanilla JS",
 };
 
 /** A framework's display name: "react" → "React". */

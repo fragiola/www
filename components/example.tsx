@@ -42,6 +42,14 @@ export function Example({
                 }),
             )}
             variant={variant}
+            {...(variant === "showcase"
+                ? {
+                      adapters: {
+                          list: project.adapters,
+                          frameworks: project.frameworks,
+                      },
+                  }
+                : {})}
             {...(label ? { label } : {})}
             {...(framework ? { framework } : {})}
             {...(theme ? { theme } : {})}

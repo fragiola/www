@@ -106,14 +106,14 @@ Do not "fix" these.
 | `pnpm serve [port]` | serve `out/` the way GitHub Pages does (:4400) |
 | `pnpm check` / `pnpm check:fix` | Biome |
 | `pnpm typecheck` | TypeScript 7, no emit (needs `.sources/`, or `FRAGIOLA_SOURCES=.sources-fixtures`) |
-| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`), the agent index against fragiola/cli's contract (`tests/agents.test.ts`) |
+| `pnpm test` | Vitest: the contract checks on the fixtures and on broken copies, links, the build failing, the site's own code painting with palette roles only (`tests/palette.test.ts`; the frameworks' marks keep their brands' colours), the brand's colours being the theme's tokens and the icon files (`tests/brand.test.ts`, after `prepare:site`), the agent index against fragiola/cli's contract (`tests/agents.test.ts`) |
 | `pnpm e2e:build` then `pnpm e2e` / `pnpm e2e:serve` | Playwright (Chromium) against `out/` built from the fixtures (`build --fixtures`): the whole suite served like Pages / the `@serve` tests (whose result depends on how a static server maps URLs, query strings, redirects and files) served by `serve` (clean URLs) |
 | `pnpm measure <origin> <path>… [--no-prefetch] [--click <sel>]` | page weight, raw and gzip, by category |
 
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.4)
+CONTRACT.md                 the site export contract (v1.5)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts
@@ -146,21 +146,24 @@ components/gallery/         the gallery: chrome (layout, the list on ui's Sideba
 components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one
 components/example-frame.tsx  the iframe side of §5
 components/example-promotion.ts  overlay promotion's geometry and the page's held scroll (§5.4)
-components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase
-components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4)
+components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase (with the adapters row above it)
+components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4), the adapters
+                            row (project.json's adapters, v1.5: a mark each, a link to the docs in a framework)
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
+components/framework-logo.tsx  the frameworks' marks (Simple Icons, CC0) in their brands' colours: the one file
+                            tests/palette.test.ts exempts
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
 components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/contract/icons.ts
 components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
                             current page as a filled pill, folding sections behind a guide line
 components/docs-page-header.tsx  a docs page's header: the section as an eyebrow, the title, the lead, the glow
-components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.4)
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.5)
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
 public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.4 export per project (fixtures/README.md)
+fixtures/<slug>/            a minimal v1.5 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```

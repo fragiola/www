@@ -5,6 +5,7 @@
     "description": "A headless grid layout for React: draggable, resizable dashboards with collisions and compaction, keyboard and RTL ready.",
     "frameworks": ["react"],
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],
     "repository": "https://github.com/fragiola/grid-layout",
     "keywords": ["grid layout", "headless ui", "dashboard"]
 }

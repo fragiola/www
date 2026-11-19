@@ -1,4 +1,4 @@
-# Site export contract, v1.4
+# Site export contract, v1.5
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -60,6 +60,7 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
     "description": "One sentence, 50–160 characters.",
     "frameworks": ["react"],          // every framework with an embed app
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],   // v1.5, optional: the landing's adapters row
     "registry": { "namespace": "@fragiola" },  // only when r/ is present
     "repository": "https://github.com/fragiola/dockable",  // v1.1: header and footer links
     "keywords": ["dockable layout", "docking panels"]    // v1.2, optional: structured data only
@@ -72,6 +73,13 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
   the project. `www` uses them only in the project's structured data
   (`SoftwareSourceCode.keywords`): they are never rendered as `<meta name="keywords">` and never
   shown.
+- `adapters` (v1.5, optional): every framework the project ships a package for, in the order the
+  landing lists them: 1–12 unique ids of lowercase letters, digits and dashes, `vanilla` for the
+  framework-free core (`@fragiola/<x>` used on its own) and the framework's name otherwise
+  (`react`, `vue`, `angular`, `svelte`, `preact`, …). Every entry of `frameworks` is one; an
+  adapter without an embed app (no docs in it yet) may be listed too. `www` shows them as a row
+  of logos above the landing's showcase example (§3.4), each framework of `frameworks` linking to
+  the docs in it. Absent, the adapters are the `frameworks`.
 
 ## 3. Pages
 
@@ -404,6 +412,8 @@ no skipped heading level, exactly one `<Hero>` on the landing and alt text on ev
 
 v1.4 adds: a sidebar `icon` is one of the names of §3.1.
 
+v1.5 adds: `project.json` `adapters`, when present, is 1–12 unique ids and holds every framework.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -412,6 +422,14 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.5
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.4 export
+stays valid.
+
+- `project.json` may list `adapters`, the frameworks the project ships a package for (§2); the
+  landing shows them above its showcase example.
 
 ## Changes in v1.4
 

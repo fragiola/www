@@ -5,6 +5,7 @@
     "description": "A headless data grid for millions of cells: virtualized on both axes, keyboard-ready, as a table or as divs.",
     "frameworks": ["react"],
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],
     "repository": "https://github.com/fragiola/data-grid",
     "keywords": ["data grid", "headless ui", "virtualization"]
 }
