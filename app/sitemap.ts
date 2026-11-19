@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
-import { docsHref, exampleHref } from "@/lib/contract/links";
+import { createHref, docsHref, exampleHref } from "@/lib/contract/links";
 import { getGallery, getProjects, getSpaces, pagePaths } from "@/lib/projects";
 import { absoluteUrl } from "@/lib/seo";
 
 // /sitemap.xml, written at build time: every indexable page and nothing else — `/`, each
-// project's landing, every docs page and every example, then the docs spaces' pages (the AI
-// agents docs, /ai/docs/**). Not the redirect pages (/<slug>/docs/, /<slug>/examples/, /ai/,
-// /mcp/, /skills/), the search index, the registry or the embeds. No lastmod:
-// the site does not know when a page's content changed, and a wrong date is worse than none.
+// project's landing, every docs page, every example and its Create page (v1.6, when it declares
+// one), then the docs spaces' pages (the AI agents docs, /ai/docs/**). Not the redirect pages
+// (/<slug>/docs/, /<slug>/examples/, /ai/, /mcp/, /skills/), the search index, the registry or
+// the embeds (the Create page's app among them). No lastmod: the site does not know when a
+// page's content changed, and a wrong date is worse than none.
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -21,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
             ...getGallery(project).examples.map((example) =>
                 exampleHref(project.slug, example.id),
             ),
+            ...(project.create ? [createHref(project.slug)] : []),
         ]),
         ...getSpaces().flatMap((space) =>
             pagePaths(space)

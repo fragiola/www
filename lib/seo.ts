@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { docsHref, exampleHref } from "@/lib/contract/links";
-import { LIMITS, plainText } from "@/lib/contract/types";
+import { createHref, docsHref, exampleHref } from "@/lib/contract/links";
+import { type CreatePage, LIMITS, plainText } from "@/lib/contract/types";
 import { ORGANIZATION_URL } from "@/lib/layout.shared";
 import type { Project } from "@/lib/projects";
 
@@ -108,6 +108,10 @@ export const docsTitle = (page: string, project: Project) =>
 
 export const exampleTitle = (example: string, project: Project) =>
     withProject(example, `${project.title} examples`);
+
+/** The Create page's title (v1.6, §5.5): its `create.title`, as a docs page's. */
+export const createTitle = (create: CreatePage, project: Project) =>
+    withProject(create.title, project.title);
 
 /**
  * A page's metadata: its title as is, its description, its canonical URL, and the Open Graph and
@@ -314,6 +318,18 @@ export function docsJsonLd(
                             index),
             ),
         ),
+        organization(),
+    ];
+}
+
+/** The Create page (v1.6): where it sits, under the project's landing. */
+export function createJsonLd(project: Project, create: CreatePage): Thing[] {
+    return [
+        breadcrumbs([
+            home,
+            landingCrumb(project),
+            { name: create.title, path: createHref(project.slug) },
+        ]),
         organization(),
     ];
 }
