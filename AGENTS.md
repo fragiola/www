@@ -66,12 +66,13 @@ Do not "fix" these.
 9. **One navigation: the header on the landings and the gallery, the sidebar in the docs.**
    `components/site-header.tsx` is the header of the organization's landing, a project's landing
    and its gallery: the wordmark, the Projects menu (every project of `projects.json`), then under
-   `/<slug>/**` the project's title, Docs and Examples; search, the theme and GitHub on the right.
+   `/<slug>/**` the project's title, Docs and Examples (and Create, when `project.json` declares a
+   Create page, v1.6); search, the theme and GitHub on the right.
    The docs have **no header**, as on fumadocs.dev: the same navigation is their sidebar's
    (`components/docs-chrome.tsx`), the same for every project — the wordmark and the collapse
    toggle, the AI agents links (a "Built for AI agents" subtitle and two sidebar rows into the AI
    agents docs, `/ai/docs/skills/` and `/ai/docs/mcp/`; fixed: they never scroll), the
-   project switcher (Fragiola UI's dropdown-menu, copied), search, Docs | Examples,
+   project switcher (Fragiola UI's dropdown-menu, copied), search, Docs | Examples (| Create),
    the framework select; the project's GitHub and Fragiola's in its footer; the theme in the
    panel's top-right corner; below `md` Fumadocs' bar (wordmark, search, theme, the drawer). The
    controls both share (wordmark, search, theme, GitHub mark) are `components/site-controls.tsx`.
@@ -130,7 +131,7 @@ lib/package-managers.ts     the install command per package manager (pnpm, npm, 
 lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
-app/                        / (organization), /ai/docs (the AI agents docs, content/ai/; /ai/, /mcp/ and /skills/ redirect into them), /[project] (landing), /[project]/docs, /[project]/examples, /api/search
+app/                        / (organization), /ai/docs (the AI agents docs, content/ai/; /ai/, /mcp/ and /skills/ redirect into them), /[project] (landing), /[project]/docs, /[project]/examples, /[project]/create (v1.6, only for a project declaring it), /api/search
                             + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
                               og.png/ and [project]/og.png/ (the share images, next/og at build),
                               icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)
@@ -145,6 +146,8 @@ components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's re
 components/gallery/         the gallery: chrome (layout, the list on ui's Sidebar), example view (page)
 components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one
 components/example-frame.tsx  the iframe side of §5
+components/create-frame.tsx  the Create page's frame (§5.5): the whole viewport, ready → host → theme, no
+                            resize, no promotion; nothing of the site drawn over it, nothing scrolls the page
 components/example-promotion.ts  overlay promotion's geometry and the page's held scroll (§5.4)
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase (with the adapters row above it)
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4), the adapters
