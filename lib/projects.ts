@@ -76,6 +76,17 @@ export function firstPageUrl(project: Project): string {
     return `/${project.slug}/`;
 }
 
+/** The sidebar section a page is listed in (§3.1: exactly once), for the page's header. */
+export function pageSection(
+    project: Project,
+    path: string,
+): { label: string; icon?: string } | undefined {
+    const section = project.docs.sections.find((s) =>
+        s.pages.some((entry) => "path" in entry && entry.path === path),
+    );
+    return section && { label: section.label, icon: section.icon };
+}
+
 /** A page's frontmatter description: the page footer's next/previous links show it. */
 function pageDescription(slug: string, path: string): string | undefined {
     const file = join(SOURCES, slug, "docs", `${path}.mdx`);

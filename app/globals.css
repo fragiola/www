@@ -289,6 +289,204 @@
     content: counter(landing-feature, decimal-leading-zero);
 }
 
+/* ─── Docs pages (app/[project]/docs, components/docs-page-header.tsx) ─────
+   The look of every project's docs page, whatever its content (§3.5: the
+   project writes it, www draws it). Everything is scoped to .site-docs and
+   painted with palette roles (through Fumadocs' --color-fd-* over them). */
+
+/* The header's glow: the accent role, fading out from behind the title. A
+   mask (alpha), so it follows every palette and both schemes. A light
+   palette's accent is dark: there the glow is a hint, or it reads as a
+   smudge. */
+.docs-header-glow {
+    --docs-glow: 6%;
+    position: absolute;
+    z-index: -1;
+    inset-inline: -2rem;
+    top: -5rem;
+    height: 18rem;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse 55% 60% at 20% 30%,
+        color-mix(
+            in oklch,
+            var(--palette-accent) var(--docs-glow),
+            transparent
+        ),
+        transparent 70%
+    );
+    mask-image: linear-gradient(to bottom, black 40%, transparent);
+}
+.dark .docs-header-glow {
+    --docs-glow: 16%;
+}
+[dir="rtl"] .docs-header-glow {
+    background: radial-gradient(
+        ellipse 55% 60% at 80% 30%,
+        color-mix(
+            in oklch,
+            var(--palette-accent) var(--docs-glow),
+            transparent
+        ),
+        transparent 70%
+    );
+}
+
+/* Prose: links underlined in the accent role, inline code as a chip,
+   headings a touch tighter. */
+.site-docs .docs-body {
+    --docs-link: color-mix(in oklch, var(--palette-accent) 45%, transparent);
+}
+.site-docs .docs-body :where(a:not([class])) {
+    text-decoration-color: var(--docs-link);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 150ms;
+}
+.site-docs .docs-body :where(a:not([class])):hover {
+    text-decoration-color: var(--palette-accent);
+}
+.site-docs .docs-body :where(h2, h3) {
+    letter-spacing: -0.015em;
+}
+.site-docs .docs-body :where(h2) {
+    padding-top: 0.5rem;
+}
+.site-docs .docs-body :where(:not(pre) > code) {
+    border: 1px solid var(--palette-line);
+    background: color-mix(in oklch, var(--palette-soft) 70%, transparent);
+    border-radius: 0.375rem;
+    padding: 0.1em 0.35em;
+    font-size: 0.875em;
+}
+
+/* Tables: a rounded frame, a tinted header row, lines between rows; a wide
+   table scrolls inside its frame instead of widening the page. */
+.site-docs .docs-body :where(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--palette-line);
+    border-radius: 0.75rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.site-docs .docs-body :where(thead th) {
+    background: color-mix(in oklch, var(--palette-soft) 70%, transparent);
+}
+.site-docs .docs-body :where(th, td) {
+    border: 0;
+    border-bottom: 1px solid var(--palette-line);
+}
+.site-docs .docs-body :where(tbody tr:last-child td) {
+    border-bottom: 0;
+}
+
+/* Callouts: a surface tinted by the callout's own colour (Fumadocs sets
+   --callout-color by type), instead of a flat card with a shadow. */
+.docs-callout {
+    border-color: color-mix(in oklch, var(--callout-color) 35%, transparent);
+    background-color: color-mix(
+        in oklch,
+        var(--callout-color) 11%,
+        transparent
+    );
+    box-shadow: none;
+}
+
+/* Link cards lift on hover; their arrow slides in. */
+.docs-card[href] {
+    transition:
+        transform 200ms,
+        border-color 200ms,
+        background-color 150ms,
+        box-shadow 200ms;
+}
+.docs-card[href]:hover {
+    border-color: color-mix(in oklch, var(--palette-accent) 40%, transparent);
+    box-shadow: 0 10px 30px -12px
+        color-mix(in oklch, var(--palette-contrast) 25%, transparent);
+}
+.docs-card-arrow {
+    opacity: 0;
+    transition:
+        opacity 200ms,
+        translate 200ms;
+    translate: -0.25rem 0;
+}
+.docs-card[href]:hover .docs-card-arrow,
+.docs-card[href]:focus-visible .docs-card-arrow {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* Steps: the number in the accent role, ringed by the page's background so
+   the rail seems to pass behind it. */
+.site-docs .fd-step::before {
+    background-color: color-mix(
+        in oklch,
+        var(--palette-accent) 14%,
+        var(--palette-base)
+    );
+    color: var(--palette-accent);
+    font-weight: 600;
+    box-shadow: 0 0 0 4px var(--palette-base);
+}
+
+/* Code blocks: a softer frame, the title bar tinted. */
+.site-docs .docs-body figure.shiki {
+    border-color: var(--palette-line);
+}
+.site-docs .docs-body figure.shiki > div:first-child:has(figcaption) {
+    background: color-mix(in oklch, var(--palette-soft) 60%, transparent);
+}
+
+/* Previous and next: cards like the link cards, the label in the accent
+   role on hover. */
+.docs-page-footer > a {
+    border-radius: 0.75rem;
+    transition:
+        transform 200ms,
+        border-color 200ms,
+        background-color 150ms;
+}
+.docs-page-footer > a:hover {
+    border-color: color-mix(in oklch, var(--palette-accent) 40%, transparent);
+}
+.docs-page-footer > a:hover > :first-child {
+    color: var(--palette-accent);
+}
+
+/* The page comes in: its header slides up, then its body fades in. The body
+   never moves: its examples measure their frame (§5, the promotion's rect,
+   §5.4), so nothing under it is transformed, even for a moment. Additive like
+   the landing's reveal: visible by default, animated only when motion is
+   welcome, and filled backwards only, so nothing is left once it has run. */
+@media (prefers-reduced-motion: no-preference) {
+    .site-docs .docs-header {
+        animation: docs-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    }
+    .site-docs .docs-body {
+        animation: docs-fade 420ms ease-out 80ms backwards;
+    }
+    .docs-card[href]:hover,
+    .docs-page-footer > a:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes docs-enter {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+}
+
+@keyframes docs-fade {
+    from {
+        opacity: 0;
+    }
+}
+
 @source "../node_modules/fumadocs-ui/dist/**/*.js";
 @source "../components/**/*.{ts,tsx}";
 @source "../app/**/*.{ts,tsx}";

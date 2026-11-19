@@ -3,6 +3,7 @@ import { Cards, Card as FumadocsCard } from "fumadocs-ui/components/card";
 import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import defaultMdxComponents from "fumadocs-ui/mdx";
+import { ArrowRight } from "lucide-react";
 import type { MDXComponents } from "mdx/types";
 import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { Example } from "@/components/example";
@@ -12,6 +13,7 @@ import { Feature, Features } from "@/components/landing/features";
 import { Hero, type HeroAction } from "@/components/landing/hero";
 import { Pills } from "@/components/landing/pills";
 import { Section } from "@/components/landing/section";
+import { cn } from "@/lib/cn";
 import { isAppRoute, siteHref } from "@/lib/contract/links";
 import { LABEL_TOKEN } from "@/lib/contract/types";
 import { getGallery, getProject, installCommand } from "@/lib/projects";
@@ -38,7 +40,12 @@ function Callout({
     children?: ReactNode;
 }) {
     return (
-        <FumadocsCallout type={CALLOUT_TYPES[type]} title={title}>
+        // tinted by its type's colour (.docs-callout, app/globals.css), its icon Fumadocs' own
+        <FumadocsCallout
+            type={CALLOUT_TYPES[type]}
+            title={title}
+            className="docs-callout"
+        >
             {children}
         </FumadocsCallout>
     );
@@ -75,8 +82,29 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
         Steps,
         Step,
         Cards,
-        Card: ({ href: to, ...props }: ComponentProps<typeof FumadocsCard>) => (
-            <FumadocsCard {...props} href={href(to)} />
+        // a link card lifts on hover and shows where it goes (.docs-card, app/globals.css)
+        Card: ({
+            href: to,
+            title,
+            className,
+            ...props
+        }: ComponentProps<typeof FumadocsCard>) => (
+            <FumadocsCard
+                {...props}
+                href={href(to)}
+                className={cn("docs-card group", className)}
+                title={
+                    <span className="inline-flex items-center gap-1.5">
+                        {title}
+                        {to ? (
+                            <ArrowRight
+                                aria-hidden
+                                className="docs-card-arrow size-3.5 shrink-0 text-fd-primary rtl:-scale-x-100"
+                            />
+                        ) : null}
+                    </span>
+                }
+            />
         ),
         Framework,
         Hero: ({ actions, ...props }: ComponentProps<typeof Hero>) => (
