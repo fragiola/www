@@ -12,6 +12,7 @@ import { useState } from "react";
 import { ExampleFrame } from "@/components/example-frame";
 import { defaultTheme, useSiteScheme } from "@/components/example-theme";
 import { useFramework } from "@/components/framework";
+import { AdapterRow } from "@/components/landing/adapters";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
 import { frameworkName } from "@/lib/frameworks";
@@ -30,7 +31,8 @@ const CodePanel = dynamic(
 //   card              a link card to the gallery
 //   showcase          (v1.1) the embed at full content width under the project's theme
 //                     switcher (swatches, as in the gallery), after an optional label, with
-//                     "See the code →" to the gallery entry in the chosen theme, code open
+//                     "See the code →" to the gallery entry in the chosen theme, code open,
+//                     and the project's adapters row above it (v1.5)
 //
 // The framework is the site's choice unless the page pins one; an example the chosen framework
 // does not have says so. The theme is the page's `theme`, else the site scheme's default, and
@@ -51,6 +53,8 @@ export interface ExampleBlockProps {
     variant: "inline" | "bleed" | "card" | "showcase";
     /** showcase: the words before the theme switcher */
     label?: string;
+    /** showcase: the project's adapters (v1.5), drawn above it, and the frameworks with docs */
+    adapters?: { list: string[]; frameworks: string[] };
 }
 
 const toolButton =
@@ -66,6 +70,7 @@ export function ExampleBlock({
     height,
     variant: kind,
     label,
+    adapters,
 }: ExampleBlockProps) {
     const chosen = useFramework();
     const framework = pinned ?? chosen;
@@ -150,6 +155,15 @@ export function ExampleBlock({
                 data-variant="showcase"
                 className="not-prose my-10 flex flex-col gap-3"
             >
+                {adapters ? (
+                    <div className="mb-3">
+                        <AdapterRow
+                            slug={slug}
+                            adapters={adapters.list}
+                            frameworks={adapters.frameworks}
+                        />
+                    </div>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-1">
                     {label ? (
                         <span className="pe-2 text-palette-accent/85 text-sm">

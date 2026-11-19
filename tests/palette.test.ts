@@ -10,12 +10,14 @@ import { expect, test } from "vitest";
 
 const ROOT = join(import.meta.dirname, "..");
 const COPIED = ["components/ui", "components/atoms", "components/families"];
+// the frameworks' marks keep their brands' colours (the landing's adapters row)
+const BRAND_MARKS = ["components/framework-logo.tsx"];
 
 function files(dir: string): string[] {
     return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap(
         (entry) => {
             const path = `${dir}/${entry.name}`;
-            if (COPIED.includes(path)) return [];
+            if (COPIED.includes(path) || BRAND_MARKS.includes(path)) return [];
             if (entry.isDirectory()) return files(path);
             return /\.(tsx?|css)$/.test(entry.name) ? [path] : [];
         },

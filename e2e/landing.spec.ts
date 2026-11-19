@@ -219,6 +219,64 @@ test("the showcase: a live demo, the theme switcher over it, kept whatever the s
     );
 });
 
+test("the adapters row above the showcase: marks in order, links to the docs in a framework", async ({
+    page,
+}) => {
+    const errors = collectErrors(page);
+    await page.goto("dockable/");
+    // project.json's adapters (v1.5), in its order; dockable's docs cover React and Vue only
+    const row = page.getByRole("list", { name: "Available for" });
+    await expect(row.getByRole("listitem")).toHaveText([
+        "Vanilla JS",
+        "React",
+        "Vue",
+        "Angular",
+    ]);
+    for (const name of ["vanilla", "react", "vue", "angular"]) {
+        await expect(row.locator(`[data-logo="${name}"]`)).toHaveCount(1);
+    }
+    await expect(row.getByRole("link")).toHaveText(["React", "Vue"]);
+    await expect(
+        row.locator('[data-adapter="vanilla"]').getByRole("link"),
+    ).toHaveCount(0);
+    // above the demo, compact, in the showcase's column
+    const rowBox = await row.boundingBox();
+    const frame = await page
+        .locator("[data-variant=showcase] .palette-surface")
+        .boundingBox();
+    expect(rowBox && frame && rowBox.y + rowBox.height < frame.y).toBe(true);
+    expect(rowBox?.height).toBeLessThanOrEqual(40);
+    // a framework opens the docs in it
+    await row.getByRole("link", { name: "Vue docs" }).click();
+    await expect(page).toHaveURL(/\/dockable\/docs\//);
+    await expect(page.getByTestId("framework-select").first()).toHaveValue(
+        "vue",
+    );
+    expect(
+        await page.evaluate(() => localStorage.getItem("@fragiola:framework")),
+    ).toBe("vue");
+    expect(errors).toEqual([]);
+});
+
+test("the adapters row wraps on a phone, no horizontal scroll", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("dockable/");
+    await expect(page.getByTestId("adapters")).toBeVisible();
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    ).toBe(true);
+});
+
+test("no adapters row on a landing without a showcase", async ({ page }) => {
+    await page.goto("ui/");
+    await expect(page.getByTestId("hero")).toBeVisible();
+    await expect(page.getByTestId("adapters")).toHaveCount(0);
+});
+
 test("the project's footer, on the landing and on every docs page", async ({
     page,
 }) => {
