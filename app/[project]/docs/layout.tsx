@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { ProjectDocsLayout } from "@/components/project-docs-layout";
-import { ProjectFooter } from "@/components/project-footer";
-import { ORGANIZATION_URL, siteHeader } from "@/lib/layout.shared";
-import { getPageTree, getProject } from "@/lib/projects";
+import { DocsSpaceLayout } from "@/components/docs-space-layout";
+import { getProject } from "@/lib/projects";
 
 export default async function Layout({
     params,
@@ -14,43 +12,5 @@ export default async function Layout({
 }) {
     const project = getProject((await params).project);
     if (!project) notFound();
-    const trees = Object.fromEntries(
-        project.frameworks.map((fw) => [fw, getPageTree(project, fw)]),
-    );
-    // no site header in the docs (rule 9): what it shows is the sidebar's (components/docs-chrome)
-    const { projects, current, repoUrl } = siteHeader(project.slug);
-    if (!current) notFound();
-    return (
-        <div className="site-docs">
-            <ProjectDocsLayout
-                chrome={{
-                    projects,
-                    current,
-                    repoUrl,
-                    organizationUrl: ORGANIZATION_URL,
-                }}
-                project={{
-                    slug: project.slug,
-                    frameworks: project.frameworks,
-                    defaultFramework: project.defaultFramework,
-                }}
-                trees={trees}
-            >
-                {/* the inset panel the page sits on (.docs-inset-panel, app/globals.css): an empty
-                    grid item behind the main column, the table of contents and the footer, first
-                    in the grid so the page paints over it */}
-                <div aria-hidden className="docs-inset-panel" />
-                {children}
-                {/* under the page and its table of contents: a fourth row of Fumadocs' docs grid,
-                    whose three named rows the sidebar, the header and the page take. Its width
-                    must not size the grid: without `contain: inline-size` its min-content width
-                    lands in the last (min-content) column and squeezes the page on small
-                    screens. */}
-                <ProjectFooter
-                    project={project}
-                    className="[contain:inline-size] [grid-column:3/-1] [grid-row:4]"
-                />
-            </ProjectDocsLayout>
-        </div>
-    );
+    return <DocsSpaceLayout project={project}>{children}</DocsSpaceLayout>;
 }

@@ -2,7 +2,7 @@ import type { SiteHeaderProps } from "@/components/site-header";
 import {
     firstExampleUrl,
     firstPageUrl,
-    getProject,
+    getDocsSpace,
     getProjects,
 } from "@/lib/projects";
 
@@ -21,10 +21,11 @@ export function siteHeader(slug?: string): SiteHeaderProps {
         description: project.description,
         docsUrl: firstPageUrl(project),
     }));
-    const project = slug ? getProject(slug) : undefined;
+    // a project, or a docs space (the AI agents docs): a space has no gallery
+    const project = slug ? getDocsSpace(slug) : undefined;
     if (!project) return { projects, repoUrl: ORGANIZATION_URL };
     // the gallery's first example, not /<slug>/examples/: that is only a redirect to it
-    const examplesUrl = firstExampleUrl(project);
+    const examplesUrl = project.space ? undefined : firstExampleUrl(project);
     return {
         projects,
         current: {
