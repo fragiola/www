@@ -1,11 +1,16 @@
 "use client";
 
-import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { Menu, Moon, Search, Sun, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+    GitHubIcon,
+    iconButton,
+    SearchButton,
+    ThemeToggle,
+    Wordmark,
+} from "@/components/site-controls";
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/cn";
 
@@ -23,6 +28,8 @@ export interface HeaderProject {
     slug: string;
     title: string;
     description: string;
+    /** its first docs page: where the docs' project switcher goes */
+    docsUrl: string;
 }
 
 export interface HeaderContext {
@@ -52,109 +59,6 @@ function sectionOf(pathname: string, current?: HeaderContext): Section {
 
 const item =
     "inline-flex h-8 items-center rounded-md px-3 font-medium text-palette-accent/85 text-sm transition-colors hover:bg-palette-soft hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-palette-ring aria-[current=page]:text-palette-contrast";
-
-const iconButton =
-    "inline-flex size-8 items-center justify-center rounded-md text-palette-accent/85 transition-colors hover:bg-palette-soft hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-palette-ring [&_svg]:size-4";
-
-function GitHubIcon({ className }: { className?: string }) {
-    return (
-        <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className={className}
-        >
-            <path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2 0 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8 0 3.2.9.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1 .9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3" />
-        </svg>
-    );
-}
-
-function Wordmark() {
-    return (
-        <NextLink
-            href="/"
-            className="rounded-md font-semibold text-base text-palette-contrast tracking-tight focus-visible:outline-2 focus-visible:outline-palette-ring"
-        >
-            Fragiola
-        </NextLink>
-    );
-}
-
-function SearchButton() {
-    const { enabled, open, hotKey, setOpenSearch } = useSearchContext();
-    // the dialog gives focus back to nothing when it closes: back to the button that opened it
-    const opener = useRef<HTMLButtonElement | null>(null);
-    useEffect(() => {
-        if (open || !opener.current) return;
-        opener.current.focus();
-        opener.current = null;
-    }, [open]);
-    if (!enabled) return null;
-    const openFrom = (event: { currentTarget: HTMLButtonElement }) => {
-        opener.current = event.currentTarget;
-        setOpenSearch(true);
-    };
-    return (
-        <>
-            <button
-                type="button"
-                data-search-full=""
-                onClick={openFrom}
-                className="hidden h-8 w-52 items-center gap-2 rounded-md border border-palette-line bg-palette-soft/50 ps-2.5 pe-1.5 text-palette-accent/85 text-sm transition-colors hover:bg-palette-soft hover:text-palette-contrast focus-visible:outline-2 focus-visible:outline-palette-ring lg:inline-flex"
-            >
-                <Search aria-hidden className="size-4" />
-                Search
-                <span className="ms-auto inline-flex gap-0.5">
-                    {hotKey.map((key, index) => (
-                        <kbd
-                            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of keys
-                            key={index}
-                            className="rounded-sm border border-palette-line bg-palette-base px-1.5 font-sans text-xs"
-                        >
-                            {key.display}
-                        </kbd>
-                    ))}
-                </span>
-            </button>
-            <button
-                type="button"
-                data-search=""
-                aria-label="Open search"
-                onClick={openFrom}
-                className={cn(iconButton, "lg:hidden")}
-            >
-                <Search aria-hidden />
-            </button>
-        </>
-    );
-}
-
-function ThemeToggle() {
-    const { resolvedTheme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-    const dark = mounted && resolvedTheme === "dark";
-    return (
-        <button
-            type="button"
-            data-theme-toggle=""
-            aria-label="Toggle theme"
-            onClick={() => setTheme(dark ? "light" : "dark")}
-            className={iconButton}
-        >
-            {/* the theme is known once mounted: no icon flips from the server's guess */}
-            {mounted ? (
-                dark ? (
-                    <Moon aria-hidden />
-                ) : (
-                    <Sun aria-hidden />
-                )
-            ) : (
-                <span aria-hidden className="size-4" />
-            )}
-        </button>
-    );
-}
 
 function ProjectCard({
     project,
