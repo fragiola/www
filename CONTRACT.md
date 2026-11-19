@@ -1,4 +1,4 @@
-# Site export contract, v1.3
+# Site export contract, v1.4
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -89,8 +89,9 @@ Pages are `.mdx` under `docs/`. A page's path is its file path without the exten
             "collapsible": true,             // v1.1, optional (default false): a folder that folds
             "defaultOpen": false,            // v1.1, optional: open on load (the current page's
                                              // section always opens)
+            "icon": "book-open",             // v1.4, optional: drawn before the label
             "pages": [
-                { "label": "Tabs", "path": "guides/tabs" },
+                { "label": "Tabs", "path": "guides/tabs", "icon": "panels-top-left" },
                 { "label": "Found a problem?", "href": "https://github.com/…", "external": true }
             ]
         }
@@ -99,6 +100,17 @@ Pages are `.mdx` under `docs/`. A page's path is its file path without the exten
 ```
 
 Every `.mdx` except `index.mdx` appears in `config.json` exactly once, and every `path` exists.
+
+`icon` (v1.4, optional) gives a section or an entry (a page or an external link) an icon, drawn
+before its label in the sidebar, and a section's icon also before its name above the title of
+each of its pages. It is one of these names, from [Lucide](https://lucide.dev/icons/), and
+nothing else: an unknown name fails the build.
+
+<!-- sidebar-icons: the same list as lib/contract/icons.ts (tests/contract.test.ts) -->
+`accessibility`, `atom`, `blocks`, `book`, `book-open`, `bot`, `box`, `calendar`, `chevrons-down-up`, `code`, `columns-3`, `compass`, `component`, `download`, `file-text`, `git-branch`, `globe`, `grid-3x3`, `languages`, `layers`, `layout-dashboard`, `life-buoy`, `list-tree`, `menu`, `moon`, `mouse-pointer-click`, `move`, `navigation`, `package`, `palette`, `panels-top-left`, `plug`, `puzzle`, `rocket`, `settings`, `shield-check`, `sparkles`, `square-stack`, `table`, `terminal`, `text-cursor-input`, `wand-sparkles`, `workflow`, `zap`
+
+An icon helps a reader scan the sidebar: give one to every section, or to none, and keep page
+icons for the few pages worth finding at a glance (the first steps, the reference).
 
 ### 3.2 Frontmatter
 
@@ -390,6 +402,8 @@ v1.2 adds: the `project.json` `description` length and `keywords`; frontmatter `
 no skipped heading level, exactly one `<Hero>` on the landing and alt text on every image
 (§3.4); `noindex` in every embed HTML file (§5.1). Each fails the build like any other problem.
 
+v1.4 adds: a sidebar `icon` is one of the names of §3.1.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -398,6 +412,13 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.4
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.3 export
+stays valid.
+
+- A sidebar section or entry may name an `icon`, one of a fixed set of Lucide names (§3.1).
 
 ## Changes in v1.3
 

@@ -3,6 +3,7 @@
 import type { Root } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import type { ReactNode } from "react";
+import { docsSidebarComponents } from "@/components/docs-sidebar";
 import {
     FrameworkSelect,
     type ProjectFrameworks,
@@ -17,6 +18,11 @@ import {
 // The site header (components/site-header.tsx, above this layout) carries the project's title,
 // its links, search, the theme and GitHub, so the sidebar carries none of them: no title, no
 // links, no search field, no theme switch. Below `md` Fumadocs' bar keeps the sidebar's toggle.
+//
+// Its rows are the site's own (components/docs-sidebar.tsx, the inset style). Its first row is
+// the "Documentation" label and the collapse toggle: Fumadocs puts the toggle right after the
+// row's content, at the top of the row, so the label takes the free width and centres itself
+// on the toggle — the toggle ends the row, level with the label.
 
 const NoTitle = () => null;
 
@@ -37,7 +43,10 @@ function Layout({
             tree={tree}
             nav={{
                 children: (
-                    <span className="font-medium text-palette-accent/85 text-sm">
+                    <span
+                        data-sidebar-title=""
+                        className="me-auto self-center ps-2.5 font-medium text-fd-foreground text-sm"
+                    >
                         Documentation
                     </span>
                 ),
@@ -45,11 +54,12 @@ function Layout({
             slots={{ navTitle: NoTitle }}
             searchToggle={{ enabled: false }}
             themeSwitch={{ enabled: false }}
-            sidebar={
-                frameworks.length > 1
+            sidebar={{
+                components: docsSidebarComponents,
+                ...(frameworks.length > 1
                     ? { banner: <FrameworkSelect frameworks={frameworks} /> }
-                    : {}
-            }
+                    : {}),
+            }}
         >
             {children}
         </DocsLayout>

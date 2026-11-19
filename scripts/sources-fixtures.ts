@@ -1,6 +1,6 @@
 // `pnpm sources:fixtures`
 //
-// Fills .sources-fixtures/ from fixtures/: one minimal v1.3 export per project of projects.json
+// Fills .sources-fixtures/ from fixtures/: one minimal v1.4 export per project of projects.json
 // (fixtures/README.md). The tests build the site from them (`pnpm e2e:build`), so they run
 // without the projects' repos and against content they control. A folder of its own: the
 // projects' exports in .sources/ are never overwritten, and `pnpm build` never publishes these.
