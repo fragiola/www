@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { Root } from "fumadocs-core/page-tree";
+import { docsIcon } from "@/components/docs-icon";
 import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
 import { readFrontmatter } from "@/lib/contract/mdx";
 import type {
@@ -84,12 +85,19 @@ function pageDescription(slug: string, path: string): string | undefined {
     return typeof description === "string" ? description : undefined;
 }
 
+/** A config entry's icon (§3.1, v1.4) for a page tree node: none when it names none. */
+function iconOf(name: string | undefined) {
+    const icon = docsIcon(name);
+    return icon === undefined ? {} : { icon };
+}
+
 /**
  * The sidebar for one framework: config.json's sections in order, other frameworks' left out.
  * Each section is a folder, so the page's breadcrumb names it (§3.1): `collapsible` folds it,
  * `defaultOpen` opens it on load, and the section of the current page is always open
  * (Fumadocs opens a folder holding the active page). A section that does not fold is always
- * open.
+ * open. A section or page that names an icon (v1.4) carries it as a Lucide element: the icons
+ * are client components, so the tree still crosses to the client layout (a client reference).
  */
 export function getPageTree(project: Project, framework: string): Root {
     const $id = `${project.slug}:${framework}`;
@@ -103,6 +111,7 @@ export function getPageTree(project: Project, framework: string): Root {
                 $id: `${$id}:${index}`,
                 type: "folder" as const,
                 name: section.label,
+                ...iconOf(section.icon),
                 collapsible: section.collapsible ?? false,
                 ...(section.collapsible
                     ? { defaultOpen: section.defaultOpen ?? false }
@@ -112,6 +121,7 @@ export function getPageTree(project: Project, framework: string): Root {
                         return {
                             type: "page" as const,
                             name: entry.label,
+                            ...iconOf(entry.icon),
                             url: entry.href,
                             external: true,
                         };
@@ -123,6 +133,7 @@ export function getPageTree(project: Project, framework: string): Root {
                     return {
                         type: "page" as const,
                         name: entry.label,
+                        ...iconOf(entry.icon),
                         // without the trailing slash: Fumadocs finds the current page (the
                         // breadcrumb, the open section) by comparing it with the pathname, which
                         // it normalizes without one. Next adds it back when it navigates.

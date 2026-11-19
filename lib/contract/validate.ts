@@ -14,6 +14,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { isSidebarIcon } from "./icons.ts";
 import { parseLink } from "./links.ts";
 import { type PageScan, type PropValue, scanPage, type Tag } from "./mdx.ts";
 import {
@@ -734,6 +735,13 @@ function checkConfig(context: Context, config: JsonFile<DocsConfig>) {
                 message: `section "${section.label}": defaultOpen needs collapsible: true (a section that does not fold is always open)`,
             });
         }
+        checkIcon(
+            problems,
+            config,
+            section.icon,
+            `section "${section.label}"`,
+            sectionLine,
+        );
         if (!Array.isArray(section.pages)) {
             problems.push({
                 file,
@@ -743,6 +751,15 @@ function checkConfig(context: Context, config: JsonFile<DocsConfig>) {
             continue;
         }
         for (const entry of section.pages) {
+            checkIcon(
+                problems,
+                config,
+                entry.icon,
+                `"${entry.label}"`,
+                "path" in entry
+                    ? config.lineOf("path", entry.path)
+                    : config.lineOf("href", entry.href),
+            );
             if ("path" in entry) {
                 const line = config.lineOf("path", entry.path);
                 listed.set(entry.path, (listed.get(entry.path) ?? 0) + 1);
@@ -804,6 +821,25 @@ function checkConfig(context: Context, config: JsonFile<DocsConfig>) {
             });
         }
     }
+}
+
+/** A sidebar section's or page's `icon` (§3.1, v1.4): one of lib/contract/icons.ts, or none. */
+function checkIcon(
+    problems: Problem[],
+    config: JsonFile<DocsConfig>,
+    icon: unknown,
+    owner: string,
+    fallbackLine: number | undefined,
+) {
+    if (icon === undefined || isSidebarIcon(icon)) return;
+    problems.push({
+        file: "docs/config.json",
+        line:
+            (typeof icon === "string"
+                ? config.lineOf("icon", icon)
+                : undefined) ?? fallbackLine,
+        message: `${owner}: icon ${JSON.stringify(icon)} is not one of the sidebar icons (§3.1)`,
+    });
 }
 
 /** Why a base-free link (§3.3) does not resolve, or undefined when it does. */

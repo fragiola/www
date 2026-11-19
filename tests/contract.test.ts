@@ -9,6 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { SIDEBAR_ICONS } from "../lib/contract/icons.ts";
 import {
     type ExportRead,
     formatProblem,
@@ -643,13 +644,67 @@ describe("frontmatter and config ↔ files (§3.1, §3.2)", () => {
     });
 });
 
+describe("sidebar icons (§3.1, v1.4)", () => {
+    type Config = {
+        sections: {
+            icon?: unknown;
+            pages: { label: string; icon?: unknown; href?: string }[];
+        }[];
+    };
+
+    test("the contract lists exactly the names of lib/contract/icons.ts", () => {
+        const contract = readFileSync(
+            join(import.meta.dirname, "..", "CONTRACT.md"),
+            "utf-8",
+        );
+        const list = contract.split("<!-- sidebar-icons:")[1]?.split("\n")[1];
+        expect(
+            list?.match(/`[a-z0-9-]+`/g)?.map((n) => n.slice(1, -1)),
+        ).toEqual([...SIDEBAR_ICONS]);
+    });
+
+    test("icons on sections, pages and external links are valid", () => {
+        editJson<Config>("dockable/docs/config.json", (config) => {
+            const section = config.sections[0];
+            if (!section) throw new Error("no section");
+            section.icon = "layers";
+            section.pages.push({
+                label: "Source",
+                href: "https://github.com/fragiola/dockable",
+                external: true,
+                icon: "git-branch",
+            } as Config["sections"][number]["pages"][number]);
+        });
+        expect(problems()).toEqual([]);
+    });
+
+    test("an unknown icon, and an icon that is not a string", () => {
+        editJson<Config>("ui/docs/config.json", (config) => {
+            const [first, second] = config.sections;
+            if (!first || !second) throw new Error("no sections");
+            first.icon = "unicorn";
+            const page = second.pages[0];
+            if (page) page.icon = 3;
+        });
+        const lines = readFileSync(path("ui/docs/config.json"), "utf-8").split(
+            "\n",
+        );
+        const lineOf = (text: string) =>
+            lines.findIndex((line) => line.includes(text)) + 1;
+        expect(problems()).toEqual([
+            `ui/docs/config.json:${lineOf('"icon": "unicorn"')}: section "Getting Started": icon "unicorn" is not one of the sidebar icons (§3.1)`,
+            `ui/docs/config.json:${lineOf('"path": "atoms/clickable"')}: "Clickable": icon 3 is not one of the sidebar icons (§3.1)`,
+        ]);
+    });
+});
+
 describe("project, manifests and examples.json (§2, §4, §5)", () => {
     test("another contract version is rejected outright", () => {
         editJson<{ contract: number }>("dockable/project.json", (project) => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.3)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.4)",
         ]);
     });
 

@@ -2,21 +2,25 @@
     "sections": [
         {
             "label": "Getting Started",
+            "icon": "rocket",
             "pages": [
                 {
                     "label": "Installation",
-                    "path": "getting-started/installation"
+                    "path": "getting-started/installation",
+                    "icon": "download"
                 }
             ]
         },
         {
             "label": "Atoms",
+            "icon": "atom",
             "collapsible": true,
             "defaultOpen": true,
             "pages": [{ "label": "Clickable", "path": "atoms/clickable" }]
         },
         {
             "label": "Menus",
+            "icon": "menu",
             "collapsible": true,
             "defaultOpen": false,
             "pages": [

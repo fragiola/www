@@ -1,10 +1,10 @@
-// The site export contract, v1.3 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1, v1.2 and
-// v1.3 keep the file format: `project.json` still says `"contract": 1`.
+// The site export contract, v1.4 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.4
+// keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.3";
+export const CONTRACT_REVISION = "1.4";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -23,8 +23,8 @@ export interface ProjectInfo {
 
 /** An entry of a sidebar section: a page of the export, or an external link. */
 export type SidebarEntry =
-    | { label: string; path: string }
-    | { label: string; href: string; external: true };
+    | { label: string; path: string; icon?: string }
+    | { label: string; href: string; external: true; icon?: string };
 
 /** `<out>/docs/config.json` (§3.1). */
 export interface DocsConfig {
@@ -35,6 +35,8 @@ export interface DocsConfig {
         collapsible?: boolean;
         /** v1.1: a collapsible section open on load (the current page's section always is) */
         defaultOpen?: boolean;
+        /** v1.4: an icon of lib/contract/icons.ts, drawn before the label */
+        icon?: string;
         pages: SidebarEntry[];
     }[];
 }
