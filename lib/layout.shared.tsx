@@ -6,10 +6,11 @@ import {
     getProjects,
 } from "@/lib/projects";
 
-// What the site header (components/site-header.tsx) shows, computed at build time: every project
-// for the Projects menu and, under /<slug>/**, the project's own context (its landing, its docs,
-// its gallery and its repository). The header is the same on every page: the organization's
-// landing, a project's landing, its docs and its gallery.
+// What the site header (components/site-header.tsx) and the docs' chrome (the sidebar's top and
+// footer, components/docs-chrome.tsx) show, computed at build time: every project for the Projects
+// menu and the project switcher and, under /<slug>/**, the project's own context (its landing,
+// its docs, its gallery and its repository). Rule 9: the header on the landings and the gallery,
+// the same navigation in the docs' sidebar.
 
 export const ORGANIZATION_URL = "https://github.com/fragiola";
 
@@ -18,6 +19,7 @@ export function siteHeader(slug?: string): SiteHeaderProps {
         slug: project.slug,
         title: project.title,
         description: project.description,
+        docsUrl: firstPageUrl(project),
     }));
     const project = slug ? getProject(slug) : undefined;
     if (!project) return { projects, repoUrl: ORGANIZATION_URL };

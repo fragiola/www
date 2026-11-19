@@ -3,9 +3,16 @@
 import type { Root } from "fumadocs-core/page-tree";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import type { ReactNode } from "react";
+import {
+    DocsBarControls,
+    type DocsChromeProps,
+    DocsCorner,
+    DocsNavTitle,
+    DocsSidebarFooter,
+    DocsSidebarTop,
+} from "@/components/docs-chrome";
 import { docsSidebarComponents } from "@/components/docs-sidebar";
 import {
-    FrameworkSelect,
     type ProjectFrameworks,
     ProjectProvider,
     useFramework,
@@ -15,24 +22,21 @@ import {
 // config.json section can be framework-specific); the framework choice, which only the browser
 // knows, picks one. The framework select shows only for a project with more than one.
 //
-// The site header (components/site-header.tsx, above this layout) carries the project's title,
-// its links, search, the theme and GitHub, so the sidebar carries none of them: no title, no
-// links, no search field, no theme switch. Below `md` Fumadocs' bar keeps the sidebar's toggle.
+// The docs have no site header (rule 9): its navigation is the sidebar's, the same for every
+// project (components/docs-chrome.tsx): the wordmark and the collapse toggle in the first row,
+// the project switcher, search, Docs | Examples and the framework select at the top, the GitHub
+// links at the bottom. Below `md` Fumadocs' bar carries the wordmark, search, the theme and the
+// drawer's toggle; the drawer has the same top and bottom.
 //
-// Its rows are the site's own (components/docs-sidebar.tsx, the inset style). Its first row is
-// the "Documentation" label and the collapse toggle: Fumadocs puts the toggle right after the
-// row's content, at the top of the row, so the label takes the free width and centres itself
-// on the toggle — the toggle ends the row, level with the label.
-
-const NoTitle = () => null;
+// Its rows are the site's own (components/docs-sidebar.tsx, the inset style).
 
 function Layout({
     trees,
-    frameworks,
+    chrome,
     children,
 }: {
     trees: Record<string, Root>;
-    frameworks: string[];
+    chrome: DocsChromeProps;
     children: ReactNode;
 }) {
     const framework = useFramework();
@@ -41,17 +45,10 @@ function Layout({
     return (
         <DocsLayout
             tree={tree}
-            nav={{
-                children: (
-                    <span
-                        data-sidebar-title=""
-                        className="me-auto self-center ps-2.5 font-medium text-fd-foreground text-sm"
-                    >
-                        Documentation
-                    </span>
-                ),
-            }}
-            slots={{ navTitle: NoTitle }}
+            nav={{ children: <DocsBarControls /> }}
+            slots={{ navTitle: DocsNavTitle }}
+            // the site's own search button and theme toggle (components/site-controls.tsx):
+            // the search gives focus back to the button that opened it
             searchToggle={{ enabled: false }}
             themeSwitch={{ enabled: false }}
             sidebar={{
@@ -61,11 +58,11 @@ function Layout({
                 // hover keeps Fumadocs' card
                 className:
                     "data-[collapsed=false]:border-e-0 data-[collapsed=false]:bg-transparent",
-                ...(frameworks.length > 1
-                    ? { banner: <FrameworkSelect frameworks={frameworks} /> }
-                    : {}),
+                banner: <DocsSidebarTop {...chrome} />,
+                footer: <DocsSidebarFooter {...chrome} />,
             }}
         >
+            <DocsCorner />
             {children}
         </DocsLayout>
     );
@@ -74,15 +71,20 @@ function Layout({
 export function ProjectDocsLayout({
     project,
     trees,
+    chrome,
     children,
 }: {
     project: ProjectFrameworks;
     trees: Record<string, Root>;
+    chrome: Omit<DocsChromeProps, "frameworks">;
     children: ReactNode;
 }) {
     return (
         <ProjectProvider project={project}>
-            <Layout trees={trees} frameworks={project.frameworks}>
+            <Layout
+                trees={trees}
+                chrome={{ ...chrome, frameworks: project.frameworks }}
+            >
                 {children}
             </Layout>
         </ProjectProvider>
