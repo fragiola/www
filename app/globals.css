@@ -416,7 +416,7 @@
 .site-docs .docs-body :where(h2) {
     padding-top: 0.5rem;
 }
-.site-docs .docs-body :where(:not(pre) > code) {
+.site-docs .docs-body :where(:not(pre) > code:not(.not-prose *)) {
     border: 1px solid var(--palette-line);
     background: color-mix(in oklch, var(--palette-soft) 70%, transparent);
     border-radius: 0.375rem;
@@ -424,25 +424,35 @@
     font-size: 0.875em;
 }
 
-/* Tables: a rounded frame, a tinted header row, lines between rows; a wide
-   table scrolls inside its frame instead of widening the page. */
-.site-docs .docs-body :where(table) {
-    display: block;
+/* Tables: a rounded frame, a tinted header row, lines between rows. The frame
+   is the table's wrapper (.docs-table, components/mdx.tsx), which scrolls a
+   wide table instead of widening the page; the table itself stays a table, as
+   wide as its frame, so the border always fits the rows. */
+.site-docs .docs-body :where(.docs-table) {
+    position: relative;
     max-width: 100%;
     overflow-x: auto;
+    margin-block: 1.5rem;
     border: 1px solid var(--palette-line);
     border-radius: 0.75rem;
+}
+.site-docs .docs-body :where(.docs-table table) {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     border-collapse: separate;
     border-spacing: 0;
 }
-.site-docs .docs-body :where(thead th) {
+.site-docs .docs-body :where(.docs-table thead th) {
     background: color-mix(in oklch, var(--palette-soft) 70%, transparent);
 }
-.site-docs .docs-body :where(th, td) {
+.site-docs .docs-body :where(.docs-table th, .docs-table td) {
     border: 0;
     border-bottom: 1px solid var(--palette-line);
 }
-.site-docs .docs-body :where(tbody tr:last-child td) {
+.site-docs .docs-body :where(.docs-table tbody tr:last-child td) {
     border-bottom: 0;
 }
 
