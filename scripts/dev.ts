@@ -8,7 +8,9 @@
 //             and every change is checked against the contract, problems printed, not fatal
 //   examples  a project with a `devUrl` gets `pnpm site:dev --base /<slug> --port <port>`
 //             started in its checkout (unless something already answers there), and
-//             /<slug>/embed/** proxied to it: the examples hot-reload inside the site
+//             /<slug>/embed/** proxied to it: the examples hot-reload inside the site, and so
+//             does the Create page (v1.6, §5.5), whose app is embed/<fw>/create.html: one more
+//             file of the embed, proxied with the rest, while /<slug>/create/ stays Next's
 //
 // Then prepare:site, and `next dev` behind a small proxy on the site's port (3000, or
 // `pnpm dev --port <n>`): /<slug>/embed/** goes to the project's site:dev, everything else to
@@ -21,6 +23,7 @@ import {
     existsSync,
     mkdirSync,
     readdirSync,
+    readFileSync,
     rmSync,
     statSync,
     watch,
@@ -34,6 +37,7 @@ import { connect } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import type { Duplex } from "node:stream";
 import { parseArgs } from "node:util";
+import type { ProjectInfo } from "../lib/contract/types.ts";
 import { formatProblem, validateExport } from "../lib/contract/validate.ts";
 import {
     childEnv,
@@ -116,6 +120,16 @@ function mirrorDocs(slug: string, from: string) {
     console.log(`◉ ${slug}: watching ${label(from)}`);
 }
 
+/** The Create page, when the export declares one: its app is proxied with the embed. */
+function createNote(slug: string): string {
+    const info = JSON.parse(
+        readFileSync(join(SOURCES, slug, "project.json"), "utf-8"),
+    ) as ProjectInfo;
+    return info.create
+        ? `, Create page /${slug}/create/ (embed/${info.create.framework}/create.html)`
+        : "";
+}
+
 async function answers(url: string): Promise<boolean> {
     try {
         await fetch(url, { signal: AbortSignal.timeout(1000) });
@@ -153,7 +167,7 @@ for (const project of readProjects()) {
         proxy[project.slug] = url.origin;
         if (await answers(url.origin)) {
             console.log(
-                `◉ ${project.slug}: embed proxied to ${url.origin} (already running)`,
+                `◉ ${project.slug}: embed proxied to ${url.origin} (already running)${createNote(project.slug)}`,
             );
             continue;
         }
@@ -171,7 +185,7 @@ for (const project of readProjects()) {
         prefixed(`${project.slug} site:dev`, child);
         children.push(child);
         console.log(
-            `◉ ${project.slug}: site:dev on ${url.origin}, embed proxied`,
+            `◉ ${project.slug}: site:dev on ${url.origin}, embed proxied${createNote(project.slug)}`,
         );
     }
 }
