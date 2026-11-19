@@ -417,15 +417,45 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
         expect(problems()).toEqual([
             "ui/project.json:14: keywords must list 1–8 topics (§2)",
             "dockable/project.json:5: description is 10 characters: 50–160 (§2)",
-            'dockable/project.json:12: keywords: "Tabs" is not lowercase (§2)',
-            'dockable/project.json:12: keywords: " splitter" is not a topic: a non-empty string, no surrounding spaces (§2)',
-            `dockable/project.json:12: keywords: "${"a".repeat(41)}" is 41 characters: at most 40 (§2)`,
+            'dockable/project.json:18: keywords: "Tabs" is not lowercase (§2)',
+            'dockable/project.json:18: keywords: " splitter" is not a topic: a non-empty string, no surrounding spaces (§2)',
+            `dockable/project.json:18: keywords: "${"a".repeat(41)}" is 41 characters: at most 40 (§2)`,
         ]);
         editJson<Record<string, unknown>>("ui/project.json", (project) => {
             project.keywords = ["theming", "theming"];
         });
         expect(problems()).toContain(
             'ui/project.json:14: keywords: "theming" is listed twice (§2)',
+        );
+    });
+
+    test("project.json: adapters (v1.5)", () => {
+        // ui names none: its adapters are its frameworks
+        expect(problems()).toEqual([]);
+        editJson<Record<string, unknown>>(
+            "dockable/project.json",
+            (project) => {
+                project.adapters = ["vanilla", "React", "vanilla", 3];
+            },
+        );
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.adapters = [];
+        });
+        const notAnId = (value: string) =>
+            `dockable/project.json:11: adapters: ${value} is not an id: lowercase letters, digits and dashes, like "vanilla" or "react" (§2)`;
+        expect(problems()).toEqual([
+            "ui/project.json:22: adapters must list 1–12 adapters (§2)",
+            notAnId('"React"'),
+            'dockable/project.json:11: adapters: "vanilla" is listed twice (§2)',
+            notAnId("3"),
+            'dockable/project.json:11: adapters: "react" is in frameworks but not in adapters (§2)',
+            'dockable/project.json:11: adapters: "vue" is in frameworks but not in adapters (§2)',
+        ]);
+        editJson<Record<string, unknown>>("ui/project.json", (project) => {
+            project.adapters = ["vanilla", "svelte"];
+        });
+        expect(problems()).toContain(
+            'ui/project.json:22: adapters: "react" is in frameworks but not in adapters (§2)',
         );
     });
 
@@ -706,7 +736,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.4)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.5)",
         ]);
     });
 

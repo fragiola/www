@@ -30,6 +30,8 @@ function readJson<T>(file: string): T {
 }
 
 export interface Project extends ProjectInfo {
+    /** project.json's adapters (v1.5), else its frameworks; none for a docs space */
+    adapters: string[];
     /** the folder its docs/ is read from: the export, or content/<slug> for a docs space */
     dir: string;
     /** a docs space www writes itself (content/<slug>/): docs only, no landing, no gallery */
@@ -52,6 +54,7 @@ export function getProjects(): Project[] {
             const info = readJson<ProjectInfo>(join(dir, "project.json"));
             return {
                 ...info,
+                adapters: info.adapters ?? info.frameworks,
                 dir,
                 docs: readJson<DocsConfig>(join(dir, "docs", "config.json")),
                 examples: readJson<ExamplesConfig>(join(dir, "examples.json")),
@@ -99,6 +102,7 @@ export function getSpaces(): Project[] {
             // one tree key: a space has no framework to choose
             frameworks: ["react"],
             defaultFramework: "react",
+            adapters: [],
             dir,
             space: true as const,
             docs: readJson<DocsConfig>(join(dir, "docs", "config.json")),

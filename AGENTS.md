@@ -113,7 +113,7 @@ Do not "fix" these.
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.4)
+CONTRACT.md                 the site export contract (v1.5)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts

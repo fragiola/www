@@ -261,6 +261,7 @@ function checkProject(
         });
     }
     if (info.keywords !== undefined) checkKeywords(project, problems);
+    if (info.adapters !== undefined) checkAdapters(project, problems);
     if (!isStringArray(info.frameworks) || info.frameworks.length === 0) {
         problems.push({
             file,
@@ -307,6 +308,57 @@ function checkProject(
         });
     }
     return info;
+}
+
+/**
+ * `adapters` (v1.5, §2): 1–12 unique ids (`vanilla`, `react`, `svelte`, …), and every framework
+ * with an embed app among them.
+ */
+function checkAdapters(project: JsonFile<ProjectInfo>, problems: Problem[]) {
+    const file = "project.json";
+    const line = project.lineOf("adapters");
+    const { adapters, frameworks } = project.value;
+    if (
+        !Array.isArray(adapters) ||
+        adapters.length < 1 ||
+        adapters.length > 12
+    ) {
+        problems.push({
+            file,
+            line,
+            message: "adapters must list 1–12 adapters (§2)",
+        });
+        return;
+    }
+    const seen = new Set<string>();
+    for (const adapter of adapters as unknown[]) {
+        if (!isString(adapter) || !/^[a-z][a-z0-9-]*$/.test(adapter)) {
+            problems.push({
+                file,
+                line,
+                message: `adapters: ${JSON.stringify(adapter)} is not an id: lowercase letters, digits and dashes, like "vanilla" or "react" (§2)`,
+            });
+            continue;
+        }
+        if (seen.has(adapter)) {
+            problems.push({
+                file,
+                line,
+                message: `adapters: "${adapter}" is listed twice (§2)`,
+            });
+        }
+        seen.add(adapter);
+    }
+    if (!isStringArray(frameworks)) return;
+    for (const framework of frameworks) {
+        if (!seen.has(framework)) {
+            problems.push({
+                file,
+                line,
+                message: `adapters: "${framework}" is in frameworks but not in adapters (§2)`,
+            });
+        }
+    }
 }
 
 /** `keywords` (v1.2, §2): 1–8 unique topics, lowercase, at most 40 characters each. */

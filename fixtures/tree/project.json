@@ -5,6 +5,7 @@
     "description": "A headless tree view for React, Vue and Angular: selection, checkboxes, keyboard, rename, drag and drop and async loading, driven by a model.",
     "frameworks": ["react", "vue", "angular"],
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],
     "repository": "https://github.com/fragiola/tree",
     "keywords": ["tree view", "headless ui", "file explorer"]
 }

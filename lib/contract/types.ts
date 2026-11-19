@@ -1,10 +1,10 @@
-// The site export contract, v1.4 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.4
+// The site export contract, v1.5 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.5
 // keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.4";
+export const CONTRACT_REVISION = "1.5";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -19,6 +19,11 @@ export interface ProjectInfo {
     repository?: string;
     /** v1.2: 1–8 lowercase topics, for the project's structured data only (§2) */
     keywords?: string[];
+    /**
+     * v1.5: the frameworks the project ships a package for, in the project's order ("vanilla" for
+     * the framework-free core); every entry of `frameworks` is one. Absent: its `frameworks`.
+     */
+    adapters?: string[];
 }
 
 /** An entry of a sidebar section: a page of the export, or an external link. */

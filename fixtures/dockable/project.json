@@ -5,5 +5,6 @@
     "description": "A headless layout manager for dockable panels: tabs, tabsets, splitters, borders and popout windows.",
     "frameworks": ["react", "vue"],
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],
     "repository": "https://github.com/fragiola/dockable"
 }

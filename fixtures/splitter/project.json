@@ -5,6 +5,7 @@
     "description": "Headless resizable panel groups: drag, keyboard and collapse, nested groups, a saved JSON layout, RTL ready and styled by you.",
     "frameworks": ["react"],
     "defaultFramework": "react",
+    "adapters": ["vanilla", "react", "vue", "angular"],
     "repository": "https://github.com/fragiola/splitter",
     "keywords": ["resizable panels", "split view", "headless ui"]
 }
