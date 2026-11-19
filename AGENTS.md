@@ -34,7 +34,7 @@ Do not "fix" these.
    top layer with `popover="manual"`, never moved in the DOM (a moved iframe reloads), the page's
    scroll held still, the embed keeping its example in place. Still the embed's own document.
    This is about examples only: the Fragiola UI components the site itself is built with (the
-   header's navigation menu, the gallery's sidebar) are copied from ui's registry into this
+   header's navigation menu, the docs' project switcher, the gallery's sidebar) are copied from ui's registry into this
    repo, the way a consumer installs them (`pnpm registry:copy`), and are the site's own code
    from then on, like the theme `prepare:site` vendors. Never edit the copies: a fix belongs in
    `../ui`, then re-copy. Biome does not organize their imports (`biome.json`): the registry's
@@ -51,7 +51,7 @@ Do not "fix" these.
    persistent layout (list scroll and filter kept), the toolbar (themes with swatches,
    Reset, Fullscreen, Code), the URL state, the remembered theme, the setup command, the mobile
    overlay. Behaviour changes go through its specs (`e2e/shell.spec.ts`), which are ported too.
-   Its header is not its own: it is the site header, as on every page (rule 9). Its list is
+   Its header is not its own: it is the site header, as on the landings (rule 9). Its list is
    Fragiola UI's Sidebar (rule 3): collapsed off canvas on desktop from the header's leading
    slot or Ctrl/⌘+B, the state remembered, a Drawer below 42rem. From `md` the code panel is
    resizable (`components/resizable.tsx`, shadcn's over `react-resizable-panels`, in palette
@@ -63,17 +63,22 @@ Do not "fix" these.
    next-themes reads `@fragiola:theme`).
 8. **This repo never installs a project's dependencies.** `site:export` and `site:dev` run in the
    project's own checkout with its own lockfile.
-9. **One header, the same on every page.** `components/site-header.tsx` is the header of the
-   organization's landing, a project's landing, its docs and its gallery: the wordmark, the
-   Projects menu (every project of `projects.json`), then under `/<slug>/**` the project's title,
-   Docs and Examples; search, the theme and GitHub on the right. What it shows is computed at
-   build time (`siteHeader()`, `lib/layout.shared.tsx`). In the docs it sits above Fumadocs'
-   grid, which `--fd-banner-height` pushes down (`.site-docs`, `app/globals.css`); the docs
-   sidebar carries no title, links, search or theme of its own. From `md` the docs are **inset**
-   (`.site-docs`, `app/globals.css`): the header, the sidebar and the gutters share one frame
-   surface (the header's only difference on those pages), and the page sits on a rounded panel
-   (`.docs-inset-panel`, a grid item of `app/[project]/docs/layout.tsx`). Its specs:
-   `e2e/header.spec.ts`, the inset ones in `e2e/docs.spec.ts`.
+9. **One navigation: the header on the landings and the gallery, the sidebar in the docs.**
+   `components/site-header.tsx` is the header of the organization's landing, a project's landing
+   and its gallery: the wordmark, the Projects menu (every project of `projects.json`), then under
+   `/<slug>/**` the project's title, Docs and Examples; search, the theme and GitHub on the right.
+   The docs have **no header**, as on fumadocs.dev: the same navigation is their sidebar's
+   (`components/docs-chrome.tsx`), the same for every project — the wordmark and the collapse
+   toggle, the project switcher (Fragiola UI's dropdown-menu, copied), search, Docs | Examples,
+   the framework select; the project's GitHub and Fragiola's in its footer; the theme in the
+   panel's top-right corner; below `md` Fumadocs' bar (wordmark, search, theme, the drawer). The
+   controls both share (wordmark, search, theme, GitHub mark) are `components/site-controls.tsx`.
+   What either shows is computed at build time (`siteHeader()`, `lib/layout.shared.tsx`). The docs
+   grid is not centred: the sidebar sits on the viewport's left edge (`--fd-layout-width`), and
+   from `md` the docs are **inset** (`.site-docs`, `app/globals.css`): the sidebar and the gutters
+   are one frame surface, the page sits on a rounded panel (`.docs-inset-panel`, a grid item of
+   `app/[project]/docs/layout.tsx`). Its specs: `e2e/header.spec.ts`, the chrome and inset ones
+   in `e2e/docs.spec.ts`.
 10. **Search and sharing is built by `lib/seo.ts` only.** Titles (the landing's own, then
     `· <project>`, then `· Fragiola` while it fits in 60), meta descriptions (plain text, 50–160),
     canonical URLs (absolute, trailing slash, no query), the Open Graph and Twitter cards (one
@@ -92,7 +97,7 @@ Do not "fix" these.
 | `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project, the projects side by side (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the agent index → `public/agents/` + `public/llms.txt` (`lib/agents.ts`), the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
-| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
+| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`dropdown-menu`, `navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
 | `pnpm brand:icons` | draw every icon from the mark in `lib/brand.ts` with Playwright's Chromium: `public/brand/fragiola-mark.svg`, `app/icon.svg`, `app/favicon.ico` (16/32/48), `app/apple-icon.png`, the manifest's icons and the 512 px logo in `public/brand/`; the same machine gives the same bytes. Run it when the mark or the palette changes (`tests/brand.test.ts` fails then) |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
@@ -125,7 +130,9 @@ app/                        / (organization), /mcp/ (the MCP server for AI agent
                             + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
                               og.png/ and [project]/og.png/ (the share images, next/og at build),
                               icon.svg, favicon.ico, apple-icon.png (pnpm brand:icons)
-components/site-header.tsx  the one header of every page (rule 9)
+components/site-header.tsx  the header of the landings and the gallery (rule 9)
+components/site-controls.tsx  the wordmark, search, theme and GitHub mark the header and the docs share
+components/docs-chrome.tsx  the docs' navigation (rule 9): the sidebar's top and footer, the panel's corner
 components/ui/, atoms/, families/  Fragiola UI's components, copied from ui's registry; never edited
 components/gallery/         the gallery: chrome (layout, the list on ui's Sidebar), example view (page)
 components/resizable.tsx    shadcn's resizable in palette roles (the code panel); the site's own until ui has one

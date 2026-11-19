@@ -19,7 +19,7 @@ import { parseArgs } from "node:util";
 import type { RegistryItem } from "../lib/contract/types.ts";
 import { label, PROJECT_SOURCES, ROOT, readJson } from "./projects.ts";
 
-const ITEMS = ["navigation-menu", "sidebar"];
+const ITEMS = ["dropdown-menu", "navigation-menu", "sidebar"];
 
 const ALIASES: [string, string][] = [
     ["@ui/", "components/ui/"],

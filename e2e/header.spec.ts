@@ -1,21 +1,16 @@
 import { expect, type Page, test } from "@playwright/test";
 import { collectErrors, DOCKABLE, expectReady, PROJECTS, UI } from "./helpers";
 
-// The site header (components/site-header.tsx): the same on every page — the wordmark, the
-// Projects menu (Fragiola UI's navigation-menu), the project's own context under /<slug>/**,
-// search, the theme and GitHub — collapsing into a menu on small screens.
+// The site header (components/site-header.tsx): the same on the landings and the gallery — the
+// wordmark, the Projects menu (Fragiola UI's navigation-menu), the project's own context under
+// /<slug>/**, search, the theme and GitHub — collapsing into a menu on small screens. The docs
+// have none (rule 9): their navigation is the sidebar's (e2e/docs.spec.ts).
 
 // `current`: the one link of the project's context marked as the current section
 const PAGES = [
     { path: "", slug: undefined, current: undefined },
     { path: "ui/", slug: "ui", current: "project" },
-    { path: "ui/docs/atoms/clickable/", slug: "ui", current: "Docs" },
     { path: "dockable/", slug: "dockable", current: "project" },
-    {
-        path: "dockable/docs/getting-started/installation/",
-        slug: "dockable",
-        current: "Docs",
-    },
     {
         path: "dockable/examples/hello-layout/",
         slug: "dockable",
@@ -103,7 +98,7 @@ for (const { path, slug, current } of PAGES) {
 test("the Projects menu lists every project and marks the current one", async ({
     page,
 }) => {
-    await page.goto("dockable/docs/getting-started/installation/");
+    await page.goto("dockable/");
     await site(page).getByRole("button", { name: "Projects" }).click();
     const list = menu(page);
     await expect(list).toBeVisible();
@@ -176,17 +171,11 @@ test("small screens: the header collapses into a menu", async ({ page }) => {
     expect(width).toBeLessThanOrEqual(375);
 });
 
-test("small screens: the docs keep the page's full width; Escape or a press outside closes the menu", async ({
+test("small screens: Escape or a press outside closes the menu", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 375, height: 740 });
-    await page.goto("ui/docs/atoms/clickable/");
-    const title = page.getByRole("heading", { level: 1 });
-    const box = await title.boundingBox();
-    // the article spans the viewport less its gutters, not a squeezed column
-    const article = await page.locator("#nd-page").boundingBox();
-    expect(article?.width ?? 0).toBeGreaterThan(330);
-    expect(box?.x ?? 0).toBeLessThan(40);
+    await page.goto("ui/");
 
     const button = header(page).getByRole("button", { name: "Menu" });
     await button.click();
@@ -220,13 +209,13 @@ test("small screens: the docs keep the page's full width; Escape or a press outs
     if (!below) throw new Error("no point of the page that acts on nothing");
     await page.mouse.click(below.x, below.y);
     await expect(site(page)).toBeHidden();
-    await expect(page).toHaveURL(/\/ui\/docs\/atoms\/clickable\/$/);
+    await expect(page).toHaveURL(/\/ui\/$/);
     // a tall phone: the open menu lists every project (seven, and growing) and ends near 850px,
-    // below this page's example, so the press goes to a page whose example reaches further down
-    // (data-grid's first grid, about 650 to 1130px), on the first frame showing below the menu
+    // so the press goes to a landing whose example reaches further down (data-grid's), on the
+    // first frame showing below the menu
     const tall = 1400;
     await page.setViewportSize({ width: 375, height: tall });
-    await page.goto("data-grid/docs/getting-started/first-grid/");
+    await page.goto("data-grid/");
     await button.click();
     await expect(site(page)).toBeVisible();
     const menu = await site(page).boundingBox();
@@ -284,7 +273,7 @@ test("small screens: the gallery's list and the site menu never open together", 
 test("closing search gives focus back to the button that opened it", async ({
     page,
 }) => {
-    await page.goto("dockable/docs/getting-started/installation/");
+    await page.goto("dockable/");
     const button = header(page).locator("[data-search-full]");
     await button.click();
     await expect(page.getByRole("dialog")).toBeVisible();

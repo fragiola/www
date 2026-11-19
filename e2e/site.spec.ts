@@ -30,17 +30,20 @@ test("moving between projects never reloads the page", {
     await expect(page).toHaveURL(
         /\/ui\/docs\/getting-started\/installation\/$/,
     );
-    // the header's Projects menu: from ui's docs to dockable's landing, then its gallery
-    await page
-        .getByTestId("site-header")
-        .getByRole("button", { name: "Projects" })
-        .click();
-    const menu = page.locator('[data-slot="navigation-menu-popup"]');
-    await menu.getByRole("link", { name: /^Dockable/ }).click();
-    await expect(page).toHaveURL(/\/dockable\/$/);
+    // the docs' project switcher (their sidebar, rule 9): from ui's docs to dockable's, then its
+    // gallery from the Examples tab
+    await page.getByTestId("project-switcher").click();
+    const menu = page.getByTestId("project-switcher-menu");
+    await menu.getByRole("menuitem", { name: /^Dockable/ }).click();
+    await expect(page).toHaveURL(
+        /\/dockable\/docs\/getting-started\/installation\/$/,
+    );
     // the menu closes with the navigation
-    await expect(menu.getByRole("list", { name: "Projects" })).toBeHidden();
-    await page.getByRole("link", { name: "Browse the 13 examples" }).click();
+    await expect(menu).toBeHidden();
+    await page
+        .getByTestId("docs-sidebar-top")
+        .getByRole("link", { name: "Examples", exact: true })
+        .click();
     await expect(page).toHaveURL(/\/dockable\/examples\/hello-layout\/$/);
     await expectReady(page.getByTestId("stage"));
     await page.getByRole("link", { name: "Docs", exact: true }).click();

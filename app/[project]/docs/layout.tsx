@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ProjectDocsLayout } from "@/components/project-docs-layout";
 import { ProjectFooter } from "@/components/project-footer";
-import { SiteHeader } from "@/components/site-header";
-import { siteHeader } from "@/lib/layout.shared";
+import { ORGANIZATION_URL, siteHeader } from "@/lib/layout.shared";
 import { getPageTree, getProject } from "@/lib/projects";
 
 export default async function Layout({
@@ -18,13 +17,18 @@ export default async function Layout({
     const trees = Object.fromEntries(
         project.frameworks.map((fw) => [fw, getPageTree(project, fw)]),
     );
-    // the site header above Fumadocs' docs grid, which it pushes down the way Fumadocs' own
-    // banner does (--fd-banner-height, .site-docs in app/globals.css): the sidebar and the table
-    // of contents stick under it
+    // no site header in the docs (rule 9): what it shows is the sidebar's (components/docs-chrome)
+    const { projects, current, repoUrl } = siteHeader(project.slug);
+    if (!current) notFound();
     return (
         <div className="site-docs">
-            <SiteHeader {...siteHeader(project.slug)} />
             <ProjectDocsLayout
+                chrome={{
+                    projects,
+                    current,
+                    repoUrl,
+                    organizationUrl: ORGANIZATION_URL,
+                }}
                 project={{
                     slug: project.slug,
                     frameworks: project.frameworks,

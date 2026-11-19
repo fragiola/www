@@ -130,28 +130,33 @@
 }
 
 /* ─── The site header (components/site-header.tsx) ──────────────────────
-   One header on every page. In the docs it sits above Fumadocs' docs grid,
-   which offsets everything that sticks (the sidebar, the table of contents,
-   the small-screen bar) by --fd-banner-height: the lever of Fumadocs' own
-   <Banner>, so nothing of Fumadocs' chrome is overridden. */
+   The header of the landings and the gallery (rule 9). The docs have none:
+   their navigation is the sidebar's (components/docs-chrome.tsx). */
 :root {
     --site-header-height: 3.5rem;
 }
 
+/* ─── The docs (app/[project]/docs/layout.tsx) ───────────────────────────
+   Fumadocs' docs grid is not centred: --fd-layout-width is the grid's whole
+   width (a percentage of the grid, so no scrollbar is counted), its gutters
+   are left nothing, and the sidebar sits on the viewport's left edge at any
+   width, as on fumadocs.dev. The page's own column stays centred inside the
+   panel. */
 .site-docs {
-    --fd-banner-height: var(--site-header-height);
+    --fd-layout-width: 100%;
 }
 
-/* The inset layout (from md): the header, the sidebar and the gutters are one
-   frame, the screen's own surface, and the page sits over it on a raised,
-   rounded panel (.docs-inset-panel, app/[project]/docs/layout.tsx), the way
-   shadcn's inset sidebar and fumadocs.dev do. The frame is a step towards the
-   soft role: in dark it is lighter than the panel, in light a grey around a
-   white page. The header keeps its content and behaviour (rule 9); only its
-   surface is the frame's here. Below md the docs stay one flat surface, the
-   sidebar a drawer. Nothing here transforms, filters or contains: a promoted
-   example (§5.4) still covers the page. */
-.docs-inset-panel {
+/* The inset layout (from md): the sidebar and the gutters are one frame,
+   the screen's own surface, and the page sits over it on a raised, rounded
+   panel (.docs-inset-panel), the way shadcn's inset sidebar and fumadocs.dev
+   do. The frame is a step towards the soft role: in dark it is lighter than
+   the panel, in light a grey around a white page. The theme toggle sits in
+   the panel's top-right corner (.docs-corner). Below md the docs stay one
+   flat surface, the sidebar a drawer, the controls in Fumadocs' bar.
+   Nothing here transforms, filters or contains an ancestor of the page: a
+   promoted example (§5.4) still covers it. */
+.docs-inset-panel,
+.docs-corner {
     display: none;
 }
 
@@ -164,16 +169,12 @@
         );
         background-color: var(--docs-frame);
     }
-    .site-docs [data-testid="site-header"] {
-        background-color: var(--docs-frame);
-        border-bottom-color: transparent;
-    }
     .docs-inset-panel {
         display: block;
         grid-column: 3 / -1;
         /* Fumadocs' three rows, then the project footer's */
         grid-row: 1 / span 4;
-        margin-block: 0 0.5rem;
+        margin-block: 0.5rem;
         margin-inline: 0 0.5rem;
         border: 1px solid var(--palette-line);
         border-radius: 0.75rem;
@@ -182,12 +183,29 @@
             color-mix(in oklch, var(--palette-contrast) 8%, transparent);
         pointer-events: none;
     }
+    /* fixed over the panel's top-right corner: out of the grid, so it sizes
+       no row; above the page, under the dialogs */
+    .docs-corner {
+        display: flex;
+        position: fixed;
+        z-index: 30;
+        top: 1rem;
+        inset-inline-end: 1.25rem;
+        gap: 0.125rem;
+        border-radius: var(--radius-md);
+        background-color: color-mix(
+            in oklch,
+            var(--palette-base) 80%,
+            transparent
+        );
+    }
 }
 
 /* A heading scrolled to (a #hash, the table of contents) clears the bars
-   stacked above it: Fumadocs' own margin (scroll-m-28) plus the header. */
+   stacked above it: Fumadocs' own margin (scroll-m-28) and, on small
+   screens, its bar (in --fd-docs-row-3). */
 .site-docs :where(h1, h2, h3, h4, h5, h6)[id] {
-    scroll-margin-top: calc(7rem + var(--fd-banner-height));
+    scroll-margin-top: 7rem;
 }
 
 /* ─── The gallery's list (components/gallery/gallery-chrome.tsx) ─────────
