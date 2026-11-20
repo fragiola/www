@@ -156,7 +156,7 @@ async function readPage(page: Page) {
 
 // titles: the landing's own, then · project, then · Fragiola when it fits
 const TITLES: Record<string, string> = {
-    "/": "Fragiola — headless React components and a design system",
+    "/": "Fragiola — headless components and a design system",
     "/ai/docs/mcp/": "MCP server · AI agents · Fragiola",
     "/ai/docs/skills/": "Agent skills · AI agents · Fragiola",
     "/ui/": "Fragiola UI — React components on Base UI and Tailwind",
