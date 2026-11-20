@@ -123,7 +123,7 @@ lib/contract/               types, links (§3.3), the MDX scan, the sidebar icon
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client; each
                             project's featured example (its landing's showcase <Example>, else its first,
                             read by lib/contract/mdx.ts), never listed by hand; the home page's palette
-                            example (ui's palette-maker, else palettes)
+                            example (ui's palettes)
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
@@ -166,8 +166,8 @@ components/landing/         Hero, Action, Section, Features/Feature, Pills, the 
                               carousel, no autoplay): small name-only chips, the active project's
                               description and links above a wide stage, each project's landing example, one
                               iframe at a time, created on activation (e2e/live-preview.spec.ts)
-                            + palette-section: "One class, one palette", Fragiola UI's palette-maker (else
-                              palettes, else no section: lib/projects.ts paletteExample) and the palette note
+                            + palette-section: "One class, one palette", Fragiola UI's palettes example alone,
+                              full width (else no section: lib/projects.ts paletteExample)
                             + live-slot: the one example iframe the two share; live-placeholder: their placeholder
                             + agent-band: the "build with your agent" band of every project landing (v1.7)
 components/framework-logo.tsx  the frameworks' marks (Simple Icons, CC0) in their brands' colours: the one file
