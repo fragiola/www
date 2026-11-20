@@ -482,6 +482,55 @@ export function scanPage(source: string): PageScan {
     return scan;
 }
 
+// ─── the landing's featured example (the organization's landing) ─────────────
+
+/** The `<Example>` a landing features: its id and the props the page wrote on it. */
+export interface LandingExample {
+    id: string;
+    variant: string;
+    theme?: string;
+    framework?: string;
+    height?: number;
+}
+
+function stringProp(tag: Tag, name: string): string | undefined {
+    const prop = tag.props.get(name);
+    if (prop?.kind === "string") return prop.value;
+    if (prop?.kind === "expression" && typeof prop.value === "string") {
+        return prop.value;
+    }
+    return undefined;
+}
+
+/**
+ * The example a landing features: its `showcase` `<Example>`, else its first `<Example>` in
+ * document order; undefined when it has none. The organization's landing shows this one, so
+ * the home page and the project's landing always agree, with nothing listed by hand.
+ */
+export function landingExample(scan: PageScan): LandingExample | undefined {
+    const examples = scan.tags
+        .filter((tag) => tag.name === "Example" && stringProp(tag, "id"))
+        .sort((a, b) => a.order - b.order);
+    const tag =
+        examples.find(
+            (example) => stringProp(example, "variant") === "showcase",
+        ) ?? examples[0];
+    const id = tag && stringProp(tag, "id");
+    if (!tag || !id) return undefined;
+    const height = tag.props.get("height");
+    const theme = stringProp(tag, "theme");
+    const framework = stringProp(tag, "framework");
+    return {
+        id,
+        variant: stringProp(tag, "variant") ?? "inline",
+        ...(theme ? { theme } : {}),
+        ...(framework ? { framework } : {}),
+        ...(height?.kind === "expression" && typeof height.value === "number"
+            ? { height: height.value }
+            : {}),
+    };
+}
+
 // ─── lowering a page to plain Markdown (the agent index) ────────────────────
 
 /**

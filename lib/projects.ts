@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { Root } from "fumadocs-core/page-tree";
 import { docsIcon } from "@/components/docs-icon";
 import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
-import { readFrontmatter } from "@/lib/contract/mdx";
+import { landingExample, readFrontmatter, scanPage } from "@/lib/contract/mdx";
 import { DOCS_SPACES } from "@/lib/site-paths";
 
 export { AI_SPACE } from "@/lib/site-paths";
@@ -376,6 +376,68 @@ export function getGallery(project: Project): Gallery {
 export function firstExampleUrl(project: Project): string | undefined {
     const [first] = getGallery(project).examples;
     return first ? exampleHref(project.slug, first.id) : undefined;
+}
+
+/** A project's slide on the organization's landing ("See it live"): its landing's example. */
+export interface FeaturedExample {
+    project: ProjectSummary & { title: string; description: string };
+    id: string;
+    variants: Record<string, ExampleVariant>;
+    themes: Pick<
+        ThemeSummary,
+        "name" | "title" | "description" | "scheme" | "swatch"
+    >[];
+    /** the landing's `theme`, `framework` and `height` on the tag, when it writes them */
+    theme?: string;
+    framework?: string;
+    height?: number;
+    /** the project's landing, and the example in its gallery */
+    landing: string;
+    gallery: string;
+}
+
+/**
+ * The example a project's landing features (`docs/index.mdx`, read by lib/contract/mdx.ts): its
+ * showcase, else its first `<Example>`. Undefined when the landing has none, or names an example
+ * no manifest has: that project gets no slide.
+ */
+export function featuredExample(project: Project): FeaturedExample | undefined {
+    const file = join(project.dir, "docs", "index.mdx");
+    if (!existsSync(file)) return undefined;
+    const tag = landingExample(scanPage(readFileSync(file, "utf-8")));
+    const example = tag && getExample(project, tag.id);
+    if (!tag || !example) return undefined;
+    return {
+        project: {
+            ...projectSummary(project),
+            title: project.title,
+            description: project.description,
+        },
+        id: tag.id,
+        variants: example.variants,
+        themes: themeSummaries(project).map(
+            ({ name, title, description, scheme, swatch }) => ({
+                name,
+                title,
+                description,
+                scheme,
+                swatch,
+            }),
+        ),
+        ...(tag.theme ? { theme: tag.theme } : {}),
+        ...(tag.framework ? { framework: tag.framework } : {}),
+        ...(tag.height ? { height: tag.height } : {}),
+        landing: `/${project.slug}/`,
+        gallery: exampleHref(project.slug, tag.id),
+    };
+}
+
+/** Every project's featured example, in projects.json order: the home page's carousel. */
+export function featuredExamples(): FeaturedExample[] {
+    return getProjects().flatMap((project) => {
+        const featured = featuredExample(project);
+        return featured ? [featured] : [];
+    });
 }
 
 /** The pages of a project, for the static params: every `.mdx` path but the landing. */
