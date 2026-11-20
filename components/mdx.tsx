@@ -9,6 +9,7 @@ import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { Example } from "@/components/example";
 import { Framework } from "@/components/framework";
 import { InstallCommand } from "@/components/install-command";
+import { AgentBand } from "@/components/landing/agent-band";
 import { Feature, Features } from "@/components/landing/features";
 import { Hero, type HeroAction } from "@/components/landing/hero";
 import { Pills } from "@/components/landing/pills";
@@ -123,6 +124,8 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
         Features,
         Feature,
         Pills,
+        // not the vocabulary's: the site's agent band, placed on every landing by lib/agent-band.ts
+        AgentBand,
         // the table's frame is its wrapper, so the border fits the rows (.docs-table, app/globals.css)
         table: (props: ComponentProps<"table">) => (
             <div className="docs-table">

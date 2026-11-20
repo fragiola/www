@@ -8,6 +8,7 @@ import { Reveal } from "./reveal";
 
 export function Section({
     id,
+    testId = "landing-section",
     title,
     eyebrow,
     description,
@@ -15,6 +16,8 @@ export function Section({
 }: {
     /** the site's, not the vocabulary's: an anchor on the organization's landing */
     id?: string;
+    /** the site's too: a www-owned band (the agent band) is not one of the page's sections */
+    testId?: string;
     title: string;
     eyebrow?: string;
     description?: string;
@@ -23,7 +26,7 @@ export function Section({
     return (
         <section
             id={id}
-            data-testid="landing-section"
+            data-testid={testId}
             className="landing-band relative py-20 sm:py-28"
         >
             <div
