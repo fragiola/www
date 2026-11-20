@@ -446,21 +446,13 @@ function liveExample(
     };
 }
 
-/**
- * The examples of Fragiola UI the organization's landing shows under "One class, one palette",
- * in order of preference: `palette-maker` (a hue becomes a new palette class), else `palettes`.
- */
-export const PALETTE_EXAMPLES = ["palette-maker", "palettes"] as const;
+/** The example of Fragiola UI the organization's landing shows under "One class, one palette". */
+export const PALETTE_EXAMPLE = "palettes";
 
 /** Fragiola UI's palette example for the organization's landing, or undefined: no section. */
 export function paletteExample(): FeaturedExample | undefined {
     const ui = getProject("ui");
-    if (!ui) return undefined;
-    for (const id of PALETTE_EXAMPLES) {
-        const example = liveExample(ui, id);
-        if (example) return example;
-    }
-    return undefined;
+    return ui ? liveExample(ui, PALETTE_EXAMPLE) : undefined;
 }
 
 export function featuredExamples(): FeaturedExample[] {

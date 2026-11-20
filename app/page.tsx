@@ -118,7 +118,7 @@ export default function Home() {
     const frameworks = frameworksToday(projects);
     // each project's landing example, derived from its landing (lib/projects.ts)
     const live = featuredExamples();
-    // Fragiola UI's palette-maker, else its palettes, else no section (lib/projects.ts)
+    // Fragiola UI's palettes example, else no section (lib/projects.ts)
     const palette = paletteExample();
     return (
         <>
