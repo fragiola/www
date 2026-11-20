@@ -3,7 +3,12 @@ import { join, resolve } from "node:path";
 import type { Root } from "fumadocs-core/page-tree";
 import { docsIcon } from "@/components/docs-icon";
 import { docsHref, exampleHref, siteHref } from "@/lib/contract/links";
-import { landingExample, readFrontmatter, scanPage } from "@/lib/contract/mdx";
+import {
+    type LandingExample,
+    landingExample,
+    readFrontmatter,
+    scanPage,
+} from "@/lib/contract/mdx";
 import { DOCS_SPACES } from "@/lib/site-paths";
 
 export { AI_SPACE } from "@/lib/site-paths";
@@ -405,15 +410,24 @@ export function featuredExample(project: Project): FeaturedExample | undefined {
     const file = join(project.dir, "docs", "index.mdx");
     if (!existsSync(file)) return undefined;
     const tag = landingExample(scanPage(readFileSync(file, "utf-8")));
-    const example = tag && getExample(project, tag.id);
-    if (!tag || !example) return undefined;
+    return tag && liveExample(project, tag.id, tag);
+}
+
+/** One of a project's examples, in the shape the organization's landing embeds it. */
+function liveExample(
+    project: Project,
+    id: string,
+    tag: Pick<LandingExample, "theme" | "framework" | "height"> = {},
+): FeaturedExample | undefined {
+    const example = getExample(project, id);
+    if (!example) return undefined;
     return {
         project: {
             ...projectSummary(project),
             title: project.title,
             description: project.description,
         },
-        id: tag.id,
+        id,
         variants: example.variants,
         themes: themeSummaries(project).map(
             ({ name, title, description, scheme, swatch }) => ({
@@ -428,11 +442,27 @@ export function featuredExample(project: Project): FeaturedExample | undefined {
         ...(tag.framework ? { framework: tag.framework } : {}),
         ...(tag.height ? { height: tag.height } : {}),
         landing: `/${project.slug}/`,
-        gallery: exampleHref(project.slug, tag.id),
+        gallery: exampleHref(project.slug, id),
     };
 }
 
-/** Every project's featured example, in projects.json order: the home page's carousel. */
+/**
+ * The examples of Fragiola UI the organization's landing shows under "One class, one palette",
+ * in order of preference: `palette-maker` (a hue becomes a new palette class), else `palettes`.
+ */
+export const PALETTE_EXAMPLES = ["palette-maker", "palettes"] as const;
+
+/** Fragiola UI's palette example for the organization's landing, or undefined: no section. */
+export function paletteExample(): FeaturedExample | undefined {
+    const ui = getProject("ui");
+    if (!ui) return undefined;
+    for (const id of PALETTE_EXAMPLES) {
+        const example = liveExample(ui, id);
+        if (example) return example;
+    }
+    return undefined;
+}
+
 export function featuredExamples(): FeaturedExample[] {
     return getProjects().flatMap((project) => {
         const featured = featuredExample(project);
