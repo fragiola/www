@@ -1008,6 +1008,9 @@ function brokenLink(
         case "invalid":
             return target.reason;
         case "external":
+        case "ai":
+            // v1.7: the site's AI agents docs, www's own pages (content/ai/, checked by
+            // validateDocsSpace); an anchor on them is not the export's to check
             return undefined;
         case "anchor":
             return anchorOn(from, target.hash);

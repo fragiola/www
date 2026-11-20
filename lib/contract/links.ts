@@ -2,12 +2,15 @@
 // the root; the site serves them under /<slug>. Pure (no Node, no DOM): the validation, the MDX
 // components and the gallery all read links through this module, so what is checked is what is
 // rendered.
+
+import { MCP_PATH } from "../site-paths.ts";
 //
 //   /docs/guides/tabs#anchor   → /<slug>/docs/guides/tabs/#anchor
 //   /examples/add-tabs         → /<slug>/examples/add-tabs/
 //   /examples                  → /<slug>/examples/
 //   /                          → /<slug>/
 //   /create                    → /<slug>/create/ (v1.6: only when project.json declares create)
+//   /ai                        → /ai/docs/mcp/ (v1.7: the site's AI agents docs, never /<slug>/ai)
 //   #anchor                    → #anchor (this page)
 //   https://…, mailto:…        → unchanged
 
@@ -20,6 +23,7 @@ export type LinkTarget =
     | { kind: "gallery"; hash?: string }
     | { kind: "example"; id: string; hash?: string }
     | { kind: "create"; hash?: string }
+    | { kind: "ai"; hash?: string }
     | { kind: "invalid"; reason: string };
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
@@ -55,6 +59,14 @@ export function parseLink(href: string): LinkTarget {
     if (path === "/") return withHash({ kind: "landing" as const });
     if (path === "/examples") return withHash({ kind: "gallery" as const });
     if (path === "/create") return withHash({ kind: "create" as const });
+    // v1.7: reserved and base-free, the same for every project (the site's, not /<slug>/ai)
+    if (path === "/ai") return withHash({ kind: "ai" as const });
+    if (path.startsWith("/ai/")) {
+        return {
+            kind: "invalid",
+            reason: `"${href}": the AI agents docs are linked as /ai (optionally /ai#anchor), nothing below it (§3.3)`,
+        };
+    }
     const example = /^\/examples\/([^/]+)$/.exec(path);
     if (example?.[1]) {
         return withHash({ kind: "example" as const, id: example[1] });
@@ -65,7 +77,7 @@ export function parseLink(href: string): LinkTarget {
     }
     return {
         kind: "invalid",
-        reason: `"${href}" is not a base-free link to a page (/docs/…), an example (/examples/…), the Create page (/create) or the landing (/)`,
+        reason: `"${href}" is not a base-free link to a page (/docs/…), an example (/examples/…), the Create page (/create), the AI agents docs (/ai) or the landing (/)`,
     };
 }
 
@@ -89,6 +101,8 @@ export function targetHref(slug: string, target: LinkTarget): string {
             return `/${slug}/docs/${target.path}/${suffix(target.hash)}`;
         case "create":
             return `${createHref(slug)}${suffix(target.hash)}`;
+        case "ai":
+            return `${MCP_PATH}${suffix(target.hash)}`;
         case "invalid":
             return "#";
     }
