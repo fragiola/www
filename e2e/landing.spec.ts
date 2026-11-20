@@ -49,12 +49,19 @@ test("the hero: eyebrow, grid background, actions by variant and icon", async ({
     );
     await expect(other).toHaveAttribute("data-background", "none");
     await expect(other.getByTestId("hero-grid")).toHaveCount(0);
-    await expect(
-        other.getByRole("link", { name: "Read the docs" }),
-    ).toHaveAttribute("href", "/dockable/docs/getting-started/installation/");
+    // examples, then the agent (v1.7: /ai is the site's AI agents docs), then the docs
     const browse = other.getByRole("link", { name: "Browse the 13 examples" });
-    await expect(browse).toHaveAttribute("data-variant", "secondary");
+    await expect(browse).toHaveAttribute("data-variant", "primary");
     await expect(browse).toHaveAttribute("href", "/dockable/examples/");
+    const agent = other.getByRole("link", { name: "Set up your agent" });
+    await expect(agent).toHaveAttribute("data-variant", "secondary");
+    await expect(agent).toHaveAttribute("href", "/ai/docs/mcp/");
+    const docs = other.getByRole("link", { name: "Read the docs" });
+    await expect(docs).toHaveAttribute("data-variant", "ghost");
+    await expect(docs).toHaveAttribute(
+        "href",
+        "/dockable/docs/getting-started/installation/",
+    );
     const github = other.getByRole("link", { name: "GitHub" });
     await expect(github).toHaveAttribute(
         "href",
@@ -275,6 +282,46 @@ test("no adapters row on a landing without a showcase", async ({ page }) => {
     await page.goto("ui/");
     await expect(page.getByTestId("hero")).toBeVisible();
     await expect(page.getByTestId("adapters")).toHaveCount(0);
+});
+
+test("the agent band on every landing, once, after the showcase (else the hero)", async ({
+    page,
+}) => {
+    // v1.7 (§3.5): www's, the same on every landing; dockable and data-grid have a showcase
+    const after = {
+        dockable: '[data-variant="showcase"]',
+        "data-grid": '[data-variant="showcase"]',
+        ui: '[data-testid="hero"]',
+        tree: '[data-testid="hero"]',
+        dnd: '[data-testid="hero"]',
+        "grid-layout": '[data-testid="hero"]',
+        splitter: '[data-testid="hero"]',
+    };
+    for (const [slug, previous] of Object.entries(after)) {
+        await page.goto(`${slug}/`);
+        const band = page.getByTestId("agent-band");
+        await expect(band).toHaveCount(1);
+        await expect(band.getByRole("heading", { level: 2 })).toHaveText(
+            "Docs are for reading. Your agent can just know it.",
+        );
+        const mcp = band.getByRole("link", { name: "Set up the MCP server" });
+        await expect(mcp).toHaveAttribute("href", "/ai/docs/mcp/");
+        await expect(mcp).toHaveAttribute("data-variant", "primary");
+        await expect(
+            band.getByRole("link", { name: "Install the agent skills" }),
+        ).toHaveAttribute("href", "/ai/docs/skills/");
+        // the landing's next top-level piece after the showcase (or the hero)
+        const placed = await page.evaluate((selector) => {
+            const top = (element: Element | null) =>
+                element?.closest(".landing > *") ?? null;
+            const before = top(document.querySelector(selector));
+            const band = top(
+                document.querySelector('[data-testid="agent-band"]'),
+            );
+            return before !== null && before.nextElementSibling === band;
+        }, previous);
+        expect(placed, slug).toBe(true);
+    }
 });
 
 test("the project's footer, on the landing and on every docs page", async ({

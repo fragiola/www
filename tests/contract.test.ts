@@ -324,7 +324,7 @@ describe("landing vocabulary (§3.4, §3.5, v1.1)", () => {
         editJson<{ frameworks: string[] }>("dockable/project.json", () => {});
         expect(problems().filter((p) => p.includes("{examples}"))).toEqual([
             expect.stringMatching(
-                /^dockable\/docs\/index\.mdx:\d+:\d+: <Hero actions>\[1\]: \{examples\}, but the project has no examples$/,
+                /^dockable\/docs\/index\.mdx:\d+:\d+: <Hero actions>\[0\]: \{examples\}, but the project has no examples$/,
             ),
         ]);
     });
@@ -743,6 +743,29 @@ describe("the Create page (v1.6, §2, §3.3, §5.5)", () => {
             .findIndex((text) => text.includes('href: "/create"'));
         expect(problems()).toEqual([
             `ui/docs/index.mdx:${line + 1}:9: broken link (<Hero actions>) "/create": /create: the project declares no Create page (project.json create, §2)`,
+        ]);
+    });
+});
+
+describe("the AI agents docs link (v1.7, §3.3)", () => {
+    test("/ai, with or without an anchor, in Markdown, a <Card> and a Hero action", () => {
+        const page = "dockable/docs/getting-started/installation.mdx";
+        append(
+            page,
+            '\n[Your agent](/ai)\n\n[Set it up](/ai#set-it-up-in-your-client)\n\n<Cards>\n    <Card title="Build with your agent" href="/ai" />\n</Cards>\n',
+        );
+        // a fixture landing already has an /ai Hero action
+        expect(
+            readFileSync(path("dockable/docs/index.mdx"), "utf-8"),
+        ).toContain('href: "/ai"');
+        expect(problems()).toEqual([]);
+    });
+
+    test("anything below /ai is a broken link, with what to write instead", () => {
+        const page = "dockable/docs/getting-started/installation.mdx";
+        const line = append(page, "\n[MCP](/ai/docs/mcp)\n");
+        expect(problems()).toEqual([
+            `${page}:${line + 1}:1: broken link (markdown) "/ai/docs/mcp": "/ai/docs/mcp": the AI agents docs are linked as /ai (optionally /ai#anchor), nothing below it (§3.3)`,
         ]);
     });
 });
