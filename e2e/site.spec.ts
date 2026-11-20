@@ -96,6 +96,20 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
     const lead = hero.locator("p").filter({ hasText: /ecosystem/ });
     await expect(lead).toContainText("headless components");
     await expect(lead).toContainText("optional");
+    // the idea first, the frameworks a fact underneath: no framework in the hero, the footer
+    // line, the title or the description
+    await expect(hero).not.toContainText("React");
+    await expect(
+        page.getByTestId("site-footer").locator("p").first(),
+    ).not.toContainText("React");
+    expect(await page.title()).not.toContain("React");
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute(
+        "content",
+        /React/,
+    );
+    await expect(page.getByTestId("frameworks-line")).toHaveText(
+        /framework-free core.*React, Vue and Angular today\./,
+    );
     const explore = hero.getByRole("link", { name: "Explore the projects" });
     await expect(explore).toBeInViewport();
     await expect(explore).toHaveAttribute("href", "#projects");
@@ -119,11 +133,13 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
         "React · Vue",
     );
 
-    // the idea, your stack, Fragiola UI, the projects, then the MCP server for AI agents
+    // every project live, the idea, your stack, Fragiola UI, the projects, then the MCP server
+    // for AI agents
     const titles = page
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
     await expect(titles).toHaveText([
+        "See it live",
         "The behaviour from us, the look from wherever you like",
         "Paint it with what you already use",
         UI.project.title,

@@ -3,6 +3,8 @@ import type { Project } from "../lib/projects.ts";
 import {
     exampleDescription,
     metaDescription,
+    SITE_DESCRIPTION,
+    SITE_TITLE,
     withProject,
 } from "../lib/seo.ts";
 
@@ -30,6 +32,17 @@ describe("titles", () => {
         );
         expect(length(title)).toBe(60);
         expect(title.endsWith("…")).toBe(true);
+    });
+});
+
+describe("the organization's landing", () => {
+    test("its title and description name no framework, within the limits", () => {
+        for (const text of [SITE_TITLE, SITE_DESCRIPTION]) {
+            expect(text).not.toMatch(/React|Vue|Angular|Svelte|Solid/);
+        }
+        expect(length(SITE_TITLE)).toBeLessThanOrEqual(60);
+        expect(length(SITE_DESCRIPTION)).toBeGreaterThanOrEqual(50);
+        expect(length(SITE_DESCRIPTION)).toBeLessThanOrEqual(160);
     });
 });
 

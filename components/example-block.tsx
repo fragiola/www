@@ -13,9 +13,9 @@ import { ExampleFrame } from "@/components/example-frame";
 import { defaultTheme, useSiteScheme } from "@/components/example-theme";
 import { useFramework } from "@/components/framework";
 import { AdapterRow } from "@/components/landing/adapters";
+import { MissingFramework } from "@/components/missing-framework";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
-import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, ThemeSummary } from "@/lib/projects";
 
 // the panel (and the code block it renders with) loads when it first opens
@@ -107,24 +107,14 @@ export function ExampleBlock({
     }
 
     if (!variant) {
-        const other = Object.keys(variants)[0];
         return (
-            <div
-                role="status"
-                data-testid="missing-framework"
-                data-example={id}
-                className="not-prose my-6 rounded-lg border border-palette-line border-dashed p-4 text-palette-accent/85 text-sm"
-            >
-                {`This example is not available for ${frameworkName(framework)} yet.`}{" "}
-                {other ? (
-                    <Link
-                        href={`${gallery}?framework=${other}`}
-                        className="underline"
-                    >
-                        {`See it in ${frameworkName(other)}`}
-                    </Link>
-                ) : null}
-            </div>
+            <MissingFramework
+                slug={slug}
+                id={id}
+                framework={framework}
+                variants={variants}
+                className="my-6"
+            />
         );
     }
 

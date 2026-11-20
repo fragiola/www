@@ -29,7 +29,8 @@ Do not "fix" these.
    an `<iframe>` (§5): hidden until `fragiola:example:ready`, sized by `layout`/`height`/`resize`,
    themed by `?theme=` and the `theme` message, its `color-scheme` the example theme's. The
    iframe is created only after hydration (a frame loaded before hydration could say ready
-   before anyone listens). Reset remounts it. While the example has a modal overlay open, the
+   before anyone listens). Reset remounts it. The organization's landing holds at most one
+   example iframe: its carousel creates the active slide's frame and removes it on the next one. While the example has a modal overlay open, the
    frame is **promoted** over the whole page (§5.4, `components/example-promotion.ts`): into the
    top layer with `popover="manual"`, never moved in the DOM (a moved iframe reloads), the page's
    scroll held still, the embed keeping its example in place. Still the embed's own document.
@@ -118,7 +119,9 @@ CONTRACT.md                 the site export contract (v1.6)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts
-lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client
+lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client; each
+                            project's featured example (its landing's showcase <Example>, else its first,
+                            read by lib/contract/mdx.ts), never listed by hand
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
@@ -150,10 +153,15 @@ components/create-frame.tsx  the Create page's frame (§5.5): the whole viewport
                             resize, no promotion; nothing of the site drawn over it, nothing scrolls the page
 components/example-promotion.ts  overlay promotion's geometry and the page's held scroll (§5.4)
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase (with the adapters row above it)
+components/missing-framework.tsx  the message of an example the chosen framework does not have (rule 7)
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4), the adapters
                             row (project.json's adapters, v1.5: a mark each, a link to the docs in a framework)
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
+                            + live-preview: the organization landing's "See it live" carousel (APG tabbed
+                              carousel, no autoplay): each project's landing example, one iframe at a time,
+                              created on activation; Fragiola UI's slide explains its palettes
+                              (e2e/live-preview.spec.ts)
 components/framework-logo.tsx  the frameworks' marks (Simple Icons, CC0) in their brands' colours: the one file
                             tests/palette.test.ts exempts
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)

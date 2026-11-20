@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    type ReactNode,
     useEffect,
     useLayoutEffect,
     useRef,
@@ -67,6 +68,8 @@ export interface ExampleFrameProps {
     fill?: boolean;
     /** load when near the viewport (docs pages) */
     lazy?: boolean;
+    /** shown until the embed is ready, in place of the spinner (the home page's carousel) */
+    placeholder?: ReactNode;
     className?: string;
 }
 
@@ -81,6 +84,7 @@ export function ExampleFrame({
     height,
     fill = false,
     lazy = false,
+    placeholder,
     className,
 }: ExampleFrameProps) {
     const frame = useRef<HTMLIFrameElement>(null);
@@ -297,6 +301,8 @@ export function ExampleFrame({
                 >
                     {failed ? (
                         `The example “${title}” did not load.`
+                    ) : placeholder ? (
+                        placeholder
                     ) : (
                         <span className="size-4 animate-spin rounded-full border-2 border-palette-line border-t-palette-accent" />
                     )}

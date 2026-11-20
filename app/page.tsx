@@ -6,12 +6,14 @@ import { ActionLink } from "@/components/landing/action";
 import { Feature, Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
 import { HeroScene } from "@/components/landing/hero-scene";
+import { LivePreview } from "@/components/landing/live-preview";
 import { Pills } from "@/components/landing/pills";
 import { Section } from "@/components/landing/section";
 import { SiteHeader } from "@/components/site-header";
 import { frameworkName } from "@/lib/frameworks";
 import { ORGANIZATION_URL, siteHeader } from "@/lib/layout.shared";
 import {
+    featuredExamples,
     firstExampleUrl,
     firstPageUrl,
     getProject,
@@ -27,7 +29,8 @@ import {
 import { MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 
 // The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
-// optional design system), bringing your own styles, Fragiola UI itself, every project of
+// optional design system), every project running live (each one's landing example, derived from
+// its landing: components/landing/live-preview.tsx), bringing your own styles, Fragiola UI itself, every project of
 // projects.json, from its own project.json, then the AI agents docs (/ai/docs/: the MCP server and the agent skills). Built from the landing pieces every project's
 // landing uses (components/landing/).
 //
@@ -43,6 +46,15 @@ export const metadata: Metadata = pageMetadata({
     description: SITE_DESCRIPTION,
     path: "/",
 });
+
+/** "React, Vue and Angular": every framework some project has an adapter for, in first-seen order. */
+function frameworksToday(projects: Project[]): string {
+    const names = [
+        ...new Set(projects.flatMap((project) => project.frameworks)),
+    ].map(frameworkName);
+    if (names.length < 2) return names.join("");
+    return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
 
 function ProjectCard({ project }: { project: Project }) {
     const examples = firstExampleUrl(project);
@@ -99,6 +111,9 @@ function ProjectCard({ project }: { project: Project }) {
 export default function Home() {
     const projects = getProjects();
     const ui = getProject("ui");
+    const frameworks = frameworksToday(projects);
+    // each project's landing example, derived from its landing (lib/projects.ts)
+    const live = featuredExamples();
     return (
         <>
             <JsonLd items={organizationJsonLd()} />
@@ -109,7 +124,7 @@ export default function Home() {
             >
                 <Hero
                     eyebrow="Headless · design system optional"
-                    title="Headless React components, and a design system when you want one."
+                    title="Headless components, and a design system when you want one."
                     description={POSITIONING}
                     background="grid"
                     backdrop={<HeroScene />}
@@ -132,6 +147,17 @@ export default function Home() {
                     ]}
                 />
 
+                {live.length > 0 ? (
+                    <Section
+                        id="live"
+                        eyebrow="Live examples"
+                        title="See it live"
+                        description="Every project, running here: the example its own landing features. Pick one — only that one runs."
+                    >
+                        <LivePreview slides={live} />
+                    </Section>
+                ) : null}
+
                 <Section
                     eyebrow="The idea"
                     title="The behaviour from us, the look from wherever you like"
@@ -153,6 +179,16 @@ export default function Home() {
                             nothing requires it.
                         </Feature>
                     </Features>
+                    {frameworks ? (
+                        <p
+                            data-testid="frameworks-line"
+                            className="text-palette-accent/85"
+                        >
+                            Every primitive lives in a framework-free core, and
+                            thin adapters bring it to each framework:{" "}
+                            {frameworks} today.
+                        </p>
+                    ) : null}
                 </Section>
 
                 <Section

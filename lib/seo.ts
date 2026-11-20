@@ -14,11 +14,10 @@ export const SITE_URL = "https://fragiola.com";
 export const SITE_NAME = "Fragiola";
 
 /** The `<title>` of `/`, written for search. */
-export const SITE_TITLE =
-    "Fragiola — headless React components and a design system";
+export const SITE_TITLE = "Fragiola — headless components and a design system";
 /** The meta description of `/`, and the manifest's description. */
 export const SITE_DESCRIPTION =
-    "Fragiola: headless React components that own behaviour, state and accessibility, and Fragiola UI, an optional design system of copy-paste components.";
+    "Fragiola: headless components that own behaviour, state and accessibility, and Fragiola UI, an optional design system of copy-paste components.";
 
 /** The share images' size (next/og, app/**\/og.png/route.tsx). */
 export const SHARE_IMAGE = { width: 1200, height: 630 } as const;

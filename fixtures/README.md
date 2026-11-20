@@ -37,7 +37,9 @@ manifests with the gallery fields and the shared files stored once, `#/` imports
 whose dependencies are all namespaced. Edit them by hand from now on.
 
 `data-grid` was written by hand for v1.2 when the project joined: a landing, two pages, three of
-its examples with placeholder sources (no registry items), and the shared fixture embed app.
+its examples with placeholder sources (no registry items), and the shared fixture embed app. Its
+landing has a `bleed` example first and a `showcase` one after it, so the organization's landing
+("See it live", which features a landing's showcase first, else its first `<Example>`) covers both.
 `grid-layout` was written the same way when it joined.
 `dnd` was written the same way when it joined.
 `tree` was written the same way when it joined, with three frameworks (`react`, `vue`,
