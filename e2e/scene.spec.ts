@@ -177,7 +177,7 @@ test("leaving / releases the scene's WebGL context", async ({ page }) => {
     await instrument(page);
     await page.goto("");
     await settle(page);
-    await page.getByRole("link", { name: /^Meet / }).click();
+    await page.getByRole("link", { name: /^Explore / }).click();
     await expect(page).toHaveURL(/\/ui\/$/);
     await expect(scene(page)).toHaveCount(0);
     await page.goBack();

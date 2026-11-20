@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 import { Reveal } from "./reveal";
 
 // <Section title eyebrow? description?> (§3.4): a landing section — a hairline above that fades
@@ -8,6 +9,8 @@ import { Reveal } from "./reveal";
 
 export function Section({
     id,
+    testId = "landing-section",
+    wide = false,
     title,
     eyebrow,
     description,
@@ -15,6 +18,10 @@ export function Section({
 }: {
     /** the site's, not the vocabulary's: an anchor on the organization's landing */
     id?: string;
+    /** the site's too: a www-owned band (the agent band) is not one of the page's sections */
+    testId?: string;
+    /** the site's too: the content wider than the prose column (a live example's room) */
+    wide?: boolean;
     title: string;
     eyebrow?: string;
     description?: string;
@@ -23,15 +30,28 @@ export function Section({
     return (
         <section
             id={id}
-            data-testid="landing-section"
+            data-testid={testId}
             className="landing-band relative py-20 sm:py-28"
         >
             <div
                 aria-hidden
                 className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-palette-line to-transparent"
             />
-            <div className="mx-auto w-full max-w-5xl px-6">
-                <Reveal className="not-prose flex max-w-2xl flex-col gap-4">
+            <div
+                className={cn(
+                    "mx-auto w-full px-6",
+                    wide ? "max-w-7xl" : "max-w-5xl",
+                )}
+            >
+                {/* a wide section's header stays in the prose column, like every other one */}
+                <Reveal
+                    className={cn(
+                        "not-prose flex flex-col gap-4",
+                        wide
+                            ? "mx-auto w-full max-w-[61rem] [&>*]:max-w-2xl"
+                            : "max-w-2xl",
+                    )}
+                >
                     {eyebrow ? (
                         <p
                             data-testid="eyebrow"

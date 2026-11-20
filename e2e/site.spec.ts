@@ -85,7 +85,7 @@ test("the registry is served at /r, every project's items in one index", {
     ).toBeGreaterThan(0);
 });
 
-test("the organization's landing: what Fragiola is first, the idea, your stack, Fragiola UI, the projects", async ({
+test("the organization's landing: what Fragiola is, live, one palette, your agent, then the idea, your stack, Fragiola UI, the projects", async ({
     page,
 }) => {
     const errors = collectErrors(page);
@@ -110,14 +110,18 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
     await expect(page.getByTestId("frameworks-line")).toHaveText(
         /framework-free core.*React, Vue and Angular today\./,
     );
-    const explore = hero.getByRole("link", { name: "Explore the projects" });
-    await expect(explore).toBeInViewport();
-    await expect(explore).toHaveAttribute("href", "#projects");
-    await expect(
-        hero.getByRole("link", { name: `Meet ${UI.project.title}` }),
-    ).toHaveAttribute("href", `/${UI.project.slug}/`);
-    await explore.click();
-    await expect(page.locator("#projects")).toBeInViewport();
+    // the examples, then the agent: no docs in the hero
+    const actions = hero.getByRole("link");
+    await expect(actions).toHaveText(["See it live", "Set up your agent"]);
+    const see = hero.getByRole("link", { name: "See it live" });
+    await expect(see).toBeInViewport();
+    await expect(see).toHaveAttribute("href", "#live");
+    await expect(see).toHaveAttribute("data-variant", "primary");
+    const agent = hero.getByRole("link", { name: "Set up your agent" });
+    await expect(agent).toHaveAttribute("href", "/ai/docs/mcp/");
+    await expect(agent).toHaveAttribute("data-variant", "secondary");
+    await see.click();
+    await expect(page.locator("#live")).toBeInViewport();
     await expect(page).toHaveTitle(/^Fragiola/);
 
     // every project, from its project.json
@@ -133,19 +137,24 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
         "React · Vue",
     );
 
-    // every project live, the idea, your stack, Fragiola UI, the projects, then the MCP server
-    // for AI agents
+    // every project live, one class one palette, the agent before the docs' idea, your stack,
+    // Fragiola UI, the projects
     const titles = page
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
     await expect(titles).toHaveText([
         "See it live",
+        "One class, one palette",
+        "Your coding agent knows Fragiola",
         "The behaviour from us, the look from wherever you like",
         "Paint it with what you already use",
         UI.project.title,
         "What Fragiola ships today",
-        "Your coding agent knows Fragiola",
     ]);
+    // a project card: its examples before its docs
+    await expect(
+        projects.locator('[data-project="dockable"]').getByRole("link"),
+    ).toHaveText(["Dockable", "Examples", "Docs"]);
     const spotlight = page.getByTestId("landing-section").filter({
         has: page.getByRole("heading", {
             level: 2,

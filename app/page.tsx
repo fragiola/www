@@ -7,6 +7,7 @@ import { Feature, Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
 import { HeroScene } from "@/components/landing/hero-scene";
 import { LivePreview } from "@/components/landing/live-preview";
+import { PaletteSection } from "@/components/landing/palette-section";
 import { Pills } from "@/components/landing/pills";
 import { Section } from "@/components/landing/section";
 import { SiteHeader } from "@/components/site-header";
@@ -19,6 +20,7 @@ import {
     getProject,
     getProjects,
     type Project,
+    paletteExample,
 } from "@/lib/projects";
 import {
     organizationJsonLd,
@@ -28,11 +30,13 @@ import {
 } from "@/lib/seo";
 import { MCP_PATH, SKILLS_PATH } from "@/lib/site-paths";
 
-// The organization's landing: what Fragiola is (headless components, and Fragiola UI, an
-// optional design system), every project running live (each one's landing example, derived from
-// its landing: components/landing/live-preview.tsx), bringing your own styles, Fragiola UI itself, every project of
-// projects.json, from its own project.json, then the AI agents docs (/ai/docs/: the MCP server and the agent skills). Built from the landing pieces every project's
-// landing uses (components/landing/).
+// The organization's landing, in the order a visitor needs it: what Fragiola is, every project
+// running live (each one's landing example, derived from its landing:
+// components/landing/live-preview.tsx), how styling works (one class, one palette: Fragiola UI's
+// palette example, components/landing/palette-section.tsx), building with a coding agent (the MCP
+// server and the agent skills, /ai/docs/) before the docs, then the idea, bringing your own
+// styles, Fragiola UI itself and every project of projects.json, from its own project.json. Built
+// from the landing pieces every project's landing uses (components/landing/).
 //
 // The copy says only what exists today: the projects are read, never listed by hand, and no
 // project is said to be styled by Fragiola UI unless it is.
@@ -89,12 +93,6 @@ function ProjectCard({ project }: { project: Project }) {
             </p>
             {/* above the card's own link (its ::after covers the card) */}
             <div className="relative mt-auto flex gap-4 pt-2 text-sm">
-                <Link
-                    href={firstPageUrl(project)}
-                    className="rounded-sm font-medium text-palette-accent/85 underline-offset-4 hover:text-palette-contrast hover:underline focus-visible:outline-2 focus-visible:outline-palette-ring"
-                >
-                    Docs
-                </Link>
                 {examples ? (
                     <Link
                         href={examples}
@@ -103,6 +101,12 @@ function ProjectCard({ project }: { project: Project }) {
                         Examples
                     </Link>
                 ) : null}
+                <Link
+                    href={firstPageUrl(project)}
+                    className="rounded-sm font-medium text-palette-accent/85 underline-offset-4 hover:text-palette-contrast hover:underline focus-visible:outline-2 focus-visible:outline-palette-ring"
+                >
+                    Docs
+                </Link>
             </div>
         </li>
     );
@@ -114,6 +118,8 @@ export default function Home() {
     const frameworks = frameworksToday(projects);
     // each project's landing example, derived from its landing (lib/projects.ts)
     const live = featuredExamples();
+    // Fragiola UI's palette-maker, else its palettes, else no section (lib/projects.ts)
+    const palette = paletteExample();
     return (
         <>
             <JsonLd items={organizationJsonLd()} />
@@ -129,27 +135,31 @@ export default function Home() {
                     background="grid"
                     backdrop={<HeroScene />}
                     actions={[
+                        live.length > 0
+                            ? {
+                                  label: "See it live",
+                                  href: "#live",
+                                  variant: "primary",
+                                  icon: "arrow",
+                              }
+                            : {
+                                  label: "Explore the projects",
+                                  href: "#projects",
+                                  variant: "primary",
+                                  icon: "arrow",
+                              },
                         {
-                            label: "Explore the projects",
-                            href: "#projects",
-                            variant: "primary",
-                            icon: "arrow",
+                            label: "Set up your agent",
+                            href: MCP_PATH,
+                            variant: "secondary",
                         },
-                        ...(ui
-                            ? [
-                                  {
-                                      label: `Meet ${ui.title}`,
-                                      href: `/${ui.slug}/`,
-                                      variant: "secondary" as const,
-                                  },
-                              ]
-                            : []),
                     ]}
                 />
 
                 {live.length > 0 ? (
                     <Section
                         id="live"
+                        wide
                         eyebrow="Live examples"
                         title="See it live"
                         description="Every project, running here: the example its own landing features. Pick one — only that one runs."
@@ -157,6 +167,39 @@ export default function Home() {
                         <LivePreview slides={live} />
                     </Section>
                 ) : null}
+
+                {palette ? (
+                    <Section
+                        id="palettes"
+                        wide
+                        eyebrow="Styling"
+                        title="One class, one palette"
+                        description="Components read colour roles, never colours. A palette is a class: put it on a page, a card or one button, and everything inside repaints — and a new colour is just a new palette."
+                    >
+                        <PaletteSection example={palette} />
+                    </Section>
+                ) : null}
+
+                <Section
+                    id="agents"
+                    eyebrow="For AI agents"
+                    title="Your coding agent knows Fragiola"
+                    description="The docs are here, but you may not need to read them. With the MCP server and the agent skills, Claude Code, Codex, Cursor and OpenCode already know every component, docs page, API and rule of the ecosystem — what is source code to copy and what is a package to install — so your agent builds instead of reading how to."
+                >
+                    <div className="not-prose flex flex-wrap items-center gap-3">
+                        <ActionLink
+                            label="Set up the MCP server"
+                            href={MCP_PATH}
+                            variant="primary"
+                            icon="arrow"
+                        />
+                        <ActionLink
+                            label="Install the agent skills"
+                            href={SKILLS_PATH}
+                            variant="secondary"
+                        />
+                    </div>
+                </Section>
 
                 <Section
                     eyebrow="The idea"
@@ -267,27 +310,6 @@ export default function Home() {
                             <ProjectCard key={project.slug} project={project} />
                         ))}
                     </ul>
-                </Section>
-
-                <Section
-                    id="agents"
-                    eyebrow="For AI agents"
-                    title="Your coding agent knows Fragiola"
-                    description="Agent skills teach Claude Code, Codex, Cursor and OpenCode Fragiola's rules, and an MCP server gives them every component, docs page and API, and tells them what is source code to copy and what is a package to install."
-                >
-                    <div className="not-prose flex flex-wrap items-center gap-3">
-                        <ActionLink
-                            label="Set up the MCP server"
-                            href={MCP_PATH}
-                            variant="primary"
-                            icon="arrow"
-                        />
-                        <ActionLink
-                            label="Install the agent skills"
-                            href={SKILLS_PATH}
-                            variant="secondary"
-                        />
-                    </div>
                 </Section>
             </main>
             <footer

@@ -1,4 +1,5 @@
 import { defineConfig, defineDocs } from "fumadocs-mdx/config";
+import { remarkAgentBand } from "./lib/agent-band.ts";
 import { remarkFeatureHeadings } from "./lib/feature-headings.ts";
 
 // One collection over every project's export: .sources/<slug>/docs/**/*.mdx (or
@@ -26,6 +27,6 @@ export const spaces = defineDocs({
 export default defineConfig({
     mdxOptions: {
         providerImportSource: "@/components/mdx",
-        remarkPlugins: [remarkFeatureHeadings],
+        remarkPlugins: [remarkFeatureHeadings, remarkAgentBand],
     },
 });

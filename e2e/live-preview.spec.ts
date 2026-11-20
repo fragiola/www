@@ -3,8 +3,10 @@ import { collectErrors, embed, expectReady, PROJECTS } from "./helpers";
 
 // "See it live" on the organization's landing (components/landing/live-preview.tsx): a tabbed
 // carousel of every project's landing example (its showcase, else its first <Example>: the
-// fixtures' data-grid landing has a bleed example first, then the showcase), one example iframe
-// at a time, created on activation after hydration.
+// fixtures' data-grid landing has a bleed example first, then the showcase), picked from small
+// name-only chips, one example iframe at a time, created on activation after hydration; and
+// "One class, one palette" (components/landing/palette-section.tsx), Fragiola UI's palette-maker,
+// which shares the page's one example iframe with it (live-slot.ts).
 
 // projects.json order; the example each fixture landing features
 const SLIDES: [string, string][] = [
@@ -43,11 +45,18 @@ test("right after the hero: a tab per project, in projects.json order, the first
         .getByRole("tablist", { name: "Projects" })
         .getByRole("tab");
     await expect(tabs).toHaveCount(SLIDES.length);
-    for (const [index, [slug]] of SLIDES.entries()) {
-        const project = PROJECTS.find((p) => p.project.slug === slug)?.project;
-        await expect(tabs.nth(index)).toContainText(project?.title ?? slug);
-        await expect(tabs.nth(index)).toContainText(project?.description ?? "");
+    // name-only chips: no description, no previous/next
+    await expect(tabs).toHaveText(
+        SLIDES.map(
+            ([slug]) =>
+                PROJECTS.find((p) => p.project.slug === slug)?.project.title ??
+                slug,
+        ),
+    );
+    for (const tab of await tabs.all()) {
+        expect((await tab.boundingBox())?.height).toBeLessThanOrEqual(36);
     }
+    await expect(live.getByRole("button", { name: /project$/ })).toHaveCount(0);
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 
     const slide = live.getByRole("tabpanel");
@@ -97,7 +106,42 @@ test("switching slides replaces the one iframe, at the same height, each derived
             "href",
             `/${slug}/examples/${id}/`,
         );
+        // the active project's description and links, above the preview
+        const project = PROJECTS.find((p) => p.project.slug === slug)?.project;
+        await expect(slide.getByTestId("live-description")).toHaveText(
+            project?.description ?? "",
+        );
+        const caption = await slide.getByTestId("live-caption").boundingBox();
+        const top = (await stage.boundingBox())?.y ?? 0;
+        expect(caption && caption.y + caption.height <= top).toBe(true);
     }
+});
+
+test("wider than the prose column; the chips wrap on a phone, no sideways scroll", async ({
+    page,
+}) => {
+    const live = await openCarousel(page);
+    const prose = await page
+        .getByTestId("landing-section")
+        .filter({ hasText: "The behaviour from us" })
+        .locator("p")
+        .first()
+        .boundingBox();
+    const box = await live.boundingBox();
+    expect(box?.width).toBeGreaterThan(61 * 16);
+    expect(box?.width).toBeGreaterThan(prose?.width ?? 0);
+
+    await page.setViewportSize({ width: 375, height: 800 });
+    const tabs = live.getByRole("tab");
+    const tops = await tabs.evaluateAll((items) =>
+        items.map((item) => Math.round(item.getBoundingClientRect().top)),
+    );
+    expect(new Set(tops).size).toBeGreaterThan(1);
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    ).toBe(true);
 });
 
 test("the landing's theme on the slide: dockable's showcase is terminal", async ({
@@ -133,15 +177,12 @@ test("keyboard: Tab reaches the picker, arrows, Home and End move, the embed is 
     await page.keyboard.press("End");
     await expect(tabs.last()).toHaveAttribute("aria-selected", "true");
 
-    // previous / next
-    await live.getByRole("button", { name: "Next project" }).click();
-    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
-    await live.getByRole("button", { name: "Previous project" }).click();
-    await expect(tabs.last()).toHaveAttribute("aria-selected", "true");
-    // the tab list scrolls sideways: the chosen tab is brought into view
-    await expect(tabs.last()).toBeInViewport({ ratio: 1 });
+    // every chip is in view: nothing to scroll to
+    for (const tab of await tabs.all()) {
+        await expect(tab).toBeInViewport({ ratio: 1 });
+    }
 
-    // from the selected tab, Tab goes on to the buttons, the slide's links, then the embed
+    // from the selected tab, Tab goes on to the slide's links, then the embed
     await tabs.last().focus();
     await expectReady(live);
     const iframe = live.locator("iframe");
@@ -168,17 +209,51 @@ test("RTL mirrors the arrows", async ({ page }) => {
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 });
 
-test("Fragiola UI's slide explains the palette demo: one class, no variants", async ({
+test("one class, one palette: ui's palette-maker after the preview, sharing its one iframe", async ({
     page,
 }) => {
+    const errors = collectErrors(page);
     const live = await openCarousel(page);
-    const note = live.getByTestId("palettes-note");
-    await expect(note).toBeVisible();
+    await expectReady(live);
+    const section = page.getByTestId("palette-section");
+    await expect(section).toHaveAttribute("data-example", "palette-maker");
+    const note = section.getByTestId("palettes-note");
     await expect(note).toContainText("One class, and the colour changes");
+    await expect(note).toContainText("my-palette-1");
     await expect(note).toContainText("No component has a colour variant");
-    await expect(note.locator("code")).toContainText('className="palette-');
-    await live.getByRole("tab", { name: /Dockable/ }).click();
+    await expect(note.locator("code").last()).toContainText(
+        'className="my-palette-1"',
+    );
+    await expect(
+        section.getByRole("link", { name: "Open in the gallery" }),
+    ).toHaveAttribute("href", "/ui/examples/palette-maker/");
+    // the carousel's slide no longer carries the note
     await expect(live.getByTestId("palettes-note")).toHaveCount(0);
+
+    // scrolled to: the palette runs, the preview pauses; never two frames
+    await section.scrollIntoViewIfNeeded();
+    await page.evaluate(() =>
+        document
+            .querySelector('[data-testid="palette-section"]')
+            ?.scrollIntoView({ block: "center" }),
+    );
+    const frame = await expectReady(section);
+    await expect(frame).toHaveAttribute("data-example-id", "palette-maker");
+    await expect(frames(page)).toHaveCount(1);
+    await expect(live.getByTestId("live-paused")).toBeVisible();
+
+    // a chip takes the frame back at once
+    await live.getByRole("tab").nth(1).click();
+    await expectReady(live);
+    await expect(frames(page)).toHaveCount(1);
+    await expect(section.getByTestId("live-paused")).toBeVisible();
+    // and "Run it here" gives it to the palette again, without a scroll (which would too)
+    await section
+        .getByRole("button", { name: "Run it here" })
+        .dispatchEvent("click");
+    await expectReady(section);
+    await expect(frames(page)).toHaveCount(1);
+    expect(errors).toEqual([]);
 });
 
 test("the framework is the site's choice", async ({ page }) => {

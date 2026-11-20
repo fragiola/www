@@ -12,6 +12,12 @@ describe("siteHref", () => {
         ["/", "/dockable/"],
         ["/create", "/dockable/create/"],
         ["/create/", "/dockable/create/"],
+        ["/ai", "/ai/docs/mcp/"],
+        ["/ai/", "/ai/docs/mcp/"],
+        [
+            "/ai#set-it-up-in-your-client",
+            "/ai/docs/mcp/#set-it-up-in-your-client",
+        ],
         ["/#what-it-ships", "/dockable/#what-it-ships"],
         ["#anchor", "#anchor"],
         ["https://github.com/fragiola", "https://github.com/fragiola"],
@@ -29,9 +35,22 @@ describe("parseLink refuses what is not base-free", () => {
         "/docs/x.mdx",
         "/r/cn.json",
         "/docs/x?tab=1",
+        "/ai/x",
+        "/ai/docs/mcp",
+        "/ai?x=1",
     ])("%s", (href) => {
         expect(parseLink(href).kind).toBe("invalid");
     });
+});
+
+test("/ai is the site's, the same for every project (v1.7)", () => {
+    expect(parseLink("/ai")).toEqual({ kind: "ai" });
+    expect(parseLink("/ai#x")).toEqual({ kind: "ai", hash: "x" });
+    expect(siteHref("ui", "/ai")).toBe(siteHref("dockable", "/ai"));
+    const typo = parseLink("/ai/x");
+    expect(typo.kind === "invalid" && typo.reason).toMatch(
+        /linked as \/ai.*nothing below it/,
+    );
 });
 
 test("isAppRoute: files leave the Next app", () => {

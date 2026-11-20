@@ -1,4 +1,4 @@
-# Site export contract, v1.6
+# Site export contract, v1.7
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.6, v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.7, v1.6, v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -157,10 +157,18 @@ Pages link **base-free**, as if the project were at the root:
 | `/examples/add-tabs` | `/<slug>/examples/add-tabs` (the gallery, §4) |
 | `/` | `/<slug>` (the landing) |
 | `/create` | `/<slug>/create` (the Create page, v1.6: only when `project.json` declares `create`, §5.5) |
+| `/ai` | `/ai/docs/mcp` (v1.7: the site's AI agents docs, the MCP server's setup first; the same for every project, never `/<slug>/ai`) |
 
 Relative file links (`../x.mdx`) are not allowed. `www` rewrites links and **fails the build on a
 link to a page, anchor or example that does not exist**, and on a `/create` link (which takes no
 anchor) from a project that declares no `create`.
+
+`/ai` (v1.7) is **reserved**: it is not the project's, it is the site's AI agents docs (the MCP
+server and the agent skills, written by `www`). It may take an anchor (`/ai#set-it-up-in-your-client`,
+a heading of the MCP page, which `www` owns and the export's checks do not read). Nothing below it
+is a link: `/ai/docs/mcp` or `/ai/x` fails the build, saying to write `/ai`. A landing's Hero
+should order its actions examples, then the agent (`/ai`), then the docs (a recommendation, not
+checked).
 
 ### 3.4 Vocabulary
 
@@ -213,6 +221,12 @@ hero, docs and examples; `www` owns the look of each piece, the same for every p
 
 `www` renders a footer on every page of a project: the project's title and description, its
 first sidebar section, and `repository`.
+
+`www` renders the **agent band** (v1.7) on every landing, once, right after its showcase
+`<Example>` (a top-level one), or right after the `<Hero>` when there is none: the same block for
+every project — the reader's coding agent, given the Fragiola MCP server and the agent skills,
+builds with the project; the docs come second. Two actions, "Set up the MCP server" and "Install
+the agent skills". A project does not write it (it is not in the vocabulary) and cannot move it.
 
 ### 3.6 Search and sharing
 
@@ -459,6 +473,8 @@ v1.6 adds: `project.json` `create`, when present, has a `title` of at most 60 ch
 `description` of 50–160 and a `framework` of `frameworks`; `embed/<framework>/create.html` exists
 and is `noindex`; a `/create` link only in a project that declares `create`.
 
+v1.7 adds: `/ai` (optionally with an anchor) is a valid link; anything below `/ai` is not.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -467,6 +483,17 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.7
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.6 export
+stays valid.
+
+- `/ai` (optionally `/ai#anchor`) is a reserved base-free link to the site's AI agents docs,
+  served at `/ai/docs/mcp/` for every project (§3.3); anything below it is a broken link.
+- `www` renders the agent band (the MCP server and the agent skills) on every landing, after its
+  showcase, else after its `<Hero>` (§3.5).
+- Recommended: a landing's Hero actions go examples, then the agent (`/ai`), then the docs (§3.3).
 
 ## Changes in v1.6
 

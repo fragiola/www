@@ -23,14 +23,15 @@ Do not "fix" these.
    refuses the fixtures (they live in `.sources-fixtures/`, built with `--fixtures`), an empty
    `.sources/`, and an export older than its checkout: re-sync instead of forcing it.
 2. **One module per rule.** Links are classified and rewritten only by `lib/contract/links.ts`
-   (the checks, the MDX components and the gallery all use it). Pages are read only by
+   (the checks, the MDX components and the gallery all use it), the reserved `/ai` link (v1.7, the
+   site's AI agents docs, `MCP_PATH`) too. Pages are read only by
    `lib/contract/mdx.ts` (a real MDX parse with positions, never regexes over the source).
 3. **A project's examples never run in the site's page.** Examples are the project's embed app in
    an `<iframe>` (§5): hidden until `fragiola:example:ready`, sized by `layout`/`height`/`resize`,
    themed by `?theme=` and the `theme` message, its `color-scheme` the example theme's. The
    iframe is created only after hydration (a frame loaded before hydration could say ready
    before anyone listens). Reset remounts it. The organization's landing holds at most one
-   example iframe: its carousel creates the active slide's frame and removes it on the next one. While the example has a modal overlay open, the
+   example iframe: its carousel creates the active slide's frame and removes it on the next one, and its palette section shares that one slot with it (`components/landing/live-slot.ts`): the section most in view, or the one the reader just picked, runs; the other shows its placeholder. While the example has a modal overlay open, the
    frame is **promoted** over the whole page (§5.4, `components/example-promotion.ts`): into the
    top layer with `popover="manual"`, never moved in the DOM (a moved iframe reloads), the page's
    scroll held still, the embed keeping its example in place. Still the embed's own document.
@@ -115,13 +116,14 @@ Do not "fix" these.
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.6)
+CONTRACT.md                 the site export contract (v1.7)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client; each
                             project's featured example (its landing's showcase <Example>, else its first,
-                            read by lib/contract/mdx.ts), never listed by hand
+                            read by lib/contract/mdx.ts), never listed by hand; the home page's palette
+                            example (ui's palette-maker, else palettes)
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
@@ -134,6 +136,8 @@ lib/package-managers.ts     the install command per package manager (pnpm, npm, 
 lib/storage.ts              every localStorage key (`@fragiola:…`) and the move of the older ones
 lib/brand.ts                the mark and the brand's colours, each a token of the vendored theme
 lib/feature-headings.ts     a remark step: a <Feature> outside a <Section> is an h2 (§3.4)
+lib/agent-band.ts           a remark step: the agent band on every landing, after its top-level showcase
+                            <Example>, else after its <Hero> (§3.5, v1.7)
 app/                        / (organization), /ai/docs (the AI agents docs, content/ai/; /ai/, /mcp/ and /skills/ redirect into them), /[project] (landing), /[project]/docs, /[project]/examples, /[project]/create (v1.6, only for a project declaring it), /api/search
                             + the metadata routes: robots.ts, sitemap.ts, manifest.ts (force-static),
                               og.png/ and [project]/og.png/ (the share images, next/og at build),
@@ -159,9 +163,13 @@ components/landing/         Hero, Action, Section, Features/Feature, Pills, the 
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
                             + live-preview: the organization landing's "See it live" carousel (APG tabbed
-                              carousel, no autoplay): each project's landing example, one iframe at a time,
-                              created on activation; Fragiola UI's slide explains its palettes
-                              (e2e/live-preview.spec.ts)
+                              carousel, no autoplay): small name-only chips, the active project's
+                              description and links above a wide stage, each project's landing example, one
+                              iframe at a time, created on activation (e2e/live-preview.spec.ts)
+                            + palette-section: "One class, one palette", Fragiola UI's palette-maker (else
+                              palettes, else no section: lib/projects.ts paletteExample) and the palette note
+                            + live-slot: the one example iframe the two share; live-placeholder: their placeholder
+                            + agent-band: the "build with your agent" band of every project landing (v1.7)
 components/framework-logo.tsx  the frameworks' marks (Simple Icons, CC0) in their brands' colours: the one file
                             tests/palette.test.ts exempts
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
@@ -169,12 +177,12 @@ components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/cont
 components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
                             current page as a filled pill, folding sections behind a guide line
 components/docs-page-header.tsx  a docs page's header: the section as an eyebrow, the title, the lead, the glow
-components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.6)
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.7), plus the site's AgentBand
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
 public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.6 export per project (fixtures/README.md)
+fixtures/<slug>/            a minimal v1.7 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```
