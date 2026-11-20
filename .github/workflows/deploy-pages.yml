@@ -26,6 +26,10 @@
 # A dispatch or the schedule runs only build and deploy: www's own code did not change (it was
 # tested on its push), and the build checks the real exports against the contract.
 #
+# checks and e2e run in Playwright's image (mcr.microsoft.com/playwright, --user 1001), whose tag
+# is the exact @playwright/test of package.json (tests/ci-workflow.test.ts): it ships Chromium and
+# its system packages, so no job installs a browser. build and deploy run on the runner.
+#
 # Caches: www's pnpm store (setup-node) for the test jobs, one store for www and the projects in
 # the build (keyed on every lockfile), and Next's .next/cache, one for the fixtures site and one
 # for the real one. None of them
@@ -63,6 +67,11 @@ jobs:
   checks:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # Playwright's image ships its browsers and their system packages; the tag is the exact
+    # @playwright/test of package.json (tests/ci-workflow.test.ts)
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
     timeout-minutes: 15
     env:
       # the whole job works on the fixtures: typecheck (fumadocs-mdx) reads them too
@@ -90,15 +99,10 @@ jobs:
           key: next-fixtures-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'styles/**', 'next.config.mjs', 'source.config.ts', 'fixtures/**') }}
           restore-keys: next-fixtures-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      # The suite runs Chromium's headless shell only. Its download and system packages go
-      # while the fixtures site builds.
+      # Chromium comes with the job's image: no browser install.
       - &build-fixtures
-        name: Build the fixtures site, install Chromium's headless shell
-        run: |
-          pnpm exec playwright install --with-deps --only-shell chromium > "$RUNNER_TEMP/playwright-install.log" 2>&1 &
-          browser=$!
-          pnpm e2e:build
-          wait "$browser" || { cat "$RUNNER_TEMP/playwright-install.log"; exit 1; }
+        name: Build the fixtures site
+        run: pnpm e2e:build
 
       - run: pnpm typecheck
 
@@ -118,6 +122,11 @@ jobs:
   e2e:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # Playwright's image ships its browsers and their system packages; the tag is the exact
+    # @playwright/test of package.json (tests/ci-workflow.test.ts)
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
     timeout-minutes: 15
     strategy:
       matrix:
