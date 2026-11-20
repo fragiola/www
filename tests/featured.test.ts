@@ -6,8 +6,8 @@ import { landingExample, scanPage } from "../lib/contract/mdx.ts";
 
 // The organization's landing ("See it live") features each project's landing example: its
 // showcase `<Example>`, else its first one, read by lib/contract/mdx.ts. Nothing is listed by hand,
-// so changing a landing changes the slide. The palette section shows Fragiola UI's palette-maker,
-// else its palettes, else nothing.
+// so changing a landing changes the slide. The palette section shows Fragiola UI's palettes,
+// else nothing.
 
 const ROOT = join(import.meta.dirname, "..");
 const FRONTMATTER =
@@ -96,7 +96,7 @@ describe("the carousel's slides, from the fixtures", () => {
         expect(slides.map((slide) => slide.project.slug)).not.toContain("dnd");
     });
 
-    test("the palette section: palette-maker, else palettes, else none", async () => {
+    test("the palette section: palettes, else none", async () => {
         const { paletteExample } = await import("../lib/projects.ts");
         const manifest = join(sources, "ui", "embed", "react", "manifest.json");
         const original = readFileSync(manifest, "utf-8");
@@ -108,16 +108,14 @@ describe("the carousel's slides, from the fixtures", () => {
                     `"id": "${to}"`,
                 ),
             );
-        // the fixture's ui exports palette-maker
-        const maker = paletteExample();
-        expect(maker?.project.slug).toBe("ui");
-        expect(maker?.id).toBe("palette-maker");
-        expect(maker?.gallery).toBe("/ui/examples/palette-maker/");
-        expect(Object.keys(maker?.variants ?? {})).toEqual(["react"]);
-        // before ui ships it: its palettes example
-        rename("palette-maker", "palettes");
-        expect(paletteExample()?.id).toBe("palettes");
-        // neither: no section
+        // the fixture's ui exports palettes
+        const palettes = paletteExample();
+        expect(palettes?.project.slug).toBe("ui");
+        expect(palettes?.id).toBe("palettes");
+        expect(palettes?.gallery).toBe("/ui/examples/palettes/");
+        expect(palettes?.variants.react?.height).toBe(360);
+        expect(Object.keys(palettes?.variants ?? {})).toEqual(["react"]);
+        // no palettes example: no section
         rename("palettes", "something-else");
         expect(paletteExample()).toBeUndefined();
         writeFileSync(manifest, original);

@@ -5,8 +5,8 @@ import { collectErrors, embed, expectReady, PROJECTS } from "./helpers";
 // carousel of every project's landing example (its showcase, else its first <Example>: the
 // fixtures' data-grid landing has a bleed example first, then the showcase), picked from small
 // name-only chips, one example iframe at a time, created on activation after hydration; and
-// "One class, one palette" (components/landing/palette-section.tsx), Fragiola UI's palette-maker,
-// which shares the page's one example iframe with it (live-slot.ts).
+// "One class, one palette" (components/landing/palette-section.tsx), Fragiola UI's palettes alone,
+// full width, which shares the page's one example iframe with it (live-slot.ts).
 
 // projects.json order; the example each fixture landing features
 const SLIDES: [string, string][] = [
@@ -209,26 +209,24 @@ test("RTL mirrors the arrows", async ({ page }) => {
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 });
 
-test("one class, one palette: ui's palette-maker after the preview, sharing its one iframe", async ({
+test("one class, one palette: ui's palettes alone after the preview, sharing its one iframe", async ({
     page,
 }) => {
     const errors = collectErrors(page);
     const live = await openCarousel(page);
     await expectReady(live);
     const section = page.getByTestId("palette-section");
-    await expect(section).toHaveAttribute("data-example", "palette-maker");
-    const note = section.getByTestId("palettes-note");
-    await expect(note).toContainText("One class, and the colour changes");
-    await expect(note).toContainText("my-palette-1");
-    await expect(note).toContainText("No component has a colour variant");
-    await expect(note.locator("code").last()).toContainText(
-        'className="my-palette-1"',
-    );
-    await expect(
-        section.getByRole("link", { name: "Open in the gallery" }),
-    ).toHaveAttribute("href", "/ui/examples/palette-maker/");
-    // the carousel's slide no longer carries the note
-    await expect(live.getByTestId("palettes-note")).toHaveCount(0);
+    await expect(section).toHaveAttribute("data-example", "palettes");
+    // the demo alone: no aside beside it, the stage as wide as the section, at the meta's height
+    await expect(page.getByTestId("palettes-note")).toHaveCount(0);
+    await expect(section.locator("aside")).toHaveCount(0);
+    const stage = section.getByTestId("palette-stage");
+    const [sectionBox, stageBox] = await Promise.all([
+        section.boundingBox(),
+        stage.boundingBox(),
+    ]);
+    expect(stageBox?.width).toBeCloseTo(sectionBox?.width ?? 0, 0);
+    expect(stageBox?.height).toBeCloseTo(360, 0);
 
     // scrolled to: the palette runs, the preview pauses; never two frames
     await section.scrollIntoViewIfNeeded();
@@ -238,7 +236,7 @@ test("one class, one palette: ui's palette-maker after the preview, sharing its 
             ?.scrollIntoView({ block: "center" }),
     );
     const frame = await expectReady(section);
-    await expect(frame).toHaveAttribute("data-example-id", "palette-maker");
+    await expect(frame).toHaveAttribute("data-example-id", "palettes");
     await expect(frames(page)).toHaveCount(1);
     await expect(live.getByTestId("live-paused")).toBeVisible();
 
