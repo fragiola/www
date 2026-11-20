@@ -133,11 +133,13 @@ test("the organization's landing: what Fragiola is first, the idea, your stack, 
         "React · Vue",
     );
 
-    // the idea, your stack, Fragiola UI, the projects, then the MCP server for AI agents
+    // every project live, the idea, your stack, Fragiola UI, the projects, then the MCP server
+    // for AI agents
     const titles = page
         .getByTestId("landing-section")
         .getByRole("heading", { level: 2 });
     await expect(titles).toHaveText([
+        "See it live",
         "The behaviour from us, the look from wherever you like",
         "Paint it with what you already use",
         UI.project.title,
