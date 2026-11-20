@@ -82,6 +82,8 @@ export function useLiveSection(
             if (sections.size === 0) {
                 window.removeEventListener("scroll", schedule);
                 window.removeEventListener("resize", schedule);
+                // the page is left: back on it, "See it live" runs first again
+                owner = "preview";
             }
         };
     }, [ref, id]);
