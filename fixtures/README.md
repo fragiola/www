@@ -1,6 +1,6 @@
 # Fixtures
 
-One minimal site export per project of `projects.json`, following the contract v1.6
+One minimal site export per project of `projects.json`, following the contract v1.7
 (`../CONTRACT.md`). `pnpm sources:fixtures` copies them into `.sources-fixtures/` (never
 `.sources/`, which holds the projects' exports), and the tests build the site from them
 (`pnpm e2e:build`), so the suite needs no project repo and runs against content it controls.
@@ -22,6 +22,10 @@ stand-in Create page (its own header linking to the docs, a main area that scrol
 `ready` with id `create`, and the `host` and `theme` it receives recorded on its root for the
 tests); its landing's `Hero` has a `/create` action. No other fixture declares one, so both cases
 are built.
+
+For v1.7 dockable's landing `Hero` orders its actions examples, then the agent (`/ai`, the site's
+AI agents docs), then the docs; every landing gets the agent band (after dockable's and
+data-grid's showcase, after the others' `Hero`).
 
 For v1.5 every library lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.
