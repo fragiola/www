@@ -31,7 +31,7 @@ Do not "fix" these.
    themed by `?theme=` and the `theme` message, its `color-scheme` the example theme's. The
    iframe is created only after hydration (a frame loaded before hydration could say ready
    before anyone listens). Reset remounts it. The organization's landing holds at most one
-   example iframe: its carousel creates the active slide's frame and removes it on the next one. While the example has a modal overlay open, the
+   example iframe: its carousel creates the active slide's frame and removes it on the next one, and its palette section shares that one slot with it (`components/landing/live-slot.ts`): the section most in view, or the one the reader just picked, runs; the other shows its placeholder. While the example has a modal overlay open, the
    frame is **promoted** over the whole page (§5.4, `components/example-promotion.ts`): into the
    top layer with `popover="manual"`, never moved in the DOM (a moved iframe reloads), the page's
    scroll held still, the embed keeping its example in place. Still the embed's own document.
@@ -122,7 +122,8 @@ lib/contract/               types, links (§3.3), the MDX scan, the sidebar icon
                             (§8); Node-free except validate.ts
 lib/projects.ts             build-time reads of .sources/ (server only), the shapes sent to the client; each
                             project's featured example (its landing's showcase <Example>, else its first,
-                            read by lib/contract/mdx.ts), never listed by hand
+                            read by lib/contract/mdx.ts), never listed by hand; the home page's palette
+                            example (ui's palette-maker, else palettes)
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
@@ -162,14 +163,16 @@ components/landing/         Hero, Action, Section, Features/Feature, Pills, the 
                             + hero-scene: the organization landing's WebGL scene (three, on / only,
                               loaded after hydration; e2e/scene.spec.ts, scene-no-webgl.spec.ts)
                             + live-preview: the organization landing's "See it live" carousel (APG tabbed
-                              carousel, no autoplay): each project's landing example, one iframe at a time,
-                              created on activation; Fragiola UI's slide explains its palettes
-                              (e2e/live-preview.spec.ts)
+                              carousel, no autoplay): small name-only chips, the active project's
+                              description and links above a wide stage, each project's landing example, one
+                              iframe at a time, created on activation (e2e/live-preview.spec.ts)
+                            + palette-section: "One class, one palette", Fragiola UI's palette-maker (else
+                              palettes, else no section: lib/projects.ts paletteExample) and the palette note
+                            + live-slot: the one example iframe the two share; live-placeholder: their placeholder
+                            + agent-band: the "build with your agent" band of every project landing (v1.7)
 components/framework-logo.tsx  the frameworks' marks (Simple Icons, CC0) in their brands' colours: the one file
                             tests/palette.test.ts exempts
 components/project-footer.tsx the project footer on every landing and docs page (§3.5)
-components/landing/agent-band.tsx  the agent band (§3.5, v1.7): the same "build with your agent" block on
-                            every project landing (the MCP server first, the agent skills), never a project's
 components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/contract/icons.ts
 components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
                             current page as a filled pill, folding sections behind a guide line

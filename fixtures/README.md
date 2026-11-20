@@ -26,6 +26,9 @@ are built.
 For v1.7 dockable's landing `Hero` orders its actions examples, then the agent (`/ai`, the site's
 AI agents docs), then the docs; every landing gets the agent band (after dockable's and
 data-grid's showcase, after the others' `Hero`).
+ui exports a stand-in `palette-maker` example (React only), so the organization's landing builds
+its "One class, one palette" section; the tests cover its fallbacks (`palettes`, then none) on a
+copy (`tests/featured.test.ts`).
 
 For v1.5 every library lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.
