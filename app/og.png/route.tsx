@@ -11,6 +11,6 @@ export function GET() {
     return shareImage({
         title: SITE_NAME,
         description:
-            "Headless React components, and a design system when you want one.",
+            "Headless components, and a design system when you want one.",
     });
 }

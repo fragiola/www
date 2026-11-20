@@ -44,6 +44,15 @@ export const metadata: Metadata = pageMetadata({
     path: "/",
 });
 
+/** "React, Vue and Angular": every framework some project has an adapter for, in first-seen order. */
+function frameworksToday(projects: Project[]): string {
+    const names = [
+        ...new Set(projects.flatMap((project) => project.frameworks)),
+    ].map(frameworkName);
+    if (names.length < 2) return names.join("");
+    return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
 function ProjectCard({ project }: { project: Project }) {
     const examples = firstExampleUrl(project);
     return (
@@ -99,6 +108,7 @@ function ProjectCard({ project }: { project: Project }) {
 export default function Home() {
     const projects = getProjects();
     const ui = getProject("ui");
+    const frameworks = frameworksToday(projects);
     return (
         <>
             <JsonLd items={organizationJsonLd()} />
@@ -109,7 +119,7 @@ export default function Home() {
             >
                 <Hero
                     eyebrow="Headless · design system optional"
-                    title="Headless React components, and a design system when you want one."
+                    title="Headless components, and a design system when you want one."
                     description={POSITIONING}
                     background="grid"
                     backdrop={<HeroScene />}
@@ -153,6 +163,16 @@ export default function Home() {
                             nothing requires it.
                         </Feature>
                     </Features>
+                    {frameworks ? (
+                        <p
+                            data-testid="frameworks-line"
+                            className="text-palette-accent/85"
+                        >
+                            Every primitive lives in a framework-free core, and
+                            thin adapters bring it to each framework:{" "}
+                            {frameworks} today.
+                        </p>
+                    ) : null}
                 </Section>
 
                 <Section
