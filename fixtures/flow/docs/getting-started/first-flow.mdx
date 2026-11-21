@@ -1,0 +1,17 @@
+---
+title: Your first flow
+description: From a list of nodes and edges to a flow you pan, zoom and wire by pointer and keyboard, with a root, its nodes, its edges and handles.
+---
+
+## A root, its nodes and its edges
+
+```tsx title="pipeline.tsx"
+<Flow.Root defaultNodes={nodes} defaultEdges={edges} fitView>
+    <Flow.Edges />
+    <Flow.Nodes>{(node) => <Flow.Handle type="source" />}</Flow.Nodes>
+</Flow.Root>
+```
+
+<Example id="basic" />
+
+See [custom nodes](/examples/custom-nodes) and [the workflow builder](/examples/workflow-builder).

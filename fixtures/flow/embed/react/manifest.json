@@ -1,0 +1,75 @@
+{
+    "files": {
+        "basic/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Flow } from \"@fragiola/flow\";\n\n// Basic flow: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Flow.Root defaultNodes={[]} defaultEdges={[]}>\n            <Flow.Edges />\n            <Flow.Nodes>{() => <Flow.Handle type=\"source\" />}</Flow.Nodes>\n        </Flow.Root>\n    );\n}\n"
+        },
+        "custom-nodes/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Flow } from \"@fragiola/flow\";\n\n// Custom nodes: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Flow.Root defaultNodes={[]} defaultEdges={[]}>\n            <Flow.Edges />\n            <Flow.Nodes>{() => <Flow.Handle type=\"source\" />}</Flow.Nodes>\n        </Flow.Root>\n    );\n}\n"
+        },
+        "workflow-builder/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Flow } from \"@fragiola/flow\";\n\n// Workflow builder: a placeholder source of the www fixture.\nexport default function Example() {\n    return (\n        <Flow.Root defaultNodes={[]} defaultEdges={[]}>\n            <Flow.Edges />\n            <Flow.Nodes>{() => <Flow.Handle type=\"source\" />}</Flow.Nodes>\n        </Flow.Root>\n    );\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "basic",
+            "title": "Basic flow",
+            "description": "Four nodes joined by edges: pan the canvas, zoom with the wheel or a pinch, drag a node, and draw a new edge from a handle.",
+            "level": "basics",
+            "order": 1,
+            "features": [
+                "Flow.Root",
+                "Flow.Nodes",
+                "Flow.Edges",
+                "Flow.Handle",
+                "fitView"
+            ],
+            "docs": "/docs/getting-started/first-flow",
+            "layout": "fill",
+            "height": 420,
+            "files": ["basic/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/flow"]
+        },
+        {
+            "id": "custom-nodes",
+            "title": "Custom nodes",
+            "description": "Each node type renders its own content from its typed data: a colour picker, a number input and a preview, with handles where each needs them.",
+            "level": "basics",
+            "order": 2,
+            "features": [
+                "Types registry",
+                "node.set-data",
+                "several handles per side"
+            ],
+            "docs": "/docs/getting-started/first-flow",
+            "layout": "fill",
+            "height": 420,
+            "files": ["custom-nodes/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/flow"]
+        },
+        {
+            "id": "workflow-builder",
+            "title": "Workflow builder",
+            "description": "An automation editor: drag triggers, actions and conditions from the palette, wire them with typed ports the middleware validates, and configure the selected step.",
+            "level": "apps",
+            "order": 1,
+            "features": [
+                "typed custom nodes",
+                "middleware",
+                "minimap()",
+                "Flow.Controls"
+            ],
+            "docs": "/docs/getting-started/installation",
+            "layout": "fill",
+            "height": 600,
+            "files": ["workflow-builder/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/flow"]
+        }
+    ]
+}

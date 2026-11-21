@@ -30,7 +30,7 @@ ui exports a stand-in `palettes` example (React only), so the organization's lan
 "One class, one palette" section; the tests cover its absence (no section) on a copy
 (`tests/featured.test.ts`).
 
-For v1.5 every library lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
+For v1.5 every library but flow lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.
 
 For v1.4 ui's sidebar names icons (§3.1): every section has one, and the Installation page too,
@@ -52,6 +52,8 @@ landing has a `bleed` example first and a `showcase` one after it, so the organi
 `tree` was written the same way when it joined, with three frameworks (`react`, `vue`,
 `angular`), each an embed of the shared fixture app with the three examples.
 `splitter` was written the same way when it joined.
+`flow` was written the same way when it joined; like the real export, its `project.json` lists no
+`adapters`.
 
 What is **not** the real projects':
 

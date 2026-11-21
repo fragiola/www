@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Installation",
+                    "path": "getting-started/installation"
+                },
+                {
+                    "label": "Your first flow",
+                    "path": "getting-started/first-flow"
+                }
+            ]
+        },
+        {
+            "label": "Community",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/flow/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}

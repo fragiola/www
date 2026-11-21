@@ -1,0 +1,10 @@
+{
+    "contract": 1,
+    "slug": "flow",
+    "title": "Flow",
+    "description": "Headless node-based editors and diagrams: nodes, edges and handles on a pannable, zoomable canvas, driven by typed commands and styled by you.",
+    "frameworks": ["react"],
+    "defaultFramework": "react",
+    "repository": "https://github.com/fragiola/flow",
+    "keywords": ["node editor", "flow diagram", "headless ui"]
+}
