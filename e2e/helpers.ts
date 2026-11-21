@@ -46,6 +46,7 @@ export const GRID_LAYOUT = fixture("grid-layout");
 export const DND = fixture("dnd");
 export const TREE = fixture("tree");
 export const SPLITTER = fixture("splitter");
+export const FLOW = fixture("flow");
 /** Every project, in projects.json order. */
 export const PROJECTS = [
     UI,
@@ -55,6 +56,7 @@ export const PROJECTS = [
     DND,
     TREE,
     SPLITTER,
+    FLOW,
 ];
 
 /** Records the `fragiola:example:*` messages every window of the page receives. */

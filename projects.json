@@ -47,5 +47,12 @@
         "ref": "main",
         "localPath": "../splitter",
         "devUrl": "http://localhost:5184"
+    },
+    {
+        "slug": "flow",
+        "repo": "https://github.com/fragiola/flow.git",
+        "ref": "main",
+        "localPath": "../flow",
+        "devUrl": "http://localhost:5185"
     }
 ]

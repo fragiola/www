@@ -17,6 +17,7 @@ const SLIDES: [string, string][] = [
     ["dnd", "hello-dnd"],
     ["tree", "file-explorer"],
     ["splitter", "basic-horizontal"],
+    ["flow", "workflow-builder"],
 ];
 
 const carousel = (page: Page) => page.getByTestId("live-preview");
@@ -62,7 +63,7 @@ test("right after the hero: a tab per project, in projects.json order, the first
     const slide = live.getByRole("tabpanel");
     await expect(slide).toHaveCount(1);
     await expect(slide).toHaveAttribute("aria-roledescription", "slide");
-    await expect(slide).toHaveAttribute("aria-label", /^1 of 7: Fragiola UI$/);
+    await expect(slide).toHaveAttribute("aria-label", /^1 of 8: Fragiola UI$/);
     const frame = await expectReady(slide);
     await expect(frame).toHaveAttribute("data-example-id", "clickable");
     await expect(frames(page)).toHaveCount(1);

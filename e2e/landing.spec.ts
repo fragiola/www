@@ -296,6 +296,7 @@ test("the agent band on every landing, once, after the showcase (else the hero)"
         dnd: '[data-testid="hero"]',
         "grid-layout": '[data-testid="hero"]',
         splitter: '[data-testid="hero"]',
+        flow: '[data-testid="hero"]',
     };
     for (const [slug, previous] of Object.entries(after)) {
         await page.goto(`${slug}/`);
