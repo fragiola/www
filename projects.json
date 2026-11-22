@@ -54,5 +54,12 @@
         "ref": "main",
         "localPath": "../flow",
         "devUrl": "http://localhost:5185"
+    },
+    {
+        "slug": "primitives",
+        "repo": "https://github.com/fragiola/primitives.git",
+        "ref": "main",
+        "localPath": "../primitives",
+        "devUrl": "http://localhost:5191"
     }
 ]

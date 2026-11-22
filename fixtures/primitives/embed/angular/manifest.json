@@ -1,0 +1,70 @@
+{
+    "files": {
+        "dialog/index.ts": {
+            "lang": "ts",
+            "content": "import { Component } from \"@angular/core\";\nimport { DialogRoot } from \"@fragiola/primitives-angular\";\n\n// Edit profile: a placeholder source of the www fixture.\n@Component({\n    selector: \"app-example\",\n    imports: [DialogRoot],\n    template: `<div fragiolaDialogRoot></div>`,\n})\nexport class Example {}\n"
+        },
+        "tabs/index.ts": {
+            "lang": "ts",
+            "content": "import { Component } from \"@angular/core\";\nimport { TabsRoot } from \"@fragiola/primitives-angular\";\n\n// Tabs: a placeholder source of the www fixture.\n@Component({\n    selector: \"app-example\",\n    imports: [TabsRoot],\n    template: `<div fragiolaTabsRoot></div>`,\n})\nexport class Example {}\n"
+        },
+        "select/index.ts": {
+            "lang": "ts",
+            "content": "import { Component } from \"@angular/core\";\nimport { SelectRoot } from \"@fragiola/primitives-angular\";\n\n// Select: a placeholder source of the www fixture.\n@Component({\n    selector: \"app-example\",\n    imports: [SelectRoot],\n    template: `<div fragiolaSelectRoot></div>`,\n})\nexport class Example {}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "dialog",
+            "title": "Edit profile",
+            "description": "A modal dialog with a form: focus moves into it, Tab stays inside, Escape or Close closes it and focus returns to the trigger.",
+            "level": "overlays",
+            "order": 1,
+            "features": [
+                "Dialog.Root",
+                "Dialog.Trigger",
+                "Dialog.Popup",
+                "Dialog.Close"
+            ],
+            "docs": "/docs/getting-started/first-component",
+            "layout": "fill",
+            "height": 360,
+            "files": ["dialog/index.ts"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-angular"]
+        },
+        {
+            "id": "tabs",
+            "title": "Tabs",
+            "description": "Tabs with a roving tab stop: the arrows move between tabs, Home and End reach the ends, and each tab shows its panel.",
+            "level": "navigation",
+            "order": 1,
+            "features": ["Tabs.Root", "Tabs.List", "Tabs.Tab", "Tabs.Panel"],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 320,
+            "files": ["tabs/index.ts"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-angular"]
+        },
+        {
+            "id": "select",
+            "title": "Select",
+            "description": "A select that opens on click or the keyboard, types ahead while closed, and returns focus to its trigger.",
+            "level": "forms",
+            "order": 1,
+            "features": [
+                "Select.Root",
+                "Select.Trigger",
+                "Select.Popup",
+                "Select.Item"
+            ],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 380,
+            "files": ["select/index.ts"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-angular"]
+        }
+    ]
+}
