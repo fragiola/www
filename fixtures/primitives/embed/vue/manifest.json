@@ -1,0 +1,70 @@
+{
+    "files": {
+        "dialog/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Dialog } from \"@fragiola/primitives-vue\";\n\n// Edit profile: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Dialog.Root />\n</template>\n"
+        },
+        "tabs/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Tabs } from \"@fragiola/primitives-vue\";\n\n// Tabs: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Tabs.Root />\n</template>\n"
+        },
+        "select/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Select } from \"@fragiola/primitives-vue\";\n\n// Select: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Select.Root />\n</template>\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "dialog",
+            "title": "Edit profile",
+            "description": "A modal dialog with a form: focus moves into it, Tab stays inside, Escape or Close closes it and focus returns to the trigger.",
+            "level": "overlays",
+            "order": 1,
+            "features": [
+                "Dialog.Root",
+                "Dialog.Trigger",
+                "Dialog.Popup",
+                "Dialog.Close"
+            ],
+            "docs": "/docs/getting-started/first-component",
+            "layout": "fill",
+            "height": 360,
+            "files": ["dialog/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-vue"]
+        },
+        {
+            "id": "tabs",
+            "title": "Tabs",
+            "description": "Tabs with a roving tab stop: the arrows move between tabs, Home and End reach the ends, and each tab shows its panel.",
+            "level": "navigation",
+            "order": 1,
+            "features": ["Tabs.Root", "Tabs.List", "Tabs.Tab", "Tabs.Panel"],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 320,
+            "files": ["tabs/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-vue"]
+        },
+        {
+            "id": "select",
+            "title": "Select",
+            "description": "A select that opens on click or the keyboard, types ahead while closed, and returns focus to its trigger.",
+            "level": "forms",
+            "order": 1,
+            "features": [
+                "Select.Root",
+                "Select.Trigger",
+                "Select.Popup",
+                "Select.Item"
+            ],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 380,
+            "files": ["select/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/primitives-vue"]
+        }
+    ]
+}

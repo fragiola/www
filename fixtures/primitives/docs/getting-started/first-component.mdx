@@ -1,0 +1,22 @@
+---
+title: Your first component
+description: A styled dialog in each framework, part by part, from its root and trigger to its popup, title and close button.
+---
+
+## A dialog, part by part
+
+```tsx title="edit-profile.tsx"
+<Dialog.Root>
+    <Dialog.Trigger>Edit profile</Dialog.Trigger>
+    <Dialog.Portal>
+        <Dialog.Popup>
+            <Dialog.Title>Edit profile</Dialog.Title>
+            <Dialog.Close>Close</Dialog.Close>
+        </Dialog.Popup>
+    </Dialog.Portal>
+</Dialog.Root>
+```
+
+<Example id="dialog" />
+
+See [tabs](/examples/tabs) and [select](/examples/select).

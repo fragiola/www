@@ -1,0 +1,10 @@
+{
+    "contract": 1,
+    "slug": "primitives",
+    "title": "Primitives",
+    "description": "Headless, accessible UI primitives for React, Vue and Angular: the same Dialog and Tabs in every framework, with behaviour and ARIA, styled by you.",
+    "frameworks": ["react", "vue", "angular"],
+    "defaultFramework": "react",
+    "repository": "https://github.com/fragiola/primitives",
+    "keywords": ["headless ui", "accessibility", "wai-aria"]
+}

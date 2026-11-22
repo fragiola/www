@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Introduction",
+                    "path": "getting-started/introduction"
+                },
+                {
+                    "label": "Your first component",
+                    "path": "getting-started/first-component"
+                }
+            ]
+        },
+        {
+            "label": "Community",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/primitives/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}
