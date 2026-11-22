@@ -67,6 +67,7 @@ describe("the carousel's slides, from the fixtures", () => {
             ["tree", "file-explorer"],
             ["splitter", "basic-horizontal"],
             ["flow", "workflow-builder"],
+            ["primitives", "dialog"],
         ]);
         const dockable = slides[1];
         expect(dockable?.theme).toBe("terminal");

@@ -47,6 +47,7 @@ export const DND = fixture("dnd");
 export const TREE = fixture("tree");
 export const SPLITTER = fixture("splitter");
 export const FLOW = fixture("flow");
+export const PRIMITIVES = fixture("primitives");
 /** Every project, in projects.json order. */
 export const PROJECTS = [
     UI,
@@ -57,6 +58,7 @@ export const PROJECTS = [
     TREE,
     SPLITTER,
     FLOW,
+    PRIMITIVES,
 ];
 
 /** Records the `fragiola:example:*` messages every window of the page receives. */

@@ -210,10 +210,10 @@ test("small screens: Escape or a press outside closes the menu", async ({
     await page.mouse.click(below.x, below.y);
     await expect(site(page)).toBeHidden();
     await expect(page).toHaveURL(/\/ui\/$/);
-    // a tall phone: the open menu lists every project (seven, and growing) and ends near 850px,
-    // so the press goes to a landing whose example reaches further down (data-grid's), on the
+    // a tall phone: the open menu lists every project (nine, and growing) and ends near 1030px,
+    // past data-grid's bleed example, so the press goes to its showcase further down, on the
     // first frame showing below the menu
-    const tall = 1400;
+    const tall = 2000;
     await page.setViewportSize({ width: 375, height: tall });
     await page.goto("data-grid/");
     await button.click();
