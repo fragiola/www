@@ -24,13 +24,13 @@ tests); its landing's `Hero` has a `/create` action. No other fixture declares o
 are built.
 
 For v1.7 dockable's landing `Hero` orders its actions examples, then the agent (`/ai`, the site's
-AI agents docs), then the docs; every landing gets the agent band (after dockable's and
-data-grid's showcase, after the others' `Hero`).
+AI agents docs), then the docs; every landing gets the agent band (after dockable's, data-grid's
+and primitives' showcase, after the others' `Hero`).
 ui exports a stand-in `palettes` example (React only), so the organization's landing builds its
 "One class, one palette" section; the tests cover its absence (no section) on a copy
 (`tests/featured.test.ts`).
 
-For v1.5 every library but flow lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
+For v1.5 every library but flow and primitives lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.
 
 For v1.4 ui's sidebar names icons (§3.1): every section has one, and the Installation page too,
@@ -54,6 +54,11 @@ landing has a `bleed` example first and a `showcase` one after it, so the organi
 `splitter` was written the same way when it joined.
 `flow` was written the same way when it joined; like the real export, its `project.json` lists no
 `adapters`.
+`primitives` was written the same way when it joined, with three frameworks (`react`, `vue`,
+`angular`) and, like the real export, no `adapters` and five themes; its landing's showcase is
+the `dialog` example (theme `light`), an `"overlay": true` example like ui's `clickable`, so a
+modal example is promoted from a landing's showcase too (`e2e/promotion.spec.ts`); its `app.css`
+has the overlay's styles, like ui's.
 
 What is **not** the real projects':
 
