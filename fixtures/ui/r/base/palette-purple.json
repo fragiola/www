@@ -1,0 +1,15 @@
+{
+    "name": "palette-purple",
+    "type": "registry:file",
+    "title": "Purple palette",
+    "description": "Chromatic palette, hue ~300. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/purple.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/purple.css",
+            "content": "/* Purple — a chromatic palette, hue ~300. The colour IS the element. Both\n   themes declare all six roles. */\n\n:root[data-theme=\"light\"] .palette-purple {\n    --palette-base: oklch(0.55 0.2 300);\n    --palette-soft: oklch(0.94 0.06 300);\n    --palette-line: oklch(0.85 0.08 300);\n    --palette-contrast: oklch(1 0 0);\n    --palette-accent: oklch(0.45 0.18 300);\n    --palette-ring: var(--palette-accent);\n}\n\n:root[data-theme=\"dark\"] .palette-purple {\n    --palette-base: oklch(0.7 0.18 300);\n    --palette-soft: oklch(0.3 0.08 300);\n    --palette-line: oklch(0.4 0.1 300);\n    --palette-contrast: oklch(0.12 0.02 300);\n    --palette-accent: oklch(0.78 0.15 300);\n    --palette-ring: var(--palette-accent);\n}\n"
+        }
+    ]
+}

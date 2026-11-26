@@ -1,0 +1,15 @@
+{
+    "name": "palette-surface-rose",
+    "type": "registry:file",
+    "title": "Surface-rose palette",
+    "description": "Neutral surface with a rose focus ring (~345). Neutrals identical to surface; only --palette-ring is chromatic. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/surface-rose.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/surface-rose.css",
+            "content": "/* Surface-rose — a neutral surface whose focus ring carries a rose hue\n   (~345). The neutrals are byte-identical to surface.css; the ONLY role\n   that differs is --palette-ring, which is a literal chromatic value taken\n   verbatim from rose.css's base. A field's frame must read as a surface,\n   not as a coloured element (Rule 3: a control never carries its own\n   body), but its focus ring should state the theme's colour. This tier\n   exists for that: the need is real (theme a field's focus), the answer\n   is a new palette, not a seventh role. Both themes declare all six\n   roles. */\n\n:root[data-theme=\"light\"] .palette-surface-rose {\n    --palette-base: oklch(1 0 0);\n    --palette-soft: oklch(0.96 0.003 250);\n    --palette-line: oklch(0.86 0.004 250);\n    --palette-contrast: oklch(0.15 0.01 250);\n    --palette-accent: oklch(0.3 0.01 250);\n    --palette-ring: oklch(0.57 0.18 345);\n}\n\n:root[data-theme=\"dark\"] .palette-surface-rose {\n    --palette-base: oklch(0.15 0.01 250);\n    --palette-soft: oklch(0.26 0.012 250);\n    --palette-line: oklch(0.31 0.012 250);\n    --palette-contrast: oklch(0.95 0.005 250);\n    --palette-accent: oklch(0.88 0.005 250);\n    --palette-ring: oklch(0.72 0.16 345);\n}\n"
+        }
+    ]
+}

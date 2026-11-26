@@ -7,14 +7,15 @@
 //                               references, levels and themes, registry namespacing, and
 //                               v1.2's search and sharing rules (lengths, keywords, the
 //                               landing's title, headings, images, noindex embeds), v1.5's
-//                               adapters and v1.6's Create page
-//   validateSite(exports)       across exports: slugs, registry duplicates, the registry items
+//                               adapters, v1.6's Create page and v1.8's bases
+//   validateSite(exports)       across exports: slugs, registry duplicates (per base), the registry items
 //                               the examples name
 //
 // Node only (reads the file system); run by the scripts before `next build`.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { extraBases } from "./bases.ts";
 import { isSidebarIcon } from "./icons.ts";
 import { parseLink } from "./links.ts";
 import { type PageScan, type PropValue, scanPage, type Tag } from "./mdx.ts";
@@ -50,6 +51,8 @@ export interface ExportRead {
     manifests: Map<string, Manifest>;
     /** the registry items of r/index.json, by name */
     registry: Map<string, RegistryItem>;
+    /** v1.8: each non-default base's registry items (r/<base>/index.json), by base, then name */
+    baseRegistries: Map<string, Map<string, RegistryItem>>;
     problems: Problem[];
 }
 
@@ -216,6 +219,7 @@ interface Context {
     /** every example id, with the frameworks that have it */
     exampleIds: Map<string, string[]>;
     registry: Map<string, RegistryItem>;
+    baseRegistries: Map<string, Map<string, RegistryItem>>;
     pages: Map<string, PageScan>;
 }
 
@@ -264,6 +268,7 @@ function checkProject(
     if (info.keywords !== undefined) checkKeywords(project, problems);
     if (info.adapters !== undefined) checkAdapters(project, problems);
     if (info.create !== undefined) checkCreate(project, problems);
+    if (info.bases !== undefined) checkBases(project, problems);
     if (!isStringArray(info.frameworks) || info.frameworks.length === 0) {
         problems.push({
             file,
@@ -310,6 +315,78 @@ function checkProject(
         });
     }
     return info;
+}
+
+/** Names a base may not take: a folder its default base's embed app or registry already holds. */
+const RESERVED_BASE_NAMES = new Set(["assets", "index", "manifest"]);
+
+/**
+ * `bases` (v1.8, §2): 2–8 bases `{ name, title, default? }`, names lowercase kebab-case and
+ * unique, every title a string, exactly one `default: true`. Their folders are checked with the
+ * embeds and the registry (checkBaseEmbeds, checkBaseRegistries).
+ */
+function checkBases(project: JsonFile<ProjectInfo>, problems: Problem[]) {
+    const file = "project.json";
+    const line = project.lineOf("bases");
+    const { bases } = project.value;
+    if (!Array.isArray(bases) || bases.length < 2 || bases.length > 8) {
+        problems.push({
+            file,
+            line,
+            message:
+                "bases must list 2–8 bases: a project on one base declares none (§2)",
+        });
+        return;
+    }
+    const seen = new Set<string>();
+    for (const base of bases as unknown[]) {
+        const entry = (base ?? {}) as Record<string, unknown>;
+        const name = entry.name;
+        if (
+            !isString(name) ||
+            !/^[a-z][a-z0-9-]*$/.test(name) ||
+            RESERVED_BASE_NAMES.has(name)
+        ) {
+            problems.push({
+                file,
+                line: (isString(name) && project.lineOf("name", name)) || line,
+                message: `bases: ${JSON.stringify(name)} is not a base name: lowercase letters, digits and dashes, and not ${[...RESERVED_BASE_NAMES].map((n) => `"${n}"`).join(", ")} (§2)`,
+            });
+            continue;
+        }
+        if (seen.has(name)) {
+            problems.push({
+                file,
+                line: project.lineOf("name", name) || line,
+                message: `bases: "${name}" is listed twice (§2)`,
+            });
+        }
+        seen.add(name);
+        if (!isString(entry.title)) {
+            problems.push({
+                file,
+                line: project.lineOf("name", name) || line,
+                message: `bases: "${name}" needs a title (§2)`,
+            });
+        }
+        if (entry.default !== undefined && typeof entry.default !== "boolean") {
+            problems.push({
+                file,
+                line: project.lineOf("name", name) || line,
+                message: `bases: "${name}"'s default must be a boolean (§2)`,
+            });
+        }
+    }
+    const defaults = (bases as { default?: unknown }[]).filter(
+        (base) => base?.default === true,
+    ).length;
+    if (defaults !== 1) {
+        problems.push({
+            file,
+            line,
+            message: `bases: exactly one base is the default (got ${defaults}) (§2)`,
+        });
+    }
 }
 
 /**
@@ -694,6 +771,44 @@ function checkEmbed(context: Context, framework: string) {
     context.manifests.set(framework, value);
 }
 
+/**
+ * A non-default base's embed app (v1.8, §5.6): `embed/<framework>/<base>/`, built with its own
+ * base path, with a manifest of the same examples as the default base's (the code readers see is
+ * the same on every base; www reads the default base's manifest only).
+ */
+function checkBaseEmbeds(context: Context, framework: string) {
+    const { dir, slug, problems, project } = context;
+    const ids = new Set(
+        context.manifests.get(framework)?.examples.map((example) => example.id),
+    );
+    for (const base of extraBases(project)) {
+        const root = `embed/${framework}/${base.name}`;
+        const index = `${root}/index.html`;
+        if (!existsSync(join(dir, index))) {
+            problems.push({
+                file: index,
+                message: `is missing: project.json declares the base "${base.name}" (§5.6)`,
+            });
+            continue;
+        }
+        checkBase(context, index, `/${slug}/${root}/`);
+        const manifestFile = `${root}/manifest.json`;
+        const manifest = readJsonFile<Manifest>(dir, manifestFile, problems);
+        if (!manifest || !Array.isArray(manifest.value.examples)) continue;
+        const own = new Set(
+            manifest.value.examples.map((example) => example.id),
+        );
+        const missing = [...ids].filter((id) => !own.has(id));
+        const extra = [...own].filter((id) => !ids.has(id));
+        if (missing.length > 0 || extra.length > 0) {
+            problems.push({
+                file: manifestFile,
+                message: `the base "${base.name}" has other examples than the default base's${missing.length ? ` (missing: ${missing.join(", ")})` : ""}${extra.length ? ` (extra: ${extra.join(", ")})` : ""} (§5.6)`,
+            });
+        }
+    }
+}
+
 /** An absolute asset URL outside the base: the app was built for another base (§5). */
 function checkBase(
     context: Context,
@@ -825,6 +940,73 @@ function checkRegistry(context: Context) {
             }
         }
         context.registry.set(item.name, full.value);
+    }
+}
+
+/**
+ * A non-default base's registry (v1.8, §7): `r/<base>/index.json` and an item file per entry,
+ * the same item names as the default base's `r/` (readers switch base by URL, the names stay),
+ * every registryDependencies entry namespaced.
+ */
+function checkBaseRegistries(context: Context) {
+    const { dir, problems, project } = context;
+    if (!project.registry) return;
+    for (const base of extraBases(project)) {
+        const root = `r/${base.name}`;
+        const index = readJsonFile<RegistryIndex>(
+            dir,
+            `${root}/index.json`,
+            problems,
+        );
+        if (!index) continue;
+        if (!Array.isArray(index.value.items)) {
+            problems.push({
+                file: `${root}/index.json`,
+                message: "needs an items array",
+            });
+            continue;
+        }
+        const items = new Map<string, RegistryItem>();
+        for (const item of index.value.items) {
+            const file = `${root}/${item.name}.json`;
+            const full = isString(item.name)
+                ? readJsonFile<RegistryItem>(dir, file, problems)
+                : undefined;
+            if (!full) continue;
+            if (full.value.name !== item.name) {
+                problems.push({
+                    file,
+                    line: full.lineOf("name"),
+                    message: `name "${full.value.name}", but ${root}/index.json lists it as "${item.name}"`,
+                });
+            }
+            for (const dependency of full.value.registryDependencies ?? []) {
+                if (
+                    !/^@[a-z0-9][a-z0-9-]*\/[^/\s]+$/.test(dependency) &&
+                    !/^https?:\/\//.test(dependency)
+                ) {
+                    problems.push({
+                        file,
+                        line: full.lineOf("registryDependencies"),
+                        message: `registryDependencies "${dependency}" is bare: write "${project.registry.namespace}/${dependency}" or a full URL (§7)`,
+                    });
+                }
+            }
+            items.set(item.name, full.value);
+        }
+        const missing = [...context.registry.keys()].filter(
+            (name) => !items.has(name),
+        );
+        const extra = [...items.keys()].filter(
+            (name) => !context.registry.has(name),
+        );
+        if (missing.length > 0 || extra.length > 0) {
+            problems.push({
+                file: `${root}/index.json`,
+                message: `the base "${base.name}" has other items than r/index.json${missing.length ? ` (missing: ${missing.join(", ")})` : ""}${extra.length ? ` (extra: ${extra.join(", ")})` : ""}: every base ships the same names (§7)`,
+            });
+        }
+        context.baseRegistries.set(base.name, items);
     }
 }
 
@@ -1564,6 +1746,7 @@ export function validateExport(dir: string, slug: string): ExportRead {
         dir,
         manifests: new Map(),
         registry: new Map(),
+        baseRegistries: new Map(),
         problems,
     };
     if (!existsSync(dir)) {
@@ -1587,6 +1770,7 @@ export function validateExport(dir: string, slug: string): ExportRead {
         manifests: read.manifests,
         exampleIds: new Map(),
         registry: read.registry,
+        baseRegistries: read.baseRegistries,
         pages: new Map(),
     };
     const examplesFile = readJsonFile<ExamplesConfig>(
@@ -1597,7 +1781,10 @@ export function validateExport(dir: string, slug: string): ExportRead {
     if (examplesFile) {
         context.examples = checkExamplesConfig(examplesFile, problems);
     }
-    for (const framework of project.frameworks) checkEmbed(context, framework);
+    for (const framework of project.frameworks) {
+        checkEmbed(context, framework);
+        checkBaseEmbeds(context, framework);
+    }
     checkCreateFile(context);
     if (existsSync(join(dir, "embed"))) {
         for (const name of readdirSync(join(dir, "embed"))) {
@@ -1610,6 +1797,7 @@ export function validateExport(dir: string, slug: string): ExportRead {
         }
     }
     checkRegistry(context);
+    checkBaseRegistries(context);
 
     if (!existsSync(join(dir, "docs"))) {
         problems.push({ file: "docs", message: "is missing" });
@@ -1652,6 +1840,7 @@ export function validateDocsSpace(
         manifests: new Map(),
         exampleIds: new Map(),
         registry: new Map(),
+        baseRegistries: new Map(),
         pages: new Map(),
     };
     readPages(context);
@@ -1690,6 +1879,25 @@ export function validateSite(exports: ExportRead[]): SiteProblem[] {
                 });
             } else {
                 owners.set(name, read);
+            }
+        }
+    }
+    // v1.8: a base's tree, /r/<base>/, is shared by every project that has that base
+    const baseOwners = new Map<string, ExportRead>();
+    for (const read of exports) {
+        for (const [base, items] of read.baseRegistries) {
+            for (const name of items.keys()) {
+                const key = `${base}/${name}`;
+                const owner = baseOwners.get(key);
+                if (owner) {
+                    problems.push({
+                        slug: read.slug,
+                        file: `r/${key}.json`,
+                        message: `registry item "${name}" of the base "${base}" is exported by both "${owner.slug}" and "${read.slug}": /r/${base}/ is shared by every project (§7)`,
+                    });
+                } else {
+                    baseOwners.set(key, read);
+                }
             }
         }
     }

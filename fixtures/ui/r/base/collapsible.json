@@ -1,0 +1,16 @@
+{
+    "name": "collapsible",
+    "type": "registry:ui",
+    "title": "Collapsible",
+    "description": "A single expand/collapse section. Composes the disclosure family (trigger, panel, content). An accordion is a group of collapsibles with coordination; a collapsible is one section on its own. Both share the same trigger, panel and content — the zero-variant rule is preserved.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/disclosure"],
+    "files": [
+        {
+            "path": "registry/ui/collapsible.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/collapsible.tsx",
+            "content": "\"use client\";\n\nimport { Collapsible as CollapsiblePrimitive } from \"@base-ui/react/collapsible\";\nimport type * as React from \"react\";\nimport { disclosure } from \"@/components/families/disclosure\";\nimport { cn } from \"@/lib/cn\";\n\n// Collapsible — a single expand/collapse section. Composes the `disclosure`\n// family (trigger, panel, content). The only things this component declares\n// for itself are Root — the coordination point for a single section.\n//\n// An accordion is a group of collapsibles with coordination; a collapsible\n// is one section on its own. Both share the same trigger, panel and content\n// from the `disclosure` family — the zero-variant rule is preserved because\n// the only difference is coordination (behaviour, not style).\n//\n// The trigger is a `group` — put a chevron inside with\n// `transition-transform group-data-[panel-open]:rotate-180` and it rotates\n// when the panel opens. See the demo.\n\nfunction CollapsibleRoot({\n    className,\n    ...props\n}: CollapsiblePrimitive.Root.Props) {\n    return (\n        <CollapsiblePrimitive.Root\n            data-slot=\"collapsible\"\n            className={cn(\n                \"border border-palette-line rounded-md\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction CollapsibleTrigger({\n    className,\n    ...props\n}: CollapsiblePrimitive.Trigger.Props) {\n    return (\n        <CollapsiblePrimitive.Trigger\n            data-slot=\"collapsible-trigger\"\n            className={cn(disclosure.trigger(), className as string)}\n            {...props}\n        />\n    );\n}\n\nfunction CollapsiblePanel({\n    className,\n    ...props\n}: CollapsiblePrimitive.Panel.Props) {\n    return (\n        <CollapsiblePrimitive.Panel\n            data-slot=\"collapsible-panel\"\n            className={cn(disclosure.panel(), className as string)}\n            {...props}\n        />\n    );\n}\n\nfunction CollapsibleContent({\n    className,\n    ...props\n}: React.ComponentProps<\"div\">) {\n    return (\n        <div\n            data-slot=\"collapsible-content\"\n            className={cn(disclosure.content(), className as string)}\n            {...props}\n        />\n    );\n}\n\nexport const Collapsible = {\n    Root: CollapsibleRoot,\n    Trigger: CollapsibleTrigger,\n    Panel: CollapsiblePanel,\n    Content: CollapsibleContent,\n};\n"
+        }
+    ]
+}

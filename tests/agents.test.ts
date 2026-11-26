@@ -189,6 +189,33 @@ describe("the agent index", () => {
             componentsJson: {
                 "@fragiola": { url: "https://fragiola.com/r/{name}.json" },
             },
+            // v1.8: ui's fixture declares two bases, the default first
+            bases: [
+                {
+                    name: "primitives",
+                    title: "Fragiola Primitives",
+                    default: true,
+                    index: "/r/index.json",
+                    item: "/r/{name}.json",
+                    componentsJson: {
+                        "@fragiola": {
+                            url: "https://fragiola.com/r/{name}.json",
+                        },
+                    },
+                },
+                {
+                    name: "base",
+                    title: "Base UI",
+                    default: false,
+                    index: "/r/base/index.json",
+                    item: "/r/base/{name}.json",
+                    componentsJson: {
+                        "@fragiola": {
+                            url: "https://fragiola.com/r/base/{name}.json",
+                        },
+                    },
+                },
+            ],
         });
     });
 

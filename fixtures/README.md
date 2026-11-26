@@ -1,6 +1,6 @@
 # Fixtures
 
-One minimal site export per project of `projects.json`, following the contract v1.7
+One minimal site export per project of `projects.json`, following the contract v1.8
 (`../CONTRACT.md`). `pnpm sources:fixtures` copies them into `.sources-fixtures/` (never
 `.sources/`, which holds the projects' exports), and the tests build the site from them
 (`pnpm e2e:build`), so the suite needs no project repo and runs against content it controls.
@@ -22,6 +22,11 @@ stand-in Create page (its own header linking to the docs, a main area that scrol
 `ready` with id `create`, and the `host` and `theme` it receives recorded on its root for the
 tests); its landing's `Hero` has a `/create` action. No other fixture declares one, so both cases
 are built.
+
+For v1.8 ui's `project.json` declares two `bases`: Fragiola Primitives (the default, at `r/` and
+`embed/react/`) and Base UI, whose registry is a copy at `r/base/` and whose embed app is the same
+app at `embed/react/base/`, built for that base and marking its root `data-fixture-base="base"`
+for the tests. No other fixture declares bases, so both cases are built.
 
 For v1.7 dockable's landing `Hero` orders its actions examples, then the agent (`/ai`, the site's
 AI agents docs), then the docs; every landing gets the agent band (after dockable's, data-grid's

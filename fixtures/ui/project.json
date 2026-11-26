@@ -2,7 +2,7 @@
     "contract": 1,
     "slug": "ui",
     "title": "Fragiola UI",
-    "description": "A copy-paste component library built on Base UI and Tailwind v4. Six colour roles, any number of palettes.",
+    "description": "A copy-paste component library on two primitive bases and Tailwind v4. Six colour roles, any number of palettes.",
     "frameworks": ["react"],
     "defaultFramework": "react",
     "registry": {
@@ -21,5 +21,16 @@
         "title": "Create",
         "description": "Build a Fragiola UI theme: pick a colour and the five design axes, see the components live and copy the CSS.",
         "framework": "react"
-    }
+    },
+    "bases": [
+        {
+            "name": "primitives",
+            "title": "Fragiola Primitives",
+            "default": true
+        },
+        {
+            "name": "base",
+            "title": "Base UI"
+        }
+    ]
 }

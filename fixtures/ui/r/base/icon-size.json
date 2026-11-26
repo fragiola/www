@@ -1,0 +1,14 @@
+{
+    "name": "icon-size",
+    "type": "registry:ui",
+    "title": "iconSize table",
+    "description": "Icon sizes by context as Tailwind classes. The documented escape from 'which size does an icon use here'.",
+    "files": [
+        {
+            "path": "registry/atoms/icon/index.ts",
+            "type": "registry:ui",
+            "target": "~/components/atoms/icon/index.ts",
+            "content": "// Icon sizes by context.\n//\n// The problem this solves: in a real application you lose time hunting for\n// another icon of the same context just to find out which size to use there.\n// Size becomes a lookup, not archaeology.\n//\n// ─── IN MOST CASES YOU DO NOT NEED THIS ───────────────────────────────────────\n// Each context already defines the icon size via CSS, through\n// `[&_svg:not([class*='size-'])]:size-N`:\n//\n//   <Clickable.Button size=\"sm\"><XIcon /></Clickable.Button>   → size-3.5, alone\n//   <Field.Addon><SearchIcon /></Field.Addon>                   → size-4, alone\n//   <DropdownMenu.Item><CopyIcon /></DropdownMenu.Item>         → size-4, alone\n//\n// The `:not([class*='size-'])` makes the default apply only when nobody\n// specified a size — so passing a size class still works as an override.\n//\n// Use this object when you need the EXPLICIT size: a loose icon outside a\n// known context, or when you deliberately want to escape the default.\n//\n// ─── WHY A CLASS AND NOT A NUMBER ─────────────────────────────────────────────\n// `size-4` instead of `16`: a number requires inline `width`/`height` or a\n// prop that each icon library names differently, and it does not go through\n// tailwind-merge — so `cn(iconSize.addon, \"size-6\")` would not resolve the\n// conflict. As a class, the override works and the value still comes from\n// Tailwind's scale.\n\nexport const iconSize = {\n    /** Inside a field addon or inset. */\n    addon: \"size-4\",\n    /** Inside a `size=\"md\"` button (the default). */\n    button: \"size-4\",\n    /** Inside a `size=\"sm\"` button. */\n    buttonSm: \"size-3.5\",\n    /** Menu item, dropdown, select, combobox. */\n    menuItem: \"size-4\",\n    /** Check/radio indicator inside a menu item. */\n    indicator: \"size-4\",\n    /** A loose icon in a content block — empty state, alert. */\n    standalone: \"size-6\",\n} as const;\n\nexport type IconSize = keyof typeof iconSize;\n"
+        }
+    ]
+}

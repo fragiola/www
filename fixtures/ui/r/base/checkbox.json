@@ -1,0 +1,16 @@
+{
+    "name": "checkbox",
+    "type": "registry:ui",
+    "title": "Checkbox",
+    "description": "A checkable box. Uses the choice family's root (the box) and indicator (the check icon). Base UI's Checkbox provides checked/unchecked/indeterminate states, keyboard and aria.",
+    "dependencies": ["@base-ui/react", "lucide-react"],
+    "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+    "files": [
+        {
+            "path": "registry/ui/checkbox.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/checkbox.tsx",
+            "content": "\"use client\";\n\nimport { Checkbox as CheckboxPrimitive } from \"@base-ui/react/checkbox\";\nimport { CheckIcon } from \"lucide-react\";\nimport type * as React from \"react\";\nimport { cn } from \"@/lib/cn\";\n\n// Checkbox — a checkable box. Uses the choice family's root (the box) and\n// indicator (the check icon). Base UI's Checkbox provides the behaviour\n// (checked/unchecked/indeterminate states, keyboard, aria).\n//\n// The choice family root has size-4.5 (18px) and rounded-sm. The indicator\n// is a CheckIcon at size-3.5 (inherited from the family's svg rule).\n//\n// No size variant, no tone prop — palette handles tone via className.\n\nfunction CheckboxRoot({\n    className,\n    ...props\n}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {\n    return (\n        <CheckboxPrimitive.Root\n            data-slot=\"checkbox\"\n            className={cn(\n                \"field-control size-4 shrink-0 rounded-sm border\",\n                \"border-palette-line bg-palette-soft\",\n                \"data-checked:bg-palette-ring data-checked:border-palette-line data-checked:text-palette-base\",\n                \"field-focus:outline-solid field-focus:outline-1 field-focus:outline-offset-1 field-focus:outline-palette-ring\",\n                \"data-disabled:opacity-50 data-disabled:cursor-not-allowed\",\n                \"transition-colors\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction CheckboxIndicator({\n    className,\n    ...props\n}: React.ComponentProps<typeof CheckboxPrimitive.Indicator>) {\n    return (\n        <CheckboxPrimitive.Indicator\n            data-slot=\"checkbox-indicator\"\n            className={cn(\n                \"grid place-content-center text-current\",\n                className as string,\n            )}\n            {...props}\n        >\n            <CheckIcon className=\"size-3.5\" />\n        </CheckboxPrimitive.Indicator>\n    );\n}\n\nexport const Checkbox = {\n    Root: CheckboxRoot,\n    Indicator: CheckboxIndicator,\n};\n"
+        }
+    ]
+}

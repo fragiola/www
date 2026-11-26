@@ -444,7 +444,7 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
         const notAnId = (value: string) =>
             `dockable/project.json:11: adapters: ${value} is not an id: lowercase letters, digits and dashes, like "vanilla" or "react" (§2)`;
         expect(problems()).toEqual([
-            "ui/project.json:27: adapters must list 1–12 adapters (§2)",
+            "ui/project.json:38: adapters must list 1–12 adapters (§2)",
             notAnId('"React"'),
             'dockable/project.json:11: adapters: "vanilla" is listed twice (§2)',
             notAnId("3"),
@@ -455,7 +455,7 @@ describe("search and sharing (§2, §3.2, §3.4, §5.1, v1.2)", () => {
             project.adapters = ["vanilla", "svelte"];
         });
         expect(problems()).toContain(
-            'ui/project.json:27: adapters: "react" is in frameworks but not in adapters (§2)',
+            'ui/project.json:38: adapters: "react" is in frameworks but not in adapters (§2)',
         );
     });
 
@@ -880,7 +880,7 @@ describe("project, manifests and examples.json (§2, §4, §5)", () => {
             project.contract = 0;
         });
         expect(problems()).toEqual([
-            "dockable/project.json:2: contract 0: www implements contract 1 (v1.6)",
+            "dockable/project.json:2: contract 0: www implements contract 1 (v1.8)",
         ]);
     });
 
@@ -987,6 +987,131 @@ describe("registry (§7)", () => {
     });
 });
 
+describe("bases (v1.8, §2, §5.6, §7)", () => {
+    // ui's fixture declares two bases: Fragiola Primitives (the default, at r/ and
+    // embed/react/) and Base UI (r/base/, embed/react/base/)
+    type Bases = { name: unknown; title?: unknown; default?: unknown }[];
+    const editBases = (edit: (bases: Bases) => void) =>
+        editJson<{ bases: Bases }>("ui/project.json", (project) =>
+            edit(project.bases),
+        );
+
+    test("the fixtures' two bases are valid", () => {
+        expect(problems()).toEqual([]);
+    });
+
+    test("bases: shape, names, titles and exactly one default", () => {
+        editBases((bases) => {
+            bases.push(
+                { name: "Base", title: "Bad" },
+                { name: "base", title: "Again" },
+                { name: "assets", title: "Reserved" },
+                { name: "radix", default: true },
+            );
+        });
+        const found = problems();
+        expect(found).toEqual(
+            expect.arrayContaining([
+                expect.stringMatching(/bases: "Base" is not a base name/),
+                expect.stringMatching(/bases: "base" is listed twice/),
+                expect.stringMatching(/bases: "assets" is not a base name/),
+                expect.stringMatching(/bases: "radix" needs a title/),
+                expect.stringMatching(
+                    /bases: exactly one base is the default \(got 2\)/,
+                ),
+            ]),
+        );
+    });
+
+    test("a project on one base declares none", () => {
+        editBases((bases) => {
+            bases.splice(1);
+        });
+        expect(problems()).toContainEqual(
+            expect.stringMatching(/bases must list 2–8 bases/),
+        );
+    });
+
+    test("a missing base registry or embed app fails, naming the base", () => {
+        rmSync(path("ui/r/base"), { recursive: true });
+        rmSync(path("ui/embed/react/base"), { recursive: true });
+        const found = problems();
+        expect(found).toContainEqual(
+            expect.stringMatching(/^ui\/r\/base\/index\.json: /),
+        );
+        expect(found).toContain(
+            'ui/embed/react/base/index.html: is missing: project.json declares the base "base" (§5.6)',
+        );
+    });
+
+    test("a base with other items or examples than the default's", () => {
+        rmSync(path("ui/r/base/cn.json"));
+        editJson<{ items: { name: string }[] }>(
+            "ui/r/base/index.json",
+            (index) => {
+                index.items = index.items.filter((item) => item.name !== "cn");
+            },
+        );
+        editJson<{ examples: { id: string }[] }>(
+            "ui/embed/react/base/manifest.json",
+            (manifest) => {
+                manifest.examples = manifest.examples.slice(1);
+            },
+        );
+        const found = problems();
+        expect(found).toContainEqual(
+            expect.stringMatching(
+                /^ui\/r\/base\/index\.json: the base "base" has other items than r\/index\.json \(missing: cn\)/,
+            ),
+        );
+        expect(found).toContainEqual(
+            expect.stringMatching(
+                /^ui\/embed\/react\/base\/manifest\.json: the base "base" has other examples than the default base's \(missing: /,
+            ),
+        );
+    });
+
+    test("a base embed app built for another base path", () => {
+        const file = path("ui/embed/react/base/index.html");
+        writeFileSync(
+            file,
+            readFileSync(file, "utf-8").replaceAll(
+                "/ui/embed/react/base/",
+                "/ui/embed/react/",
+            ),
+        );
+        expect(problems()).toContainEqual(
+            expect.stringMatching(
+                /^ui\/embed\/react\/base\/index\.html:\d+: .* is outside \/ui\/embed\/react\/base\//,
+            ),
+        );
+    });
+
+    test("two projects exporting the same item on the same base fail the build", () => {
+        cpSync(path("ui/r"), path("dockable/r"), { recursive: true });
+        editJson<Record<string, unknown>>(
+            "dockable/project.json",
+            (project) => {
+                project.registry = { namespace: "@fragiola" };
+                project.bases = [
+                    {
+                        name: "primitives",
+                        title: "Fragiola Primitives",
+                        default: true,
+                    },
+                    { name: "base", title: "Base UI" },
+                ];
+            },
+        );
+        cpSync(path("ui/embed/react/base"), path("dockable/embed/react/base"), {
+            recursive: true,
+        });
+        expect(problems()).toContain(
+            'dockable/r/base/cn.json: registry item "cn" of the base "base" is exported by both "ui" and "dockable": /r/base/ is shared by every project (§7)',
+        );
+    });
+});
+
 test.each(["agents", "llms.txt", "ai", "mcp", "skills", "r", "brand"])(
     "the slug %s is reserved by the site",
     (slug) => {
@@ -995,6 +1120,7 @@ test.each(["agents", "llms.txt", "ai", "mcp", "skills", "r", "brand"])(
             dir,
             manifests: new Map(),
             registry: new Map(),
+            baseRegistries: new Map(),
             problems: [],
         };
         expect(

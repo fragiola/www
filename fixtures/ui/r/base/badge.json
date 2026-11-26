@@ -1,0 +1,16 @@
+{
+    "name": "badge",
+    "type": "registry:ui",
+    "title": "Badge",
+    "description": "A small status indicator. One axis (variant: soft / solid / outline), none of which is colour. Tone arrives as a palette class (palette-danger, palette-blue, etc.) — no variant=\"destructive\", no tone prop. The palette class overrides the six roles, so bg-palette-soft becomes the danger soft tint and text-palette-contrast becomes the danger contrast.",
+    "dependencies": ["tailwind-variants"],
+    "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+    "files": [
+        {
+            "path": "registry/atoms/badge/index.tsx",
+            "type": "registry:ui",
+            "target": "~/components/atoms/badge/index.tsx",
+            "content": "\"use client\";\n\nimport type * as React from \"react\";\nimport { tv, type VariantProps } from \"tailwind-variants\";\nimport { cn } from \"@/lib/cn\";\n\n// Badge — a small status indicator. One axis (variant: soft / solid /\n// outline), none of which is colour. Tone arrives as a palette class applied\n// from outside (`className=\"palette-danger\"`); there is no\n// `variant=\"destructive\"` and no `tone` prop. This is the same discipline as\n// Clickable.\n//\n// The badge is a COMPONENT, not a style family — the zero-variant rule does\n// not apply. What does apply is that the variant axis is a fill strategy,\n// not a colour.\n//\n// Text role follows the contract: `contrast` is content on a background YOU\n// painted with base (solid); `accent` is content on soft or on a foreign\n// background (soft, outline). Using contrast on soft made the light theme\n// unreadable — white text on a near-white tint.\n\nconst badge = tv({\n    base: `\n        inline-flex items-center rounded-full border px-2.5 py-0.5\n        text-xs font-medium transition-colors\n        [&_svg:not([class*='size-'])]:size-3\n    `,\n    variants: {\n        variant: {\n            soft: \"bg-palette-soft text-palette-accent border-transparent\",\n            solid: \"bg-palette-base text-palette-contrast border-transparent\",\n            outline: \"bg-transparent text-palette-accent border-palette-line\",\n        },\n    },\n    defaultVariants: {\n        variant: \"soft\",\n    },\n});\n\ntype BadgeVariants = VariantProps<typeof badge>;\n\ntype BadgeProps = React.HTMLAttributes<HTMLSpanElement> & BadgeVariants;\n\nfunction Badge({ className, variant, ...props }: BadgeProps) {\n    return (\n        <span\n            data-slot=\"badge\"\n            className={cn(badge({ variant }), className as string)}\n            {...props}\n        />\n    );\n}\n\nexport { Badge, badge };\n"
+        }
+    ]
+}
