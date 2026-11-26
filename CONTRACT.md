@@ -1,4 +1,4 @@
-# Site export contract, v1.7
+# Site export contract, v1.8
 
 `fragiola.com` is one static site built by this repo (`www`) from the exports of separate
 project repos (`ui`, `dockable`, and later `grid`, `scheduler`, …). A project never ships a docs
@@ -9,7 +9,7 @@ panel, the site theme.
 This file is the source of truth. A project states the version it implements
 (`project.json` → `contract`), and `www` rejects an export that does not match.
 
-Changes in v1.7, v1.6, v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
+Changes in v1.8, v1.7, v1.6, v1.5, v1.4, v1.3, v1.2 and v1.1, and from v0 (the POC), are listed at the end.
 
 ---
 
@@ -69,7 +69,11 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
         "title": "Create",
         "description": "One sentence, 50–160 characters.",
         "framework": "react"
-    }
+    },
+    "bases": [                                           // v1.8, optional: the primitive libraries (§5.6, §7)
+        { "name": "primitives", "title": "Fragiola Primitives", "default": true },
+        { "name": "base", "title": "Base UI" }
+    ]
 }
 ```
 
@@ -92,6 +96,17 @@ embed apps (§5) with hot reload, so `www` in dev can proxy `/<slug>/embed/**` t
   characters, as plain text) its meta description, and `framework`, one of `frameworks`, the
   embed app that holds it: `embed/<framework>/create.html` (§5.5). Absent, the project has no
   Create page, no `/<slug>/create/` route and no link to one.
+- `bases` (v1.8, optional): the **primitive libraries** the project's components are offered on,
+  as shadcn/ui offers Base UI, Radix and React Aria (Fragiola UI: Fragiola Primitives and Base
+  UI). 2–8 entries `{ name, title, default? }`: `name` is lowercase letters, digits and dashes
+  (not `assets`, `index` or `manifest`), unique, the folder of the base's registry and embeds;
+  `title` is what the base switcher shows; **exactly one** has `"default": true`. The default
+  base is exported where an export without bases puts everything (`r/`, `embed/<framework>/`);
+  every other base one folder down (`r/<name>/`, §7; `embed/<framework>/<name>/`, §5.6). `www`
+  shows a base switch on the project's docs (under the framework's) and in its gallery: the
+  choice is site-wide (`?base=<name>` in a shared link), remembered like the framework, and a
+  project that does not offer the chosen base shows its default one. Absent, the project has one
+  base and nothing to switch. A project on one base declares none.
 
 ## 3. Pages
 
@@ -436,6 +451,23 @@ inside itself, never the site's page.
 `www` keeps the frame hidden until `ready`, like an example's, and links to the page from the
 project's docs and header when `create` is declared.
 
+### 5.6 Bases (v1.8)
+
+A project that declares `bases` (§2) ships, for every framework and every **non-default** base,
+the same embed app built on that base at `embed/<framework>/<base>/`, with base
+`<base>/embed/<framework>/<base>/` (the default base stays at `embed/<framework>/`):
+
+- its `index.html` and every other HTML file follow §5.1 (`noindex`, the theme before the first
+  paint, `color-scheme`), and it speaks §5.2 and §5.4 like the default base's app;
+- its `manifest.json` lists the **same example ids** as the default base's. The code readers see
+  is the same on every base (§6: an example imports the project's modules through `#/…`, which
+  the base changes underneath), so `www` reads the code panel and the gallery from the default
+  base's manifest only;
+- the Create page (§5.5) is the default base's only.
+
+`www` loads `<base>/embed/<framework>/<base>/?id=<id>&theme=<name>` while a non-default base is
+chosen; switching base reloads the frame, as Reset does.
+
 ## 6. Code shown to readers
 
 Examples import a project's internal modules through **`#/…`** (`#/components/ui/select`,
@@ -453,6 +485,13 @@ setup command lists the registry items and packages the reader needs.
   item**.
 - `<InstallCommand item="x">` and the gallery's setup command render
   `npx shadcn@latest add <namespace>/<x>`.
+- v1.8, with `bases` (§2): the default base's items are `r/` as above; every other base exports
+  `r/<base>/index.json` and `r/<base>/<name>.json` with **the same item names** and the same
+  namespace (a reader switches base by pointing the namespace at another URL, the way shadcn's
+  `style` does). `www` serves them at `/r/<base>/`, merges each base's indexes, and fails the
+  build when two projects export the same item on the same base. The command does not change
+  with the base: on a non-default base `www` adds, under it, the `components.json` entry that
+  selects the base (`"<namespace>": { "url": "https://fragiola.com/r/<base>/{name}.json" }`).
 
 ## 8. What `www` validates
 
@@ -475,6 +514,12 @@ and is `noindex`; a `/create` link only in a project that declares `create`.
 
 v1.7 adds: `/ai` (optionally with an anchor) is a valid link; anything below `/ai` is not.
 
+v1.8 adds: `project.json` `bases`, when present, is 2–8 bases with valid, unique names, a title
+each and exactly one default; for every non-default base, `r/<base>/index.json` and its items
+exist and list the same names as `r/index.json`, and `embed/<framework>/<base>/index.html` exists,
+is built for its own base and has a `manifest.json` of the same example ids; no item is exported
+twice on the same base.
+
 ## 9. Delivery
 
 `projects.json` in `www` lists `{ slug, repo, ref, localPath?, devUrl? }`. The deploy workflow
@@ -483,6 +528,19 @@ schedule, on demand, and on `repository_dispatch` sent by a project's CI after a
 default branch.
 
 ---
+
+## Changes in v1.8
+
+Additive: the file format is unchanged, `project.json` keeps `"contract": 1`, and a v1.7 export
+stays valid.
+
+- `project.json` `bases` (optional): the primitive libraries a project's components are offered
+  on, exactly one the default (§2).
+- A non-default base's embed app at `embed/<framework>/<base>/`, with the same example ids
+  (§5.6), and its registry at `r/<base>/`, with the same item names (§7).
+- `www` shows a base switch on the docs and in the gallery (site-wide, `?base=`), loads the
+  chosen base's embeds, adds the base's `components.json` entry under install commands, serves
+  `/r/<base>/`, and lists the bases in the agent index (`registry.bases`).
 
 ## Changes in v1.7
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ProjectDocsLayout } from "@/components/project-docs-layout";
 import { ProjectFooter } from "@/components/project-footer";
+import { basesOf } from "@/lib/contract/bases";
 import { ORGANIZATION_URL, siteHeader } from "@/lib/layout.shared";
 import { getPageTree, type Project } from "@/lib/projects";
 
@@ -34,6 +35,7 @@ export function DocsSpaceLayout({
                     slug: project.slug,
                     frameworks: project.frameworks,
                     defaultFramework: project.defaultFramework,
+                    bases: basesOf(project),
                 }}
                 trees={trees}
             >

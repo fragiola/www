@@ -1,7 +1,8 @@
 "use client";
 
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import { Tooltip as TooltipPrimitive } from "@fragiola/primitives-react/tooltip";
 import { popup } from "@/components/families/popup";
+import { POSITIONER_DEFAULTS, type PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
 // Tooltip — a transient text label that appears on hover or focus. Composes
@@ -19,17 +20,23 @@ import { cn } from "@/lib/cn";
 // `render` on Trigger is the project's single polymorphism mechanism —
 // stitch it to a Clickable.Button, a Clickable.Link, or any element.
 
-function TooltipProvider({ ...props }: TooltipPrimitive.Provider.Props) {
+function TooltipProvider({
+    ...props
+}: PrimitiveProps<typeof TooltipPrimitive.Provider, "div">) {
     return (
         <TooltipPrimitive.Provider data-slot="tooltip-provider" {...props} />
     );
 }
 
-function TooltipRoot({ ...props }: TooltipPrimitive.Root.Props) {
+function TooltipRoot({
+    ...props
+}: PrimitiveProps<typeof TooltipPrimitive.Root, "div">) {
     return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
+function TooltipTrigger({
+    ...props
+}: PrimitiveProps<typeof TooltipPrimitive.Trigger, "button">) {
     return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
@@ -43,14 +50,15 @@ function TooltipContent({
     side,
     sideOffset = 4,
     ...props
-}: TooltipPrimitive.Popup.Props &
+}: PrimitiveProps<typeof TooltipPrimitive.Popup, "div"> &
     Pick<
-        TooltipPrimitive.Positioner.Props,
+        PrimitiveProps<typeof TooltipPrimitive.Positioner, "div">,
         "align" | "alignOffset" | "side" | "sideOffset"
     >) {
     return (
         <TooltipPrimitive.Portal>
             <TooltipPrimitive.Positioner
+                {...POSITIONER_DEFAULTS}
                 className="z-50 outline-none"
                 align={align}
                 alignOffset={alignOffset}

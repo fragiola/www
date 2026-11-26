@@ -37,7 +37,8 @@ Do not "fix" these.
    scroll held still, the embed keeping its example in place. Still the embed's own document.
    This is about examples only: the Fragiola UI components the site itself is built with (the
    header's navigation menu, the docs' project switcher, the gallery's sidebar) are copied from ui's registry into this
-   repo, the way a consumer installs them (`pnpm registry:copy`), and are the site's own code
+   repo, the way a consumer installs them (`pnpm registry:copy`, from ui's default base: Fragiola
+   Primitives, `@fragiola/primitives-react`), and are the site's own code
    from then on, like the theme `prepare:site` vendors. Never edit the copies: a fix belongs in
    `../ui`, then re-copy. Biome does not organize their imports (`biome.json`): the registry's
    aliases, resolved, reorder them.
@@ -59,7 +60,12 @@ Do not "fix" these.
    resizable (`components/resizable.tsx`, shadcn's over `react-resizable-panels`, in palette
    roles), its width remembered; below `md` it is the overlay it always was.
 7. **The framework choice is site-wide** (`localStorage["@fragiola:framework"]`, `?framework=` in
-   the gallery). An example missing in the chosen framework says so; it never disappears. Every
+   the gallery). An example missing in the chosen framework says so; it never disappears. **So is
+   the base choice** (v1.8, `components/base.tsx`: `@fragiola:base`, `?base=` on any page): a
+   project declaring `bases` gets a select under the framework's in the docs and a switch in the
+   gallery; its frames load `embed/<fw>/<base>/` (switching remounts them) and its install
+   commands gain the base's `components.json` entry; a project without the chosen base shows its
+   default one. Every
    key the site stores starts with `@fragiola:` and is named in `lib/storage.ts` only; the keys
    written before the prefix move on the first visit (an inline script in `<head>`, before
    next-themes reads `@fragiola:theme`).
@@ -102,7 +108,7 @@ Do not "fix" these.
 | `pnpm sources:sync [slug…]` | `pnpm install --frozen-lockfile` then `site:export` in each project, the projects side by side (`localPath`; in CI `$FRAGIOLA_PROJECTS_DIR/<slug>`, installed with `--install`) into `.sources/<slug>`, recording each checkout's commit and changes in `.sources/.origin.json`, then the contract checks |
 | `pnpm sources:fixtures` | fill `.sources-fixtures/` from `fixtures/` (what the tests build from; never `.sources/`) |
 | `pnpm prepare:site [--fixtures\|--dev] [--check]` | checks, then embed apps → `public/<slug>/embed/`, code → `public/<slug>/code/`, registries → `public/r/`, the agent index → `public/agents/` + `public/llms.txt` (`lib/agents.ts`), the theme from ui's registry → `styles/fragiola/`. By default it takes only fresh project exports (fails on an empty `.sources/`, the fixtures, or an export its checkout has moved on from) |
-| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`dropdown-menu`, `navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`), byte for byte; `--check` fails when a copy is behind the registry |
+| `pnpm registry:copy [--check]` | copy the Fragiola UI components the site is built with (`dropdown-menu`, `navigation-menu`, `sidebar` and their registry dependencies, the theme and the palettes left to `prepare:site`) from `.sources/ui/r` to their targets (`components/ui/`, `components/atoms/`, `components/families/`, `lib/cn.ts`, `lib/base.ts`; a `registry:lib` file without a target under `lib/`, as the shadcn CLI puts it), byte for byte; `--check` fails when a copy is behind the registry |
 | `pnpm brand:icons` | draw every icon from the mark in `lib/brand.ts` with Playwright's Chromium: `public/brand/fragiola-mark.svg`, `app/icon.svg`, `app/favicon.ico` (16/32/48), `app/apple-icon.png`, the manifest's icons and the 512 px logo in `public/brand/`; the same machine gives the same bytes. Run it when the mark or the palette changes (`tests/brand.test.ts` fails then) |
 | `pnpm build` | `prepare:site` + `next build` → `out/`, from the projects' exports only |
 | `pnpm dev [--port n]` | the site on :3000 with the projects live: `<localPath>/site/docs` mirrored and re-checked on every change, `site:dev` started for a project with `devUrl` and `/<slug>/embed/**` proxied to it (websockets too, so the examples hot-reload) |
@@ -116,7 +122,7 @@ Do not "fix" these.
 ## Repository layout
 
 ```
-CONTRACT.md                 the site export contract (v1.7)
+CONTRACT.md                 the site export contract (v1.8)
 projects.json               { slug, repo, ref, localPath?, devUrl? } per project
 lib/contract/               types, links (§3.3), the MDX scan, the sidebar icons (icons.ts, §3.1), the checks
                             (§8); Node-free except validate.ts
@@ -127,6 +133,7 @@ lib/projects.ts             build-time reads of .sources/ (server only), the sha
 lib/code.ts                 the code panel's files: URLs, fetch-once cache
 lib/layout.shared.tsx       what the site header shows (siteHeader), computed at build time
 lib/cn.ts                   Fragiola UI's cn, copied from ui's registry (pnpm registry:copy)
+lib/base.ts                 Fragiola UI's base adapter (Fragiola Primitives), copied likewise
 lib/agents.ts               the agent index: /agents/index.json (fragiola/cli docs/agent-index.md v1), a
                             Markdown copy of every docs page, /agents/overview.md, /llms.txt
 content/agents/overview.md  the ecosystem for AI agents, hand-written (served as /agents/overview.md)
@@ -157,6 +164,8 @@ components/create-frame.tsx  the Create page's frame (§5.5): the whole viewport
                             resize, no promotion; nothing of the site drawn over it, nothing scrolls the page
 components/example-promotion.ts  overlay promotion's geometry and the page's held scroll (§5.4)
 components/example-block.tsx  <Example> in a page: inline, bleed, card, showcase (with the adapters row above it)
+components/base.tsx         the base choice (v1.8, rule 7): useBase, the docs' select, the components.json note
+lib/contract/bases.ts       a project's bases and their folders (r/<base>/, embed/<fw>/<base>/), Node-free
 components/missing-framework.tsx  the message of an example the chosen framework does not have (rule 7)
 components/landing/         Hero, Action, Section, Features/Feature, Pills, the scroll reveal (§3.4), the adapters
                             row (project.json's adapters, v1.5: a mark each, a link to the docs in a framework)
@@ -177,12 +186,13 @@ components/docs-icon.tsx    the drawing of every sidebar icon, typed by lib/cont
 components/docs-sidebar.tsx the docs sidebar's rows (Fumadocs' sidebar parts, the site's inset look): icons, the
                             current page as a filled pill, folding sections behind a guide line
 components/docs-page-header.tsx  a docs page's header: the section as an eyebrow, the title, the lead, the glow
-components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.7), plus the site's AgentBand
+components/mdx.tsx          the v1.1 vocabulary (unchanged in v1.2 to v1.8), plus the site's AgentBand; under an
+                            <InstallCommand>, the chosen base's components.json entry (v1.8)
 components/json-ld.tsx      structured data in a page's static HTML, `<` escaped
 components/share-image.tsx  the share card drawn by next/og: the mark, a title, a line of description
 public/brand/               the mark (SVG, 512 px PNG) and the manifest's icons (pnpm brand:icons)
 scripts/                    sources-sync, sources-fixtures, prepare-site, registry-copy, brand-icons, build, dev, serve, measure
-fixtures/<slug>/            a minimal v1.7 export per project (fixtures/README.md)
+fixtures/<slug>/            a minimal v1.8 export per project (fixtures/README.md)
 tests/                      Vitest
 e2e/                        Playwright
 ```

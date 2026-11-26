@@ -1,10 +1,11 @@
 "use client";
 
-import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
+import { NavigationMenu as NavigationMenuPrimitive } from "@fragiola/primitives-react/navigation-menu";
 import { ChevronDownIcon } from "lucide-react";
-import type * as React from "react";
 import { Text } from "@/components/atoms/text";
+import { foundation } from "@/components/families/foundation";
 import { popup } from "@/components/families/popup";
+import { POSITIONER_DEFAULTS, type PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
 // NavigationMenu — the heaviest primitive in the batch. A strip of triggers
@@ -25,12 +26,12 @@ import { cn } from "@/lib/cn";
 // Content layout (grids of links) is the consumer's; we supply the parts,
 // not a layout.
 
-function NavigationMenuRoot<Value>({
+function NavigationMenuRoot({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Root<Value>>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Root, "nav">) {
     return (
-        <NavigationMenuPrimitive.Root<Value>
+        <NavigationMenuPrimitive.Root
             data-slot="navigation-menu"
             className={cn("flex flex-col gap-2", className as string)}
             {...props}
@@ -41,7 +42,7 @@ function NavigationMenuRoot<Value>({
 function NavigationMenuList({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.List>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.List, "div">) {
     return (
         <NavigationMenuPrimitive.List
             data-slot="navigation-menu-list"
@@ -57,7 +58,7 @@ function NavigationMenuList({
 function NavigationMenuItem({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Item>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Item, "div">) {
     return (
         <NavigationMenuPrimitive.Item
             data-slot="navigation-menu-item"
@@ -71,7 +72,7 @@ function NavigationMenuTrigger({
     className,
     children,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Trigger>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Trigger, "button">) {
     // The trigger: no typography of its own (the consumer's text is the
     // label). `highlighted` covers :focus. The open state is
     // `data-popup-open:bg-palette-soft` (a role). Focus ring is
@@ -81,17 +82,17 @@ function NavigationMenuTrigger({
         <NavigationMenuPrimitive.Trigger
             data-slot="navigation-menu-trigger"
             className={cn(
-                "relative cursor-pointer inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-palette-accent/85 outline-none select-none",
-                "highlighted:bg-palette-soft highlighted:text-palette-contrast",
+                "relative cursor-pointer inline-flex items-center gap-2 whitespace-nowrap rounded-control px-3 py-1.5 text-sm font-medium text-palette-accent/85 outline-none select-none",
+                foundation.hover(),
+                foundation.focus(),
                 "data-popup-open:bg-palette-soft data-popup-open:text-palette-contrast",
-                "focus-visible:outline-2 focus-visible:outline-palette-ring",
                 className as string,
             )}
             {...props}
         >
             {children}
             <ChevronDownIcon
-                className="size-4 text-palette-accent/85 transition-transform duration-200 data-popup-open:rotate-180"
+                className="size-icon text-palette-accent/85 transition-transform duration-200 data-popup-open:rotate-180"
                 data-slot="navigation-menu-icon"
             />
         </NavigationMenuPrimitive.Trigger>
@@ -101,7 +102,7 @@ function NavigationMenuTrigger({
 function NavigationMenuContent({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Content>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Content, "div">) {
     // Content is moved into the viewport by the primitive. The outgoing
     // content stays mounted (absolutely positioned over the incoming one)
     // until its exit transition finishes, so an exit effect on switch would
@@ -124,7 +125,7 @@ function NavigationMenuContent({
                 "data-starting-style:opacity-0 data-ending-style:opacity-0",
                 "data-starting-style:data-[activation-direction=left]:-translate-x-8",
                 "data-starting-style:data-[activation-direction=right]:translate-x-8",
-                "data-ending-style:data-activation-direction:hidden",
+                "data-ending-style:not-data-[activation-direction=none]:data-activation-direction:hidden",
                 className as string,
             )}
             {...props}
@@ -135,7 +136,7 @@ function NavigationMenuContent({
 function NavigationMenuLink({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Link, "a">) {
     // Renders Text.Link through render — the consumer stitches a router link
     // the same way as every other link in the project. The active state is a
     // role (data-[active]:text-palette-contrast), not a colour.
@@ -152,23 +153,31 @@ function NavigationMenuLink({
     );
 }
 
+// Fragiola Primitives' Portal renders no element of its own (Base UI's is a
+// div): the div here carries the portal's slot and its props, so
+// everything keyed on `navigation-menu-portal` (the embeds' overlay promotion, readers'
+// selectors) finds it on every base.
 function NavigationMenuPortal({
+    children,
+    container,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Portal>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Portal, "div">) {
     return (
-        <NavigationMenuPrimitive.Portal
-            data-slot="navigation-menu-portal"
-            {...props}
-        />
+        <NavigationMenuPrimitive.Portal container={container}>
+            <div data-slot="navigation-menu-portal" {...props}>
+                {children}
+            </div>
+        </NavigationMenuPrimitive.Portal>
     );
 }
 
 function NavigationMenuPositioner({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Positioner>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Positioner, "div">) {
     return (
         <NavigationMenuPrimitive.Positioner
+            {...POSITIONER_DEFAULTS}
             data-slot="navigation-menu-positioner"
             className={cn("z-50 outline-none", className as string)}
             {...props}
@@ -179,7 +188,7 @@ function NavigationMenuPositioner({
 function NavigationMenuPopup({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Popup>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Popup, "div">) {
     // The popup is `popup.content` — the same floating box dropdown-menu and
     // popover use. The viewport's size transition uses the primitive's
     // --popup-width / --popup-height CSS variables; no new popup member.
@@ -199,7 +208,7 @@ function NavigationMenuPopup({
 function NavigationMenuViewport({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Viewport, "div">) {
     // The viewport morphs between items of different sizes. The transition
     // uses the primitive's --popup-width / --popup-height CSS variables
     // (set on the popup). `transition-[width,height]` animates the morph;
@@ -219,7 +228,7 @@ function NavigationMenuViewport({
 function NavigationMenuArrow({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Arrow>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Arrow, "div">) {
     return (
         <NavigationMenuPrimitive.Arrow
             data-slot="navigation-menu-arrow"
@@ -239,14 +248,14 @@ function NavigationMenuArrow({
 function NavigationMenuBackdrop({
     className,
     ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Backdrop>) {
+}: PrimitiveProps<typeof NavigationMenuPrimitive.Backdrop, "div">) {
     return (
         <NavigationMenuPrimitive.Backdrop
             data-slot="navigation-menu-backdrop"
             className={cn(
                 "fixed inset-0 z-40 bg-scrim",
                 "data-open:animate-in data-open:fade-in-0",
-                "data-closed:animate-out data-closed:fade-out-0",
+                "data-closed:animate-out data-closed:fade-out-0 duration-150",
                 className as string,
             )}
             {...props}

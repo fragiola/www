@@ -1,0 +1,16 @@
+{
+    "name": "radio",
+    "type": "registry:ui",
+    "title": "Radio + RadioGroup",
+    "description": "A checkable circle. Uses the choice family's root (the circle, rounded-full) and indicator (a filled dot). RadioGroup provides the group behaviour and keyboard navigation.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/choice", "@fragiola/field"],
+    "files": [
+        {
+            "path": "registry/ui/radio.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/radio.tsx",
+            "content": "\"use client\";\n\nimport { Radio as RadioPrimitive } from \"@base-ui/react/radio\";\nimport { RadioGroup as RadioGroupPrimitive } from \"@base-ui/react/radio-group\";\nimport type * as React from \"react\";\nimport { cn } from \"@/lib/cn\";\n\n// Radio — a checkable circle. Uses the choice family's root (the circle)\n// and indicator (the dot). Base UI's Radio provides the behaviour.\n//\n// The choice family root has rounded-sm; radio overrides to rounded-full.\n// The indicator is a filled circle (size-2) instead of a check icon.\n//\n// RadioGroup is the root directly (not a namespace) — it renders a <div>\n// and provides shared state to the radio buttons inside.\n\nfunction RadioGroup({\n    className,\n    ...props\n}: React.ComponentProps<typeof RadioGroupPrimitive>) {\n    return (\n        <RadioGroupPrimitive\n            data-slot=\"radio-group\"\n            className={cn(\"flex flex-col gap-2\", className as string)}\n            {...props}\n        />\n    );\n}\n\nfunction RadioRoot({\n    className,\n    ...props\n}: React.ComponentProps<typeof RadioPrimitive.Root>) {\n    return (\n        <RadioPrimitive.Root\n            data-slot=\"radio\"\n            className={cn(\n                \"field-control size-4 shrink-0 rounded-full border\",\n                \"border-palette-line bg-palette-soft\",\n                \"data-checked:bg-palette-ring\",\n                \"field-focus:outline-solid field-focus:outline-1 field-focus:outline-offset-1 field-focus:outline-palette-ring\",\n                \"data-disabled:opacity-50 data-disabled:cursor-not-allowed\",\n                \"transition-colors\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction RadioIndicator({\n    className,\n    ...props\n}: React.ComponentProps<typeof RadioPrimitive.Indicator>) {\n    return (\n        <RadioPrimitive.Indicator\n            data-slot=\"radio-indicator\"\n            className={cn(\n                \"grid place-content-center w-full h-full\",\n                className as string,\n            )}\n            {...props}\n        >\n            <span className=\"size-2 rounded-full bg-palette-base\" />\n        </RadioPrimitive.Indicator>\n    );\n}\n\nexport { RadioGroup };\n\nexport const Radio = {\n    Root: RadioRoot,\n    Indicator: RadioIndicator,\n};\n"
+        }
+    ]
+}

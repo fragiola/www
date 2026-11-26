@@ -12,6 +12,7 @@ import {
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useId } from "react";
+import { BaseSelect } from "@/components/base";
 import { SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE } from "@/components/docs-sidebar";
 import { FrameworkSelect } from "@/components/framework";
 import {
@@ -237,6 +238,7 @@ export function DocsSidebarTop({
             {frameworks.length > 1 ? (
                 <FrameworkSelect frameworks={frameworks} />
             ) : null}
+            <BaseSelect />
         </div>
     );
 }

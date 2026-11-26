@@ -1,0 +1,16 @@
+{
+    "name": "context-menu",
+    "type": "registry:ui",
+    "title": "Context Menu",
+    "description": "A menu of actions triggered by right-click. Declares only Root, Trigger (with select-none — behavioural, not visual), Content and SubContent. Installing after dropdown-menu writes exactly one file — the shared families are already on disk.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/menu", "@fragiola/popup"],
+    "files": [
+        {
+            "path": "registry/ui/context-menu.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/context-menu.tsx",
+            "content": "\"use client\";\n\nimport { ContextMenu as ContextMenuPrimitive } from \"@base-ui/react/context-menu\";\nimport type * as React from \"react\";\nimport { createMenuParts } from \"@/components/families/menu/parts\";\nimport { cn } from \"@/lib/cn\";\n\nconst parts = createMenuParts(ContextMenuPrimitive);\n\nfunction ContextMenuRoot({ ...props }: ContextMenuPrimitive.Root.Props) {\n    return <ContextMenuPrimitive.Root data-slot=\"context-menu\" {...props} />;\n}\n\nfunction ContextMenuTrigger({\n    className,\n    ...props\n}: ContextMenuPrimitive.Trigger.Props) {\n    return (\n        <ContextMenuPrimitive.Trigger\n            data-slot=\"context-menu-trigger\"\n            // select-none is behavioural (stops text selection on right-click),\n            // not visual style — it does not come from a family.\n            className={cn(\"select-none\", className as string)}\n            {...props}\n        />\n    );\n}\n\nfunction ContextMenuContent({\n    align = \"start\",\n    alignOffset = 4,\n    side = \"right\",\n    sideOffset = 0,\n    ...props\n}: ContextMenuPrimitive.Popup.Props &\n    Pick<\n        ContextMenuPrimitive.Positioner.Props,\n        \"align\" | \"alignOffset\" | \"side\" | \"sideOffset\"\n    >) {\n    return (\n        <parts.Content\n            data-slot=\"context-menu-content\"\n            align={align}\n            alignOffset={alignOffset}\n            side={side}\n            sideOffset={sideOffset}\n            {...props}\n        />\n    );\n}\n\nfunction ContextMenuSubContent({\n    ...props\n}: React.ComponentProps<typeof ContextMenuContent>) {\n    return (\n        <ContextMenuContent\n            data-slot=\"context-menu-sub-content\"\n            side=\"right\"\n            {...props}\n        />\n    );\n}\n\nexport const ContextMenu = {\n    ...parts,\n    Root: ContextMenuRoot,\n    Trigger: ContextMenuTrigger,\n    Content: ContextMenuContent,\n    SubContent: ContextMenuSubContent,\n};\n"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "palette-surface",
+    "type": "registry:file",
+    "title": "Surface palette",
+    "description": "The neutral floor palette. Both themes, all six roles.",
+    "registryDependencies": ["@fragiola/theme"],
+    "files": [
+        {
+            "path": "registry/styles/palettes/surface.css",
+            "type": "registry:file",
+            "target": "~/styles/palettes/surface.css",
+            "content": "/* Surface — the floor of the app.\n   The neutral palette that everything else sits on. Both themes declare all\n   six roles; the palette class declares and paints nothing (architecture.md\n   §1) — components paint explicitly with bg-palette-base, text-palette-contrast,\n   and so on.\n\n   Contract (architecture.md §1):\n     --palette-base      the color of this palette — background or fill\n     --palette-soft      subtle background — alert, badge, field surface, hover\n     --palette-line      stroke\n     --palette-contrast  content on base/shade (a background YOU painted)\n     --palette-accent    content on a foreign background or on soft\n     --palette-ring      interaction highlight — focus, active. EVERY palette\n                         declares it; one that does not theme focus uses\n                         var(--palette-accent). */\n\n:root[data-theme=\"light\"] .palette-surface {\n    --palette-base: oklch(1 0 0);\n    --palette-soft: oklch(0.96 0.003 250);\n    --palette-line: oklch(0.86 0.004 250);\n    --palette-contrast: oklch(0.15 0.01 250);\n    --palette-accent: oklch(0.3 0.01 250);\n    --palette-ring: var(--palette-accent);\n}\n\n:root[data-theme=\"dark\"] .palette-surface {\n    --palette-base: oklch(0.15 0.01 250);\n    --palette-soft: oklch(0.26 0.012 250);\n    --palette-line: oklch(0.31 0.012 250);\n    --palette-contrast: oklch(0.95 0.005 250);\n    --palette-accent: oklch(0.88 0.005 250);\n    --palette-ring: var(--palette-accent);\n}\n"
+        }
+    ]
+}

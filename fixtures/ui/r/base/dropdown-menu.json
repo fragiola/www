@@ -1,0 +1,16 @@
+{
+    "name": "dropdown-menu",
+    "type": "registry:ui",
+    "title": "Dropdown Menu",
+    "description": "A menu of actions triggered by a button. Declares only Root, Trigger, Content and SubContent with its own positioning defaults — everything else comes from the menu parts factory. No tone/variant/destructive prop; tone arrives as a palette class.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/menu", "@fragiola/popup"],
+    "files": [
+        {
+            "path": "registry/ui/dropdown-menu.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/dropdown-menu.tsx",
+            "content": "\"use client\";\n\nimport { Menu as MenuPrimitive } from \"@base-ui/react/menu\";\nimport type * as React from \"react\";\nimport { createMenuParts } from \"@/components/families/menu/parts\";\nimport { cn } from \"@/lib/cn\";\n\nconst parts = createMenuParts(MenuPrimitive);\n\nfunction DropdownMenuRoot({ ...props }: MenuPrimitive.Root.Props) {\n    return <MenuPrimitive.Root data-slot=\"dropdown-menu\" {...props} />;\n}\n\nfunction DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {\n    return (\n        <MenuPrimitive.Trigger data-slot=\"dropdown-menu-trigger\" {...props} />\n    );\n}\n\nfunction DropdownMenuContent({\n    align = \"start\",\n    alignOffset = 0,\n    side = \"bottom\",\n    sideOffset = 4,\n    className,\n    ...props\n}: MenuPrimitive.Popup.Props &\n    Pick<\n        MenuPrimitive.Positioner.Props,\n        \"align\" | \"alignOffset\" | \"side\" | \"sideOffset\"\n    >) {\n    return (\n        <parts.Content\n            data-slot=\"dropdown-menu-content\"\n            align={align}\n            alignOffset={alignOffset}\n            side={side}\n            sideOffset={sideOffset}\n            className={cn(\n                \"max-h-(--available-height) origin-(--transform-origin) overflow-x-hidden overflow-y-auto outline-none data-closed:overflow-hidden\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nfunction DropdownMenuSubContent({\n    align = \"start\",\n    alignOffset = -3,\n    side = \"right\",\n    sideOffset = 0,\n    ...props\n}: React.ComponentProps<typeof DropdownMenuContent>) {\n    return (\n        <DropdownMenuContent\n            data-slot=\"dropdown-menu-sub-content\"\n            align={align}\n            alignOffset={alignOffset}\n            side={side}\n            sideOffset={sideOffset}\n            {...props}\n        />\n    );\n}\n\nexport const DropdownMenu = {\n    ...parts,\n    Root: DropdownMenuRoot,\n    Trigger: DropdownMenuTrigger,\n    Content: DropdownMenuContent,\n    SubContent: DropdownMenuSubContent,\n};\n"
+        }
+    ]
+}

@@ -1,9 +1,11 @@
 "use client";
 
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
-import { useRender } from "@base-ui/react/use-render";
+import { Button as ButtonPrimitive } from "@fragiola/primitives-react/button";
+import { useRender } from "@fragiola/primitives-react/render";
 import * as React from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+import { foundation } from "@/components/families/foundation";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
 // Clickable — the button surface. One component, three exports:
@@ -31,7 +33,7 @@ import { cn } from "@/lib/cn";
 // itself.
 //
 // Icon sizing follows the button's size automatically, with an escape hatch:
-// `[&_svg:not([class*='size-'])]:size-4`. The `:not()` is what lets an
+// `[&_svg:not([class*='size-'])]:size-icon`. The `:not()` is what lets an
 // explicit override win without `!important`.
 //
 // `disabled` is a `tv` variant driven from the DOM prop, so a `<button>` and a
@@ -44,22 +46,27 @@ import { cn } from "@/lib/cn";
 // `ExternalLink` is a separate export (not a prop) because it differs in
 // defaults and semantics (`target`, `rel`), not in appearance.
 
+// The focus ring, the outline fill (a control box, the same surface as a
+// field) and the soft hover are the foundation's (docs/visual-language.md),
+// so a button and a field beside it share their stroke, their ring and
+// their height.
 const clickable = tv({
-    base: `
-        inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md
-        text-sm font-medium transition-colors
-        focus-visible:outline-2 focus-visible:outline-palette-ring
-        [&_svg:not([class*='size-'])]:size-4
+    base: [
+        foundation.focus(),
+        `
+        inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control
+        text-sm font-medium transition-colors duration-150
+        [&_svg:not([class*='size-'])]:size-icon
     `,
+    ],
     variants: {
         variant: {
             solid: "bg-palette-base text-palette-contrast hover:bg-palette-base-hover",
-            ghost: "bg-transparent text-palette-accent hover:bg-palette-soft",
-            outline:
-                "border border-palette-line bg-transparent text-palette-accent hover:bg-palette-soft",
+            ghost: ["bg-transparent text-palette-accent", foundation.hover()],
+            outline: [foundation.box(), foundation.hover()],
             // `icon` is a fill strategy, not a shape: transparent, no border,
             // a soft hover. Pair with `shape="square"` for an icon button.
-            icon: "bg-transparent text-palette-accent hover:bg-palette-soft",
+            icon: ["bg-transparent text-palette-accent", foundation.hover()],
         },
         size: {
             xs: "h-4 px-2",
@@ -84,7 +91,7 @@ const clickable = tv({
 
 type ClickableVariants = VariantProps<typeof clickable>;
 
-type ButtonProps = React.ComponentProps<typeof ButtonPrimitive> &
+type ButtonProps = PrimitiveProps<typeof ButtonPrimitive, "button"> &
     ClickableVariants;
 
 function Button({

@@ -1,6 +1,6 @@
 // Menu parts factory — `createMenuParts(P)`.
 //
-// Takes a Base UI menu namespace (Menu or ContextMenu) and returns the styled
+// Takes a Fragiola Primitives menu namespace (Menu or ContextMenu) and returns the styled
 // React wrappers. This is the piece that lets dropdown-menu and context-menu
 // share wrappers without coupling to the wrong namespace.
 //
@@ -8,17 +8,18 @@
 //
 // Why a factory and not a direct import of `Menu`:
 // ContextMenu.Item === Menu.Item (14/14 parts identical at runtime). The
-// behavioural adaptation happens inside Base UI via ContextMenuRootContext.
+// behavioural adaptation happens inside the library's ContextMenu.
 // Importing Menu directly would work today, but the factory protects against
-// tomorrow: if Base UI ever diverges, each component inherits its own
+// tomorrow: if the library ever diverges, each component inherits its own
 // namespace's divergence instead of being silently pinned to Menu.
 
-import type { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import type { Menu as MenuPrimitive } from "@fragiola/primitives-react/menu";
 import { CheckIcon, ChevronRightIcon } from "lucide-react";
 import type * as React from "react";
+import { menu } from "@/components/families/menu";
+import { popup } from "@/components/families/popup";
+import { POSITIONER_DEFAULTS, type PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
-import { menu } from "../menu";
-import { popup } from "../popup";
 
 // Structural type of the namespace — only the parts the factory consumes.
 // Root and Trigger are deliberately excluded: they differ between Menu and
@@ -47,7 +48,7 @@ export function createMenuParts(P: MenuNamespace) {
         className,
         inset,
         ...props
-    }: MenuPrimitive.Item.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.Item, "div"> & { inset?: boolean }) {
         return (
             <P.Item
                 data-slot="menu-item"
@@ -62,7 +63,7 @@ export function createMenuParts(P: MenuNamespace) {
         className,
         inset,
         ...props
-    }: MenuPrimitive.Item.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.Item, "div"> & { inset?: boolean }) {
         return (
             <P.Item
                 data-slot="menu-item"
@@ -77,7 +78,9 @@ export function createMenuParts(P: MenuNamespace) {
         className,
         inset,
         ...props
-    }: MenuPrimitive.GroupLabel.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.GroupLabel, "div"> & {
+        inset?: boolean;
+    }) {
         return (
             <P.GroupLabel
                 data-slot="menu-label"
@@ -88,7 +91,10 @@ export function createMenuParts(P: MenuNamespace) {
         );
     }
 
-    function Separator({ className, ...props }: MenuPrimitive.Separator.Props) {
+    function Separator({
+        className,
+        ...props
+    }: PrimitiveProps<typeof MenuPrimitive.Separator, "div">) {
         return (
             <P.Separator
                 data-slot="menu-separator"
@@ -98,7 +104,9 @@ export function createMenuParts(P: MenuNamespace) {
         );
     }
 
-    function Group({ ...props }: MenuPrimitive.Group.Props) {
+    function Group({
+        ...props
+    }: PrimitiveProps<typeof MenuPrimitive.Group, "div">) {
         return <P.Group data-slot="menu-group" {...props} />;
     }
 
@@ -118,7 +126,9 @@ export function createMenuParts(P: MenuNamespace) {
         checked,
         inset,
         ...props
-    }: MenuPrimitive.CheckboxItem.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.CheckboxItem, "div"> & {
+        inset?: boolean;
+    }) {
         return (
             <P.CheckboxItem
                 data-slot="menu-item"
@@ -140,7 +150,9 @@ export function createMenuParts(P: MenuNamespace) {
         );
     }
 
-    function RadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
+    function RadioGroup({
+        ...props
+    }: PrimitiveProps<typeof MenuPrimitive.RadioGroup, "div">) {
         return <P.RadioGroup data-slot="menu-radio-group" {...props} />;
     }
 
@@ -149,7 +161,9 @@ export function createMenuParts(P: MenuNamespace) {
         children,
         inset,
         ...props
-    }: MenuPrimitive.RadioItem.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.RadioItem, "div"> & {
+        inset?: boolean;
+    }) {
         return (
             <P.RadioItem
                 data-slot="menu-item"
@@ -175,7 +189,9 @@ export function createMenuParts(P: MenuNamespace) {
         inset,
         children,
         ...props
-    }: MenuPrimitive.SubmenuTrigger.Props & { inset?: boolean }) {
+    }: PrimitiveProps<typeof MenuPrimitive.SubmenuTrigger, "div"> & {
+        inset?: boolean;
+    }) {
         return (
             <P.SubmenuTrigger
                 data-slot="menu-sub-trigger"
@@ -196,14 +212,15 @@ export function createMenuParts(P: MenuNamespace) {
         side,
         sideOffset,
         ...props
-    }: MenuPrimitive.Popup.Props &
+    }: PrimitiveProps<typeof MenuPrimitive.Popup, "div"> &
         Pick<
-            MenuPrimitive.Positioner.Props,
+            PrimitiveProps<typeof MenuPrimitive.Positioner, "div">,
             "align" | "alignOffset" | "side" | "sideOffset"
         >) {
         return (
             <P.Portal>
                 <P.Positioner
+                    {...POSITIONER_DEFAULTS}
                     className="isolate z-50 outline-none"
                     align={align}
                     alignOffset={alignOffset}

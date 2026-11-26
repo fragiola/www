@@ -1,10 +1,10 @@
-// The site export contract, v1.6 (CONTRACT.md): the shapes of what a project exports. Shared by
-// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.6
+// The site export contract, v1.8 (CONTRACT.md): the shapes of what a project exports. Shared by
+// the scripts (run with Node's type stripping: erasable syntax only) and the site. v1.1 to v1.8
 // keep the file format: `project.json` still says `"contract": 1`.
 
 export const CONTRACT = 1;
 /** The revision www implements, as the messages print it. */
-export const CONTRACT_REVISION = "1.6";
+export const CONTRACT_REVISION = "1.8";
 
 /** `<out>/project.json` (§2). */
 export interface ProjectInfo {
@@ -26,6 +26,22 @@ export interface ProjectInfo {
     adapters?: string[];
     /** v1.6: a Create page, `embed/<framework>/create.html`, served at /<slug>/create/ (§5.5) */
     create?: CreatePage;
+    /**
+     * v1.8: the primitive libraries the project's components are offered on (§2, §5.6, §7):
+     * exactly one is the default, exported where an export without bases puts its registry and
+     * embeds; every other one at `r/<name>/` and `embed/<framework>/<name>/`.
+     */
+    bases?: BaseInfo[];
+}
+
+/** `project.json` `bases` (v1.8, §2): one primitive library the project's components run on. */
+export interface BaseInfo {
+    /** lowercase kebab-case: the folder of its registry and embeds */
+    name: string;
+    /** what the base switcher shows ("Fragiola Primitives", "Base UI") */
+    title: string;
+    /** the base exported at the default paths */
+    default?: boolean;
 }
 
 /** `project.json` `create` (v1.6, §2, §5.5): the project's full-page tool. */

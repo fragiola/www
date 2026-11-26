@@ -214,23 +214,34 @@ for (const read of reads) {
 }
 
 // ─── registry (§7) ───────────────────────────────────────────────────────────
+// /r/ holds every project's items on its default base, /r/<base>/ each other base's (v1.8): the
+// same names, an index per tree.
 const registryOut = join(PUBLIC, "r");
 rmSync(registryOut, { recursive: true, force: true });
-const items: Omit<RegistryItem, "files">[] = [];
+const trees = new Map<string, Omit<RegistryItem, "files">[]>([["", []]]);
+function publish(tree: string, from: string, item: RegistryItem) {
+    mkdirSync(join(registryOut, tree), { recursive: true });
+    cpSync(from, join(registryOut, tree, `${item.name}.json`));
+    const { files: _files, ...summary } = item;
+    if (!trees.has(tree)) trees.set(tree, []);
+    trees.get(tree)?.push(summary);
+}
 for (const read of reads) {
     for (const [name, item] of read.registry) {
-        cpSync(
-            join(read.dir, "r", `${name}.json`),
-            join(registryOut, `${name}.json`),
-        );
-        const { files: _files, ...summary } = item;
-        items.push(summary);
+        publish("", join(read.dir, "r", `${name}.json`), item);
+    }
+    for (const [base, items] of read.baseRegistries) {
+        for (const [name, item] of items) {
+            publish(base, join(read.dir, "r", base, `${name}.json`), item);
+        }
     }
 }
-write(
-    join(registryOut, "index.json"),
-    `${JSON.stringify({ name: "fragiola", homepage: "https://fragiola.com", items }, null, 4)}\n`,
-);
+for (const [tree, items] of trees) {
+    write(
+        join(registryOut, tree, "index.json"),
+        `${JSON.stringify({ name: "fragiola", homepage: "https://fragiola.com", items }, null, 4)}\n`,
+    );
+}
 
 // ─── the agent index ─────────────────────────────────────────────────────────
 // /agents/index.json, a Markdown copy of every docs page, the overview and /llms.txt: what AI
@@ -302,5 +313,5 @@ write(
 
 const seconds = ((performance.now() - started) / 1000).toFixed(1);
 console.log(
-    `prepare:site — ${reads.map((r) => `${r.slug} (${[...r.manifests.keys()].join(", ")})`).join(", ")} · ${codeFiles} code files · ${items.length} registry items · ${agents.files.length} agent files · ${imports.length} theme files · ${seconds}s`,
+    `prepare:site — ${reads.map((r) => `${r.slug} (${[...r.manifests.keys()].join(", ")})`).join(", ")} · ${codeFiles} code files · ${trees.get("")?.length ?? 0} registry items${trees.size > 1 ? ` (+ ${[...trees.keys()].filter(Boolean).join(", ")})` : ""} · ${agents.files.length} agent files · ${imports.length} theme files · ${seconds}s`,
 );

@@ -261,8 +261,14 @@ test("small screens: the gallery's list and the site menu never open together", 
     await expect(list).toBeVisible();
     await expect(site(page)).toBeHidden();
     // the list is the Sidebar's Drawer, modal: the page behind it, the menu with it, is out of
-    // reach until it closes
-    await expect(menu).toBeHidden();
+    // reach until it closes (inert on Fragiola Primitives, ui's default base; aria-hidden on
+    // Base UI)
+    expect(
+        await menu.evaluate(
+            (element) =>
+                element.closest('[inert], [aria-hidden="true"]') !== null,
+        ),
+    ).toBe(true);
     await page.keyboard.press("Escape");
     await expect(list).toBeHidden();
     await menu.click();

@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/json-ld";
 import { getMDXComponents } from "@/components/mdx";
 import { ProjectFooter } from "@/components/project-footer";
 import { SiteHeader } from "@/components/site-header";
+import { basesOf } from "@/lib/contract/bases";
 import { siteHeader } from "@/lib/layout.shared";
 import { getProject } from "@/lib/projects";
 import { pageMetadata, projectJsonLd } from "@/lib/seo";
@@ -57,6 +58,7 @@ export default async function ProjectLanding({ params }: Props) {
                     slug: project.slug,
                     frameworks: project.frameworks,
                     defaultFramework: project.defaultFramework,
+                    bases: basesOf(project),
                 }}
             >
                 <main data-testid="landing" className="flex flex-1 flex-col">

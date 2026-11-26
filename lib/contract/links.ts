@@ -164,7 +164,9 @@ export function embedHref(
     framework: string,
     id: string,
     theme: string,
+    /** v1.8: a non-default base's folder (`base/`), "" for the default base (lib/contract/bases.ts) */
+    base = "",
 ): string {
     const query = new URLSearchParams({ id, theme });
-    return `/${slug}/embed/${framework}/?${query}`;
+    return `/${slug}/embed/${framework}/${base}?${query}`;
 }

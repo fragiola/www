@@ -42,11 +42,12 @@
 // Namespace object: a single `popup` export with `content` and `tooltip`.
 
 import { tv } from "tailwind-variants";
+import { foundation } from "./foundation";
 
 const content = tv({
-    base: `
-        palette-raised bg-palette-base text-palette-contrast
-        rounded-lg border border-palette-line shadow-md
+    base: [
+        foundation.overlay(),
+        `
         min-w-36 p-2
         max-h-(--available-height) origin-(--transform-origin)
         overflow-x-hidden overflow-y-auto
@@ -62,6 +63,7 @@ const content = tv({
         rtl:data-[side=inline-end]:slide-in-from-right-2
         duration-150 ease-out
     `,
+    ],
 });
 
 // tooltip — a transient text label. Inverted palette (accent as background,

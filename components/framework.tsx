@@ -7,6 +7,7 @@ import {
     useContext,
     useSyncExternalStore,
 } from "react";
+import type { BaseInfo } from "@/lib/contract/types";
 import { frameworkName } from "@/lib/frameworks";
 import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 
@@ -43,6 +44,8 @@ export interface ProjectFrameworks {
     slug: string;
     frameworks: string[];
     defaultFramework: string;
+    /** v1.8: the project's bases, the default first; absent or empty for a project on one */
+    bases?: BaseInfo[];
 }
 
 const ProjectContext = createContext<ProjectFrameworks | null>(null);

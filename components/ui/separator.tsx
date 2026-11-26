@@ -1,10 +1,10 @@
 "use client";
 
-import { Separator as SeparatorPrimitive } from "@base-ui/react/separator";
-import type * as React from "react";
+import { Separator as SeparatorPrimitive } from "@fragiola/primitives-react/separator";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
-// Separator — a visual divider. Uses Base UI's primitive for the ARIA
+// Separator — a visual divider. Uses Fragiola Primitives' primitive for the ARIA
 // (`role="separator"`, `aria-orientation`). No family — the `menu` family
 // has a `separator` member, but that one is specific to menu lists (it
 // carries the menu's spacing). This separator is generic: `bg-palette-line`
@@ -16,7 +16,7 @@ import { cn } from "@/lib/cn";
 function Separator({
     className,
     ...props
-}: React.ComponentProps<typeof SeparatorPrimitive>) {
+}: PrimitiveProps<typeof SeparatorPrimitive, "div">) {
     return (
         <SeparatorPrimitive
             data-slot="separator"

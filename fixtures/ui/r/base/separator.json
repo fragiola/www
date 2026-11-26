@@ -1,0 +1,16 @@
+{
+    "name": "separator",
+    "type": "registry:ui",
+    "title": "Separator",
+    "description": "A visual divider. Uses Base UI primitive for ARIA (role=separator, aria-orientation). No family — the menu family separator carries menu spacing. This separator is generic: bg-palette-line (a role) + orientation from primitive. Horizontal: h-px w-full. Vertical: h-full w-px.",
+    "dependencies": ["@base-ui/react"],
+    "registryDependencies": ["@fragiola/theme", "@fragiola/cn"],
+    "files": [
+        {
+            "path": "registry/ui/separator.tsx",
+            "type": "registry:ui",
+            "target": "~/components/ui/separator.tsx",
+            "content": "\"use client\";\n\nimport { Separator as SeparatorPrimitive } from \"@base-ui/react/separator\";\nimport type * as React from \"react\";\nimport { cn } from \"@/lib/cn\";\n\n// Separator — a visual divider. Uses Base UI's primitive for the ARIA\n// (`role=\"separator\"`, `aria-orientation`). No family — the `menu` family\n// has a `separator` member, but that one is specific to menu lists (it\n// carries the menu's spacing). This separator is generic: `bg-palette-line`\n// (a role) + orientation from the primitive.\n//\n// Horizontal: `h-px w-full`. Vertical: `h-full w-px`. The consumer can\n// override the size via className.\n\nfunction Separator({\n    className,\n    ...props\n}: React.ComponentProps<typeof SeparatorPrimitive>) {\n    return (\n        <SeparatorPrimitive\n            data-slot=\"separator\"\n            className={cn(\n                \"shrink-0 bg-palette-line\",\n                \"data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full\",\n                \"data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px\",\n                className as string,\n            )}\n            {...props}\n        />\n    );\n}\n\nexport { Separator };\n"
+        }
+    ]
+}

@@ -1,26 +1,27 @@
 "use client";
 
-import { Field as FieldPrimitive } from "@base-ui/react/field";
+import { Field as FieldPrimitive } from "@fragiola/primitives-react/field";
 import type * as React from "react";
 import { Text } from "@/components/atoms/text";
 import { field } from "@/components/families/field";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
-// Field composition — stitches Base UI's Field primitive (behaviour/a11y)
+// Field composition — stitches Fragiola Primitives' Field primitive (behaviour/a11y)
 // with the `field` family's style (appearance) via `render` (architecture.md
 // §3). Namespace object: a single export, dot access.
 //
-// Base UI's Field resolves the a11y wiring that neither shadcn nor the
+// Fragiola Primitives' Field resolves the a11y wiring that neither shadcn nor the
 // reference code did: controlId↔labelId (aria-labelledby), aria-invalid,
 // validate/validationMode, and aria-describedby on Description/Error via
 // LabelableProvider. No div+useId reimplementation.
 
 // Root — column: label, body, description, error. Passes validate,
-// validationMode, invalid, disabled, name through to Base UI.
+// validationMode, invalid, disabled, name through to Fragiola Primitives.
 function FieldRoot({
     className,
     ...props
-}: React.ComponentProps<typeof FieldPrimitive.Root>) {
+}: PrimitiveProps<typeof FieldPrimitive.Root, "div">) {
     return (
         <FieldPrimitive.Root
             data-slot="field-root"
@@ -31,12 +32,12 @@ function FieldRoot({
 }
 
 // Label → Text.Label via render. Clicking the label activates the control
-// (from Base UI, not reimplemented). field.label brings only palette/state;
+// (from Fragiola Primitives, not reimplemented). field.label brings only palette/state;
 // the typography (block/text-sm/font-semibold) comes from Text.Label.
 function FieldLabel({
     className,
     ...props
-}: React.ComponentProps<typeof FieldPrimitive.Label>) {
+}: PrimitiveProps<typeof FieldPrimitive.Label, "label">) {
     return (
         <FieldPrimitive.Label
             data-slot="field-label"
@@ -50,11 +51,11 @@ function FieldLabel({
 // ChoiceRoot — row layout for checkable controls (checkbox, radio, switch).
 // Unlike Root: control on the left, label on the right (not on top). Uses
 // field.choiceRoot instead of field.root. Reuses Label/Description/Error from
-// the normal field. Base UI Field provides the same a11y wiring.
+// the normal field. Fragiola Primitives' Field provides the same a11y wiring.
 function FieldChoiceRoot({
     className,
     ...props
-}: React.ComponentProps<typeof FieldPrimitive.Root>) {
+}: PrimitiveProps<typeof FieldPrimitive.Root, "div">) {
     return (
         <FieldPrimitive.Root
             data-slot="field-choice-root"
@@ -133,12 +134,12 @@ function FieldAddon({
 }
 
 // Description → Text.Paragraph via render. field.description brings only
-// palette/state; the typography comes from Text. Base UI registers the id in
+// palette/state; the typography comes from Text. Fragiola Primitives registers the id in
 // the LabelableProvider → aria-describedby on the control.
 function FieldDescription({
     className,
     ...props
-}: React.ComponentProps<typeof FieldPrimitive.Description>) {
+}: PrimitiveProps<typeof FieldPrimitive.Description, "p">) {
     return (
         <FieldPrimitive.Description
             data-slot="field-description"
@@ -150,15 +151,15 @@ function FieldDescription({
 }
 
 // Error → Text.Error via render. match controls visibility based on the
-// field's ValidityState (e.g. match="valueMissing"). Base UI registers the id
+// field's ValidityState (e.g. match="valueMissing"). Fragiola Primitives registers the id
 // in the LabelableProvider → aria-describedby; data-invalid activates
 // palette-danger.
 function FieldError({
     className,
     match,
     ...props
-}: React.ComponentProps<typeof FieldPrimitive.Error> &
-    Pick<React.ComponentProps<typeof FieldPrimitive.Error>, "match">) {
+}: PrimitiveProps<typeof FieldPrimitive.Error, "div"> &
+    Pick<PrimitiveProps<typeof FieldPrimitive.Error, "div">, "match">) {
     return (
         <FieldPrimitive.Error
             data-slot="field-error"

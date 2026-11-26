@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import React from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+import { foundation } from "@/components/families/foundation";
 import { cn } from "@/lib/cn";
 
 const headingVariants = tv({
@@ -77,7 +78,8 @@ const Link = React.forwardRef<
         <a
             ref={ref}
             className={cn(
-                "text-palette-contrast text-sm hover:underline",
+                foundation.focus(),
+                "rounded-sm text-palette-contrast text-sm underline decoration-palette-line underline-offset-4 transition-colors duration-150 hover:decoration-current",
                 className,
             )}
             {...rest}
@@ -94,7 +96,9 @@ const Clickable = React.forwardRef<
             type="button"
             ref={ref}
             className={cn(
-                "inline text-palette-contrast text-sm hover:underline",
+                foundation.focus(),
+                "inline",
+                "rounded-sm text-palette-contrast text-sm underline decoration-palette-line underline-offset-4 transition-colors duration-150 hover:decoration-current",
                 className,
             )}
             {...rest}
@@ -141,7 +145,7 @@ const Label = React.forwardRef<
         <label
             ref={ref}
             className={cn(
-                "text-palette-contrast text-sm font-semibold block",
+                "text-palette-contrast text-sm font-medium block",
                 className,
             )}
             {...rest}
@@ -169,7 +173,10 @@ const TextError = React.forwardRef<
     return (
         <span
             ref={ref}
-            className={cn("palette-danger text-xs", className)}
+            className={cn(
+                "palette-danger text-xs text-palette-accent",
+                className,
+            )}
             {...rest}
         />
     );

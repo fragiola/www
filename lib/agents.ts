@@ -14,6 +14,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { baseDir, basesOf } from "./contract/bases.ts";
 import { siteHref } from "./contract/links.ts";
 import { lowerPage, readFrontmatter } from "./contract/mdx.ts";
 import type {
@@ -97,8 +98,24 @@ export interface AgentIndex {
         index: string;
         item: string;
         componentsJson: Record<string, { url: string }>;
+        /**
+         * v1.8 (CONTRACT.md §7): the primitive libraries the registry is offered on, the default
+         * first (its paths are the ones above). Additive: a reader that ignores it gets the
+         * default base. Absent when the registry has one base.
+         */
+        bases?: AgentRegistryBase[];
     };
     projects: AgentProject[];
+}
+
+/** One base of the registry (v1.8): its paths, and the components.json entry that selects it. */
+export interface AgentRegistryBase {
+    name: string;
+    title: string;
+    default: boolean;
+    index: string;
+    item: string;
+    componentsJson: Record<string, { url: string }>;
 }
 
 /** What one export gives the index (an `ExportRead` of lib/contract/validate.ts is one). */
@@ -306,6 +323,19 @@ export function buildAgentFiles(
         const namespace = info.registry?.namespace;
         const kind: ProjectKind = namespace ? "registry" : "library";
         if (namespace && !registry) {
+            const bases = basesOf(info).map((base) => {
+                const dir = baseDir(base);
+                return {
+                    name: base.name,
+                    title: base.title,
+                    default: base.default === true,
+                    index: `/r/${dir}index.json`,
+                    item: `/r/${dir}{name}.json`,
+                    componentsJson: {
+                        [namespace]: { url: `${site}/r/${dir}{name}.json` },
+                    },
+                };
+            });
             registry = {
                 namespace,
                 index: "/r/index.json",
@@ -313,6 +343,7 @@ export function buildAgentFiles(
                 componentsJson: {
                     [namespace]: { url: `${site}/r/{name}.json` },
                 },
+                ...(bases.length > 0 ? { bases } : {}),
             };
         }
         const config = readJson<DocsConfig>(

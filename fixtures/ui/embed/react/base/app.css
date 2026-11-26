@@ -1,0 +1,77 @@
+/* The fixture embed app's styles: one floor colour per example theme. */
+html,
+body {
+    margin: 0;
+    height: 100%;
+    font-family: system-ui, sans-serif;
+}
+#stage {
+    box-sizing: border-box;
+    height: 100%;
+    padding: 16px;
+}
+#stage.flow {
+    height: auto;
+}
+body:has(#stage.flow) {
+    height: auto;
+}
+.example {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+.example h1 {
+    margin: 0;
+    font-size: 18px;
+}
+.row {
+    height: 40px;
+}
+html[data-example-theme="light"],
+html[data-example-theme="light"] body {
+    background: rgb(250, 250, 250);
+    color: rgb(20, 20, 20);
+}
+html[data-example-theme="dark"],
+html[data-example-theme="dark"] body {
+    background: rgb(24, 24, 27);
+    color: rgb(244, 244, 245);
+}
+#stage[data-example-theme="light"] {
+    background: rgb(250, 250, 250);
+}
+#stage[data-example-theme="dark"] {
+    background: rgb(24, 24, 27);
+}
+/* An `overlay` example's modal overlay: on the whole viewport, from its inline-end edge. */
+.overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgb(0 0 0 / 0.4);
+    opacity: 0;
+    transition: opacity 200ms;
+}
+.overlay-panel {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    box-sizing: border-box;
+    width: 240px;
+    padding: 16px;
+    transform: translateX(100%);
+    transition: transform 200ms;
+}
+html[data-example-theme="light"] .overlay-panel {
+    background: rgb(250, 250, 250);
+}
+html[data-example-theme="dark"] .overlay-panel {
+    background: rgb(24, 24, 27);
+}
+.overlay-backdrop[data-open] {
+    opacity: 1;
+}
+.overlay-panel[data-open] {
+    transform: none;
+}

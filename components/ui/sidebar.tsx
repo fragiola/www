@@ -1,14 +1,16 @@
 "use client";
 
-import { useDirection } from "@base-ui/react/direction-provider";
-import { useRender } from "@base-ui/react/use-render";
+import { useDirection } from "@fragiola/primitives-react/direction";
+import { useRender } from "@fragiola/primitives-react/render";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 import { tv, type VariantProps } from "tailwind-variants";
 import { Badge } from "@/components/atoms/badge";
 import { Clickable } from "@/components/atoms/clickable";
 import { Input } from "@/components/atoms/fields";
+import { foundation } from "@/components/families/foundation";
 import { menu } from "@/components/families/menu";
+import type { RenderComponentProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 import { Drawer } from "@/components/ui/drawer";
 import { Field } from "@/components/ui/field";
@@ -16,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip } from "@/components/ui/tooltip";
 
-// Sidebar — the app shell's navigation column. Base UI has no sidebar
+// Sidebar — the app shell's navigation column. Neither base has a sidebar
 // primitive, so this component is a RECOMBINATION: the behaviour comes from
 // primitives that already sit behind Fragiola components (Drawer on mobile,
 // Tooltip in icon mode, useRender for polymorphic parts), and the appearance
@@ -85,7 +87,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 // ─── SIDE IS LOGICAL ────────────────────────────────────────────────────────
 // `side="start" | "end"` (rule 6). The desktop layout flips on its own with
 // logical properties. The Drawer's `side` is physical, so the mobile edge is
-// resolved against the reading direction Base UI reads (DirectionProvider).
+// resolved against the reading direction the base reads (DirectionProvider).
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -638,7 +640,7 @@ function SidebarGroupLabel({
     className,
     render,
     ...props
-}: useRender.ComponentProps<"div">) {
+}: RenderComponentProps<"div">) {
     return useRender({
         defaultTagName: "div",
         render,
@@ -646,9 +648,9 @@ function SidebarGroupLabel({
             ...props,
             className: cn(
                 menu.label(),
+                foundation.focusInset(),
                 "flex h-8 shrink-0 items-center gap-2 rounded-md",
-                "focus-visible:outline-2 focus-visible:outline-palette-ring",
-                "[&>svg]:size-4 [&>svg]:shrink-0",
+                "[&>svg]:size-icon [&>svg]:shrink-0",
                 "transition-[margin,opacity] duration-200 ease-linear motion-reduce:transition-none",
                 "group-data-[collapsible=icon]/sidebar:-mt-8 group-data-[collapsible=icon]/sidebar:opacity-0",
                 className as string,
@@ -756,7 +758,7 @@ function SidebarMenuButton({
     tooltip,
     className,
     ...props
-}: useRender.ComponentProps<"button"> &
+}: RenderComponentProps<"button"> &
     VariantProps<typeof menuButton> & {
         /** The current page: `data-active`, lit and weighted. */
         isActive?: boolean;
@@ -926,7 +928,7 @@ function SidebarMenuSubButton({
     isActive = false,
     className,
     ...props
-}: useRender.ComponentProps<"a"> &
+}: RenderComponentProps<"a"> &
     VariantProps<typeof menuSubButton> & {
         /** The current page: `data-active`, lit and weighted. */
         isActive?: boolean;
