@@ -55,6 +55,7 @@
 // Namespace object: a single `menu` export with all members.
 
 import { tv } from "tailwind-variants";
+import { foundation } from "./foundation";
 
 // The row every item of the family shares — popup or navigation. Not a
 // member: it has no way of being lit, so on its own it is not an item.
@@ -64,7 +65,7 @@ const itemSkeleton = tv({
         text-palette-accent/85
         data-disabled:pointer-events-none data-disabled:opacity-50
         data-inset:ps-7
-        [&_svg:not([class*='size-'])]:size-4
+        [&_svg:not([class*='size-'])]:size-icon
         [&_svg]:pointer-events-none [&_svg]:shrink-0
     `,
 });
@@ -73,10 +74,10 @@ const itemSkeleton = tv({
 // subTrigger derive from it via extend.
 const item = tv({
     extend: itemSkeleton,
-    base: `
-        cursor-default py-1.5 px-1.5 outline-none
-        highlighted:bg-palette-soft highlighted:text-palette-contrast
-    `,
+    base: [
+        foundation.highlighted(),
+        "cursor-default py-1.5 px-1.5 outline-none",
+    ],
 });
 
 // selectableItem = item with space for the indicator (check) on the end side.
@@ -126,18 +127,21 @@ const itemIndicator = tv({
 // `data-disabled`.
 const navItem = tv({
     extend: itemSkeleton,
-    base: `
+    base: [
+        foundation.hover(),
+        foundation.current(),
+        foundation.focusInset(),
+        `
         h-8 w-full overflow-hidden px-2 text-start
-        hover:bg-palette-soft hover:text-palette-contrast
-        data-active:bg-palette-soft data-active:font-medium data-active:text-palette-contrast
+        hover:text-palette-contrast
         [&[data-popup-open][aria-haspopup]]:bg-palette-soft
         [&[data-popup-open][aria-haspopup]]:text-palette-contrast
-        focus-visible:outline-2 focus-visible:outline-palette-ring
         disabled:pointer-events-none disabled:opacity-50
         aria-disabled:pointer-events-none aria-disabled:opacity-50
         transition-[width,height,padding]
         [&>span:last-child]:truncate
     `,
+    ],
 });
 
 // navSubItem — an item one level down (Sidebar.MenuSubButton). The same

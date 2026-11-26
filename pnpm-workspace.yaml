@@ -5,4 +5,11 @@ allowBuilds:
   sharp: false
 # Only versions published at least 7 days ago (minutes).
 minimumReleaseAge: 10080
+# This organisation's own packages, taken the day they are published: the Fragiola UI components
+# the site is built with run on Fragiola Primitives (ui's default base, Epic #89). Exact versions,
+# so the guard still covers anything else.
+minimumReleaseAgeExclude:
+  - '@fragiola/primitives-react@0.2.0'
+  - '@fragiola/primitives@0.2.0'
+
 verifyDepsBeforeRun: false

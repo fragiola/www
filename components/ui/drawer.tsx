@@ -1,14 +1,17 @@
 "use client";
 
-import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer";
+import type { DialogTriggerProps } from "@fragiola/primitives-react/dialog";
+import { Drawer as DrawerPrimitive } from "@fragiola/primitives-react/drawer";
 import { XIcon } from "lucide-react";
+import type * as React from "react";
 import { Clickable } from "@/components/atoms/clickable";
 import { Text } from "@/components/atoms/text";
 import { layer } from "@/components/families/layer";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
 // Drawer — an edge-anchored layer with real swipe and snap-point support.
-// Built on Base UI's Drawer primitive, which is why this component exists and
+// Built on Fragiola Primitives' Drawer, which is why this component exists and
 // why `sheet` does not: an edge-anchored dialog and a drawer are the same
 // component, and the behaviour library ships a real Drawer with swipe, snap
 // points and a viewport. Two items would be exactly the duplication this
@@ -42,18 +45,40 @@ import { cn } from "@/lib/cn";
 
 type Side = "up" | "down" | "left" | "right";
 
-function DrawerRoot({ ...props }: DrawerPrimitive.Root.Props) {
+function DrawerRoot({
+    ...props
+}: PrimitiveProps<typeof DrawerPrimitive.Root, "div">) {
     return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
 }
 
-function DrawerTrigger({ ...props }: DrawerPrimitive.Trigger.Props) {
+// The Trigger's own props type is an `Omit` of Dialog's over a type that
+// forwards any prop, which leaves only the forwarding: the props are
+// Dialog.Trigger's (the same part, with a Drawer handle).
+type TriggerProps = Omit<
+    PrimitiveProps<React.ComponentType<DialogTriggerProps>, "button">,
+    "handle"
+> &
+    Pick<React.ComponentProps<typeof DrawerPrimitive.Trigger>, "handle">;
+
+function DrawerTrigger({ ...props }: TriggerProps) {
     return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
 }
 
-function DrawerPortal({ children, ...props }: DrawerPrimitive.Portal.Props) {
+// Fragiola Primitives' Portal renders no element of its own (Base UI's is a
+// div): the div here carries the portal's slot and its props, so
+// everything keyed on `drawer-portal` (the embeds' overlay promotion, readers'
+// selectors) finds it on every base.
+function DrawerPortal({
+    children,
+    container,
+    keepMounted,
+    ...props
+}: PrimitiveProps<typeof DrawerPrimitive.Portal, "div">) {
     return (
-        <DrawerPrimitive.Portal data-slot="drawer-portal" {...props}>
-            {children}
+        <DrawerPrimitive.Portal container={container} keepMounted={keepMounted}>
+            <div data-slot="drawer-portal" {...props}>
+                {children}
+            </div>
         </DrawerPrimitive.Portal>
     );
 }
@@ -61,7 +86,7 @@ function DrawerPortal({ children, ...props }: DrawerPrimitive.Portal.Props) {
 function DrawerBackdrop({
     className,
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Backdrop>) {
+}: PrimitiveProps<typeof DrawerPrimitive.Backdrop, "div">) {
     return (
         <DrawerPrimitive.Backdrop
             data-slot="drawer-backdrop"
@@ -78,7 +103,7 @@ function DrawerViewport({
     className,
     side = "right",
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Viewport> & {
+}: PrimitiveProps<typeof DrawerPrimitive.Viewport, "div"> & {
     side?: Side;
 }) {
     return (
@@ -110,7 +135,7 @@ function DrawerPopup({
     className,
     side = "right",
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Popup> & {
+}: PrimitiveProps<typeof DrawerPrimitive.Popup, "div"> & {
     side?: Side;
 }) {
     return (
@@ -130,7 +155,7 @@ function DrawerPopup({
                 // the transition is off while the finger is down.
                 "ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform",
                 "data-swiping:duration-0 data-swiping:select-none",
-                "data-ending-style:duration-[calc(var(--drawer-swipe-strength)*300ms)]",
+                "data-ending-style:duration-[calc(var(--drawer-swipe-strength,1)*300ms*var(--motion-scale,1))]",
                 // sizing + radius per anchored edge. Radius is removed on the
                 // ANCHORED edge (the one touching the screen); the free edges
                 // keep it. left/right use PHYSICAL radius (rounded-r/l), not
@@ -161,7 +186,7 @@ function DrawerHandle({ className, ...props }: React.ComponentProps<"div">) {
             data-slot="drawer-handle"
             aria-hidden
             className={cn(
-                "mx-auto mt-3 mb-2 h-1.5 w-10 shrink-0 rounded-full bg-palette-line",
+                "mx-auto mt-3 mb-2 h-1.5 w-10 shrink-0 rounded-pill bg-palette-line",
                 className as string,
             )}
             {...props}
@@ -174,7 +199,7 @@ function DrawerContent({
     showClose = true,
     children,
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content> & {
+}: PrimitiveProps<typeof DrawerPrimitive.Content, "div"> & {
     showClose?: boolean;
 }) {
     return (
@@ -236,7 +261,7 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
 function DrawerTitle({
     className,
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Title>) {
+}: PrimitiveProps<typeof DrawerPrimitive.Title, "h2">) {
     return (
         <DrawerPrimitive.Title
             data-slot="drawer-title"
@@ -250,7 +275,7 @@ function DrawerTitle({
 function DrawerDescription({
     className,
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Description>) {
+}: PrimitiveProps<typeof DrawerPrimitive.Description, "p">) {
     return (
         <DrawerPrimitive.Description
             data-slot="drawer-description"
@@ -264,7 +289,7 @@ function DrawerDescription({
 function DrawerClose({
     className,
     ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Close>) {
+}: PrimitiveProps<typeof DrawerPrimitive.Close, "button">) {
     return (
         <DrawerPrimitive.Close
             data-slot="drawer-close"

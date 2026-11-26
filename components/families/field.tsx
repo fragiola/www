@@ -50,6 +50,7 @@
 // compiling.
 
 import { tv } from "tailwind-variants";
+import { foundation } from "./foundation";
 
 // root — vertical column: label on top, box (row) in the middle,
 // description/error below. `group/field` lets row/body/addon react to the
@@ -73,15 +74,29 @@ const choiceRoot = tv({
 // sides — without an orientation prop, without an extra nesting level.
 // min-h-control lives on the body (the control's area), not here: with a
 // block addon on top, the row is already taller from the content.
+//
+// Radius: `--radius-control`, capped at half the control height (4.5 steps
+// of `--spacing`, h-control being 9). At `data-radius="full"` a one-line field
+// is a pill, and a textarea or a field with a block addon keeps round corners
+// instead of turning into a stadium. `--field-radius` is declared here, on
+// the box, so the addons and insets inside derive their inner radius from it
+// (minus the 2px gap, never below zero).
+//
+// The surface, the stroke and the ring are the foundation's (`box`,
+// `fieldFocus`, docs/visual-language.md): the row looks like every other
+// control box — an outline button, a select trigger, an unchecked checkbox.
 const row = tv({
-    base: `
+    base: [
+        foundation.box(),
+        foundation.fieldFocus(),
+        `
         flex w-full min-w-0 flex-wrap items-stretch overflow-hidden
-        rounded-md border border-palette-line bg-palette-soft
-        text-sm text-palette-accent/85
-        field-focus:outline-2 field-focus:outline-palette-ring
+        [--field-radius:min(var(--radius-control),calc(var(--spacing)*4.5))]
+        rounded-(--field-radius) text-sm
         group-data-disabled/field:cursor-not-allowed
         group-data-disabled/field:opacity-50
     `,
+    ],
 });
 
 // body — the control's area inside the box. No border, no background and
@@ -116,8 +131,8 @@ const body = tv({
 // writing only the middle.
 const control = tv({
     base: `
-        field-control w-full min-w-0 bg-transparent px-3 py-2 text-sm text-palette-accent/85 outline-none
-        placeholder:text-palette-accent/60
+        field-control w-full min-w-0 bg-transparent px-3 py-2 text-sm text-palette-accent outline-none
+        placeholder:text-palette-accent/85
         selection:bg-palette-base selection:text-palette-contrast
         disabled:cursor-not-allowed
         file:border-0 file:bg-transparent file:text-sm file:font-semibold
@@ -143,14 +158,14 @@ const control = tv({
 // Side is data-side, NOT a variant — zero variants means zero.
 const addon = tv({
     base: `
-        flex shrink-0 items-center self-stretch px-3 text-sm text-palette-accent/85
+        flex shrink-0 items-center self-stretch bg-palette-soft px-3 text-sm text-palette-accent/85
         border-palette-line
         data-[side=inline-start]:border-e
         data-[side=inline-end]:border-s
         data-[side=block-start]:basis-full data-[side=block-start]:order-first data-[side=block-start]:border-b
         data-[side=block-end]:basis-full data-[side=block-end]:order-last data-[side=block-end]:border-t
-        [&>kbd]:rounded-[calc(var(--radius-md)-2px)] [&>button]:rounded-[calc(var(--radius-md)-2px)]
-        [&_svg:not([class*='size-'])]:size-4
+        [&>kbd]:rounded-[max(0px,calc(var(--field-radius)-2px))] [&>button]:rounded-[max(0px,calc(var(--field-radius)-2px))]
+        [&_svg:not([class*='size-'])]:size-icon
     `,
 });
 
@@ -166,8 +181,8 @@ const inset = tv({
     base: `
         flex shrink-0 items-center justify-center gap-2 text-palette-accent/85
         first:ps-3 last:pe-3
-        [&>kbd]:rounded-[calc(var(--radius-md)-2px)] [&>button]:rounded-[calc(var(--radius-md)-2px)]
-        [&_svg:not([class*='size-'])]:size-4
+        [&>kbd]:rounded-[max(0px,calc(var(--field-radius)-2px))] [&>button]:rounded-[max(0px,calc(var(--field-radius)-2px))]
+        [&_svg:not([class*='size-'])]:size-icon
     `,
 });
 
@@ -177,12 +192,16 @@ const inset = tv({
 // Text.Error brings palette-danger/text-xs. Redefining typography here would
 // violate the composition rule — the same rule as DialogTitle. data-disabled
 // comes from Base UI itself on these elements.
+//
+// The label is the field's name, not secondary text: full `accent` (not
+// `contrast` — under `palette-danger` that is the white meant for a red
+// fill) at `font-medium`, the weight of every label (docs/visual-language.md).
 const label = tv({
-    base: "text-palette-accent/85 leading-none data-disabled:opacity-50",
+    base: "font-medium text-palette-accent leading-none data-disabled:opacity-50",
 });
 
 const description = tv({
-    base: "text-palette-accent/85 data-disabled:opacity-50",
+    base: [foundation.secondary(), "data-disabled:opacity-50"],
 });
 
 const error = tv({

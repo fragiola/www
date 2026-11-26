@@ -1,17 +1,22 @@
 "use client";
 
-import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import { Menu as MenuPrimitive } from "@fragiola/primitives-react/menu";
 import type * as React from "react";
 import { createMenuParts } from "@/components/families/menu/parts";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
 
 const parts = createMenuParts(MenuPrimitive);
 
-function DropdownMenuRoot({ ...props }: MenuPrimitive.Root.Props) {
+function DropdownMenuRoot({
+    ...props
+}: PrimitiveProps<typeof MenuPrimitive.Root, "div">) {
     return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
-function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
+function DropdownMenuTrigger({
+    ...props
+}: PrimitiveProps<typeof MenuPrimitive.Trigger, "button">) {
     return (
         <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
     );
@@ -24,9 +29,9 @@ function DropdownMenuContent({
     sideOffset = 4,
     className,
     ...props
-}: MenuPrimitive.Popup.Props &
+}: PrimitiveProps<typeof MenuPrimitive.Popup, "div"> &
     Pick<
-        MenuPrimitive.Positioner.Props,
+        PrimitiveProps<typeof MenuPrimitive.Positioner, "div">,
         "align" | "alignOffset" | "side" | "sideOffset"
     >) {
     return (

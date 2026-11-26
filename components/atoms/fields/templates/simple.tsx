@@ -1,7 +1,7 @@
 import type * as React from "react";
+import { Input } from "@/components/atoms/fields/input";
 import { field } from "@/components/families/field";
 import { Field } from "@/components/ui/field";
-import { Input } from "../input";
 
 // Input.Template.Simple — the tightest case. label, description, error,
 // required, inset (inside, start/end), addon (outside, four sides) — all

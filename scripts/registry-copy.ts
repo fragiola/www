@@ -68,12 +68,20 @@ for (let name = queue.shift(); name; name = queue.shift()) {
     }
     copied.push(name);
     for (const file of item.files ?? []) {
-        if (!file.target || file.content === undefined) {
+        // a registry:lib file without a target lands under the lib alias, as the shadcn CLI
+        // puts it (ui's `base` item: registry/lib/base.ts → lib/base.ts)
+        const libTarget =
+            file.type === "registry:lib" &&
+            file.path.startsWith("registry/lib/")
+                ? `@lib/${file.path.slice("registry/lib/".length)}`
+                : undefined;
+        const fileTarget = file.target ?? libTarget;
+        if (!fileTarget || file.content === undefined) {
             throw new Error(
-                `registry:copy — ${name}: ${file.path} has no ${file.target ? "content" : "target"}`,
+                `registry:copy — ${name}: ${file.path} has no ${fileTarget ? "content" : "target"}`,
             );
         }
-        const path = target(file.target);
+        const path = target(fileTarget);
         const other = files.get(path);
         if (other && other.content !== file.content) {
             throw new Error(

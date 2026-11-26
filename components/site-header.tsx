@@ -79,7 +79,8 @@ function ProjectCard({
         <NavigationMenu.Link
             active={current && section === "landing"}
             data-current={current ? "" : undefined}
-            closeOnClick
+            // no closeOnClick: Fragiola Primitives' Link has none (ui's default base); the header
+            // is a page's own, so the menu goes with the page the link opens
             render={<NextLink href={`/${project.slug}/`} />}
             className="group flex h-full flex-col gap-1 rounded-md p-3 transition-colors hover:bg-palette-soft focus-visible:outline-2 focus-visible:outline-palette-ring data-current:bg-palette-soft/60"
         >

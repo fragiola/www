@@ -42,6 +42,7 @@
 // values where only one is right (the surface is the same); unify.
 
 import { tv } from "tailwind-variants";
+import { foundation } from "./foundation";
 
 // ─── TRANSITIONS, NOT KEYFRAMES ─────────────────────────────────────────────
 // data-starting-style / data-ending-style are Base UI's TRANSITION markers:
@@ -64,7 +65,7 @@ import { tv } from "tailwind-variants";
 const backdrop = tv({
     base: `
         fixed inset-0 z-50 bg-scrim
-        transition-opacity duration-300 ease-out motion-reduce:transition-none
+        transition-opacity duration-200 ease-out motion-reduce:transition-none
         data-starting-style:opacity-0 data-ending-style:opacity-0
     `,
 });
@@ -75,14 +76,15 @@ const backdrop = tv({
 // ring so the dialog's own focus management (initialFocus) is visible only on
 // the focused child.
 const panel = tv({
-    base: `
-        palette-raised bg-palette-base text-palette-contrast
-        rounded-lg border border-palette-line shadow-lg
+    base: [
+        foundation.overlay(),
+        `
         outline-none
-        transition-[opacity,scale,translate,transform] duration-300 ease-out
+        transition-[opacity,scale,translate,transform] duration-200 ease-out
         motion-reduce:transition-none
         data-starting-style:opacity-0 data-ending-style:opacity-0
     `,
+    ],
 });
 
 // header — title + description block. The dialog/drawer primitives do not
@@ -113,7 +115,7 @@ const title = tv({
 // description — palette + state only; typography comes from Text.Paragraph
 // through render.
 const description = tv({
-    base: "text-palette-accent/85",
+    base: foundation.secondary(),
 });
 
 export const layer = {

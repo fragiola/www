@@ -21,9 +21,9 @@ import { cn } from "@/lib/cn";
 
 const badge = tv({
     base: `
-        inline-flex items-center rounded-full border px-2.5 py-0.5
+        inline-flex items-center rounded-pill border px-2.5 py-0.5
         text-xs font-medium transition-colors
-        [&_svg:not([class*='size-'])]:size-3
+        [&_svg:not([class*='size-'])]:size-icon-xs
     `,
     variants: {
         variant: {

@@ -1,6 +1,6 @@
 // Layer parts factory — `createLayerParts(P)`.
 //
-// Takes a Base UI overlay namespace (Dialog or AlertDialog) and returns the
+// Takes a Fragiola Primitives overlay namespace (Dialog or AlertDialog) and returns the
 // styled React wrappers that compose `layer` + `Text` + `Clickable`. This is
 // the piece that lets dialog and alert-dialog share wrappers without coupling
 // to the wrong namespace.
@@ -9,7 +9,7 @@
 // AlertDialog.Backdrop === Dialog.Backdrop, AlertDialog.Popup === Dialog.Popup,
 // AlertDialog.Title === Dialog.Title, etc. (7/9 parts identical at runtime —
 // only Root and Trigger differ). Importing Dialog directly would work today,
-// but the factory protects against tomorrow: if Base UI ever diverges, each
+// but the factory protects against tomorrow: if the library ever diverges, each
 // component inherits its own namespace's divergence instead of being silently
 // pinned to Dialog.
 //
@@ -21,13 +21,14 @@
 // footer, title, description) but its parts are thin enough that a factory
 // would be padding — see registry/ui/drawer.tsx.
 
-import type { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import type { Dialog as DialogPrimitive } from "@fragiola/primitives-react/dialog";
 import { XIcon } from "lucide-react";
 import type * as React from "react";
 import { Clickable } from "@/components/atoms/clickable";
 import { Text } from "@/components/atoms/text";
+import { layer } from "@/components/families/layer";
+import type { PrimitiveProps } from "@/lib/base";
 import { cn } from "@/lib/cn";
-import { layer } from "../layer";
 
 // Structural type of the namespace — only the parts the factory consumes.
 // Root and Trigger are deliberately excluded: they differ between Dialog and
@@ -51,7 +52,7 @@ export function createLayerParts(P: LayerNamespace) {
     function Backdrop({
         className,
         ...props
-    }: React.ComponentProps<typeof P.Backdrop>) {
+    }: PrimitiveProps<typeof P.Backdrop, "div">) {
         return (
             <P.Backdrop
                 data-slot="layer-backdrop"
@@ -66,7 +67,7 @@ export function createLayerParts(P: LayerNamespace) {
         showClose = true,
         children,
         ...props
-    }: React.ComponentProps<typeof P.Popup> & {
+    }: PrimitiveProps<typeof P.Popup, "div"> & {
         /** Whether to render the close affordance. A boolean that toggles a
          * part is not a style variant. alert-dialog sets this to false. */
         showClose?: boolean;
@@ -138,7 +139,7 @@ export function createLayerParts(P: LayerNamespace) {
     function Title({
         className,
         ...props
-    }: React.ComponentProps<typeof P.Title>) {
+    }: PrimitiveProps<typeof P.Title, "h2">) {
         return (
             <P.Title
                 data-slot="layer-title"
@@ -156,7 +157,7 @@ export function createLayerParts(P: LayerNamespace) {
     function Description({
         className,
         ...props
-    }: React.ComponentProps<typeof P.Description>) {
+    }: PrimitiveProps<typeof P.Description, "p">) {
         return (
             <P.Description
                 data-slot="layer-description"
@@ -170,7 +171,7 @@ export function createLayerParts(P: LayerNamespace) {
     function Close({
         className,
         ...props
-    }: React.ComponentProps<typeof P.Close>) {
+    }: PrimitiveProps<typeof P.Close, "button">) {
         return (
             <P.Close
                 data-slot="layer-close"
