@@ -10,6 +10,7 @@ import {
     useState,
     useSyncExternalStore,
 } from "react";
+import { setBase, useBase } from "@/components/base";
 import { ExampleFrame } from "@/components/example-frame";
 import { setFramework } from "@/components/framework";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/resizable";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/cn";
+import type { BaseInfo } from "@/lib/contract/types";
 import { frameworkName } from "@/lib/frameworks";
 import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 import { iconButton, useShell, variantFor } from "./gallery-chrome";
@@ -98,9 +100,31 @@ function FrameworkSwitcher({
     );
 }
 
+/** The base switch of the toolbar (v1.8): site-wide, like the framework's. */
+function BaseSwitcher({ bases, value }: { bases: BaseInfo[]; value: string }) {
+    return (
+        <fieldset className="flex items-center gap-1">
+            <legend className="sr-only">Base</legend>
+            {bases.map((base) => (
+                <button
+                    key={base.name}
+                    type="button"
+                    aria-pressed={value === base.name}
+                    data-base-option={base.name}
+                    className={cn(iconButton, "h-7 px-2 text-xs")}
+                    onClick={() => setBase(base.name)}
+                >
+                    {base.title}
+                </button>
+            ))}
+        </fieldset>
+    );
+}
+
 export function ExampleView({ id }: { id: string }) {
     const { gallery, state, setState, framework, theme, ready } = useShell();
     const { project } = gallery;
+    const base = useBase();
     const [resetKey, setResetKey] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
     const wide = useWide();
@@ -262,6 +286,12 @@ export function ExampleView({ id }: { id: string }) {
                                 <FrameworkSwitcher
                                     frameworks={project.frameworks}
                                     value={framework}
+                                />
+                            ) : null}
+                            {project.bases.length > 1 && base ? (
+                                <BaseSwitcher
+                                    bases={project.bases}
+                                    value={base.name}
                                 />
                             ) : null}
                             <div className="ms-auto flex items-center gap-1">

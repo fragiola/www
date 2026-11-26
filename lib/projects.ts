@@ -13,7 +13,9 @@ import { DOCS_SPACES } from "@/lib/site-paths";
 
 export { AI_SPACE } from "@/lib/site-paths";
 
+import { basesOf } from "@/lib/contract/bases";
 import type {
+    BaseInfo,
     DocsConfig,
     ExamplesConfig,
     Manifest,
@@ -259,6 +261,8 @@ export interface ProjectSummary {
     slug: string;
     frameworks: string[];
     defaultFramework: string;
+    /** v1.8: the bases, the default first; empty for a project on one (lib/contract/bases.ts) */
+    bases: BaseInfo[];
 }
 
 export interface ThemeSummary {
@@ -302,6 +306,7 @@ export function projectSummary(project: Project): ProjectSummary {
         slug: project.slug,
         frameworks: project.frameworks,
         defaultFramework: project.defaultFramework,
+        bases: basesOf(project),
     };
 }
 

@@ -6,6 +6,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import { ArrowRight } from "lucide-react";
 import type { MDXComponents } from "mdx/types";
 import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from "react";
+import { BaseRegistryNote } from "@/components/base";
 import { Example } from "@/components/example";
 import { Framework } from "@/components/framework";
 import { InstallCommand } from "@/components/install-command";
@@ -17,7 +18,13 @@ import { Section } from "@/components/landing/section";
 import { cn } from "@/lib/cn";
 import { isAppRoute, siteHref } from "@/lib/contract/links";
 import { LABEL_TOKEN } from "@/lib/contract/types";
-import { getGallery, getProject, installCommand } from "@/lib/projects";
+import {
+    getGallery,
+    getProject,
+    installCommand,
+    registryNamespaces,
+} from "@/lib/projects";
+import { SITE_URL } from "@/lib/seo";
 
 // The vocabulary (§3.4, v1.1), and nothing else: Example, Callout, Tabs/Tab, Steps/Step,
 // Cards/Card, InstallCommand, Framework, and for the landing Hero, Section, Features/Feature,
@@ -132,8 +139,15 @@ export function getMDXComponents(slug?: string, components?: MDXComponents) {
                 <table {...props} />
             </div>
         ),
+        // v1.8: on a non-default base, the components.json entry that selects it follows
         InstallCommand: ({ item }: { item: string }) => (
-            <InstallCommand command={installCommand([item])} />
+            <>
+                <InstallCommand command={installCommand([item])} />
+                <BaseRegistryNote
+                    namespace={registryNamespaces().get(item) ?? "@fragiola"}
+                    site={SITE_URL}
+                />
+            </>
         ),
         Example: (props: Omit<ComponentProps<typeof Example>, "project">) => {
             if (!slug) throw new Error("<Example> outside a project page");

@@ -12,6 +12,8 @@ export const STORAGE_KEYS = {
     theme: "@fragiola:theme",
     /** the framework choice, site-wide (components/framework.tsx) */
     framework: "@fragiola:framework",
+    /** the base choice, site-wide (components/base.tsx, v1.8) */
+    base: "@fragiola:base",
     /** the package manager of the docs' install commands (components/install-command.tsx) */
     packageManager: "@fragiola:package-manager",
     /** the example theme chosen in a project's gallery */

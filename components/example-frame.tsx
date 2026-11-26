@@ -8,6 +8,7 @@ import {
     useState,
     useSyncExternalStore,
 } from "react";
+import { useBaseDir } from "@/components/base";
 import {
     holdScroll,
     measurePromotion,
@@ -73,7 +74,23 @@ export interface ExampleFrameProps {
     className?: string;
 }
 
-export function ExampleFrame({
+/**
+ * The frame on the chosen base (v1.8, components/base.tsx): `embed/<fw>/<base>/` for a
+ * non-default one. Switching base remounts the frame, as Reset does: a new embed, a new ready.
+ */
+export function ExampleFrame(props: ExampleFrameProps) {
+    const baseFolder = useBaseDir();
+    return (
+        <ExampleFrameOnBase
+            key={baseFolder}
+            {...props}
+            baseFolder={baseFolder}
+        />
+    );
+}
+
+function ExampleFrameOnBase({
+    baseFolder,
     slug,
     framework,
     id,
@@ -86,7 +103,7 @@ export function ExampleFrame({
     lazy = false,
     placeholder,
     className,
-}: ExampleFrameProps) {
+}: ExampleFrameProps & { baseFolder: string }) {
     const frame = useRef<HTMLIFrameElement>(null);
     const wrapper = useRef<HTMLDivElement>(null);
     // never in the server's HTML: a frame loading before hydration could say ready before
@@ -267,6 +284,7 @@ export function ExampleFrame({
             data-testid="example-frame"
             data-example-id={id}
             data-framework={framework}
+            data-base={baseFolder ? baseFolder.slice(0, -1) : undefined}
             data-layout={layout}
             data-ready={ready ? "" : undefined}
             data-promoted={promotion ? "" : undefined}
@@ -276,7 +294,7 @@ export function ExampleFrame({
             {!mounted || loadedWith === undefined ? null : (
                 <iframe
                     ref={frame}
-                    src={embedHref(slug, framework, id, loadedWith)}
+                    src={embedHref(slug, framework, id, loadedWith, baseFolder)}
                     title={title}
                     loading={lazy ? "lazy" : "eager"}
                     allow="clipboard-read; clipboard-write; fullscreen"

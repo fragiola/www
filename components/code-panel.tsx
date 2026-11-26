@@ -3,6 +3,7 @@
 import { CodeBlock, Pre } from "fumadocs-ui/components/codeblock";
 import { Check, Copy, X } from "lucide-react";
 import { type CSSProperties, useEffect, useId, useRef, useState } from "react";
+import { useBase } from "@/components/base";
 import { cn } from "@/lib/cn";
 import { type CodeFile, loadExampleCode, loadThemeFiles } from "@/lib/code";
 
@@ -184,6 +185,7 @@ export function CodePanel({
                     >
                         {setup}
                     </code>
+                    <BaseSetupNote setup={setup} />
                 </div>
             ) : null}
             {loaded.state === "loading" ? (
@@ -257,5 +259,29 @@ export function CodePanel({
                 </>
             )}
         </div>
+    );
+}
+
+/**
+ * On a non-default base (v1.8, components/base.tsx): where the setup's registry items come from,
+ * the components.json URL of the base's registry. The panel only renders in the browser, so the
+ * site's origin is the page's.
+ */
+function BaseSetupNote({ setup }: { setup: string }) {
+    const base = useBase();
+    const namespace = /(@[a-z0-9][a-z0-9-]*)\//.exec(setup)?.[1];
+    if (!base || base.default || !namespace) return null;
+    return (
+        <p
+            data-testid="base-setup-note"
+            data-base={base.name}
+            className="mt-1.5"
+        >
+            {`On ${base.title}, point ${namespace} at `}
+            <code className="font-mono text-palette-contrast">
+                {`${window.location.origin}/r/${base.name}/{name}.json`}
+            </code>
+            {" in components.json."}
+        </p>
     );
 }

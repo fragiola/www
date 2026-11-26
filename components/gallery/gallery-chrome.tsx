@@ -12,6 +12,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { useBase } from "@/components/base";
 import { defaultTheme, useSiteScheme } from "@/components/example-theme";
 import {
     ProjectProvider,
@@ -21,6 +22,7 @@ import {
 import { SiteHeader, type SiteHeaderProps } from "@/components/site-header";
 import { Sidebar, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/cn";
+import type { BaseInfo } from "@/lib/contract/types";
 import { frameworkName } from "@/lib/frameworks";
 import type { ExampleVariant, Gallery, GalleryExample } from "@/lib/projects";
 import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
@@ -35,7 +37,7 @@ import { readStored, STORAGE_KEYS, writeStored } from "@/lib/storage";
 // framework and the code panel their state. No project's package is used to draw it.
 //
 // URL state: ?theme=<name> (an explicit choice; without one the example follows the site's
-// scheme), ?code=1, ?framework=<name> (when not the project's default). The chosen theme is
+// scheme), ?code=1, ?framework=<name> (when not the project's default), ?base=<name> (v1.8, likewise). The chosen theme is
 // remembered per project; the framework choice is site-wide (components/framework.tsx); the
 // list's open state is the reader's (lib/storage.ts).
 
@@ -61,11 +63,14 @@ export function query(
     state: ShellState,
     framework: string,
     defaultFramework: string,
+    /** v1.8: the chosen base, written when it is not the project's default */
+    base?: BaseInfo,
 ): string {
     const params = new URLSearchParams();
     if (state.theme) params.set("theme", state.theme);
     if (state.code) params.set("code", "1");
     if (framework !== defaultFramework) params.set("framework", framework);
+    if (base && !base.default) params.set("base", base.name);
     const text = params.toString();
     return text ? `?${text}` : "";
 }
@@ -275,6 +280,7 @@ function Chrome({
     // the example's id: the segment below /<slug>/examples (none on the index redirect)
     const current = useSelectedLayoutSegment() ?? "";
     const framework = useFramework();
+    const base = useBase();
     const scheme = useSiteScheme();
     const [state, setShellState] = useState<ShellState>({
         theme: null,
@@ -323,12 +329,12 @@ function Chrome({
     // biome-ignore lint/correctness/useExhaustiveDependencies: a new example has a new URL to update
     useEffect(() => {
         if (!ready) return;
-        const url = `${window.location.pathname}${query(state, framework, project.defaultFramework)}${window.location.hash}`;
+        const url = `${window.location.pathname}${query(state, framework, project.defaultFramework, base)}${window.location.hash}`;
         window.history.replaceState(window.history.state, "", url);
         if (state.theme) {
             writeStored(STORAGE_KEYS.exampleTheme(project.slug), state.theme);
         }
-    }, [state, framework, ready, current]);
+    }, [state, framework, base, ready, current]);
 
     const theme =
         state.theme ??
@@ -342,7 +348,7 @@ function Chrome({
         ready,
     };
     const href = (id: string) =>
-        `/${project.slug}/examples/${id}/${query(state, framework, project.defaultFramework)}`;
+        `/${project.slug}/examples/${id}/${query(state, framework, project.defaultFramework, base)}`;
 
     return (
         <ShellContext value={context}>
@@ -393,6 +399,7 @@ export function GalleryChrome({
                 slug: gallery.project.slug,
                 frameworks: gallery.project.frameworks,
                 defaultFramework: gallery.project.defaultFramework,
+                bases: gallery.project.bases,
             }}
         >
             <Chrome gallery={gallery} header={header}>
