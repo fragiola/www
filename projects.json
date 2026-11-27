@@ -61,5 +61,12 @@
         "ref": "main",
         "localPath": "../primitives",
         "devUrl": "http://localhost:5191"
+    },
+    {
+        "slug": "calendar",
+        "repo": "https://github.com/fragiola/calendar.git",
+        "ref": "main",
+        "localPath": "../calendar",
+        "devUrl": "http://localhost:5192"
     }
 ]
