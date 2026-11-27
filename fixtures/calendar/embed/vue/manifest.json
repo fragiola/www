@@ -1,0 +1,70 @@
+{
+    "files": {
+        "month/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Calendar } from \"@fragiola/calendar-vue\";\n\n// Month: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Calendar.DayGrid />\n</template>\n"
+        },
+        "drag-and-resize/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Calendar } from \"@fragiola/calendar-vue\";\n\n// Drag and resize: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Calendar.TimeGrid />\n</template>\n"
+        },
+        "team-planner/index.vue": {
+            "lang": "vue",
+            "content": "<script setup lang=\"ts\">\nimport { Calendar } from \"@fragiola/calendar-vue\";\n\n// Team planner: a placeholder source of the www fixture.\n</script>\n\n<template>\n    <Calendar.Root />\n</template>\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "month",
+            "title": "Month",
+            "description": "A month you assemble yourself: the title as data, the navigation buttons, weeks of days whose events fit what the day holds.",
+            "level": "basics",
+            "order": 1,
+            "features": ["DayGrid", "Weeks", "Day", "DayEvents", "More"],
+            "docs": "/docs/getting-started/first-calendar",
+            "layout": "fill",
+            "height": 680,
+            "files": ["month/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-vue"]
+        },
+        {
+            "id": "drag-and-resize",
+            "title": "Drag and resize",
+            "description": "Move an event across days and between the all-day row and the time grid, or resize it, with the pointer or the keyboard.",
+            "level": "interaction",
+            "order": 1,
+            "features": [
+                "dragAndDrop()",
+                "resize()",
+                "DragPreview",
+                "ResizeHandle"
+            ],
+            "docs": "/docs/getting-started/first-calendar",
+            "layout": "fill",
+            "height": 620,
+            "files": ["drag-and-resize/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-vue"]
+        },
+        {
+            "id": "team-planner",
+            "title": "Team planner",
+            "description": "A team's week with every feature on: calendars to show or hide, a mini month, and an event editor in a modal dialog.",
+            "level": "apps",
+            "order": 1,
+            "features": [
+                "every feature",
+                "Dialog",
+                "AlertDialog",
+                "calendar.set-visible"
+            ],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 720,
+            "files": ["team-planner/index.vue"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-vue"]
+        }
+    ]
+}

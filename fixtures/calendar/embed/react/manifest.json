@@ -1,0 +1,70 @@
+{
+    "files": {
+        "month/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Calendar } from \"@fragiola/calendar-react\";\n\n// Month: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Calendar.DayGrid />;\n}\n"
+        },
+        "drag-and-resize/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Calendar } from \"@fragiola/calendar-react\";\n\n// Drag and resize: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Calendar.TimeGrid />;\n}\n"
+        },
+        "team-planner/index.tsx": {
+            "lang": "tsx",
+            "content": "\"use client\";\n\nimport { Calendar } from \"@fragiola/calendar-react\";\n\n// Team planner: a placeholder source of the www fixture.\nexport default function Example() {\n    return <Calendar.Root />;\n}\n"
+        }
+    },
+    "examples": [
+        {
+            "id": "month",
+            "title": "Month",
+            "description": "A month you assemble yourself: the title as data, the navigation buttons, weeks of days whose events fit what the day holds.",
+            "level": "basics",
+            "order": 1,
+            "features": ["DayGrid", "Weeks", "Day", "DayEvents", "More"],
+            "docs": "/docs/getting-started/first-calendar",
+            "layout": "fill",
+            "height": 680,
+            "files": ["month/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-react"]
+        },
+        {
+            "id": "drag-and-resize",
+            "title": "Drag and resize",
+            "description": "Move an event across days and between the all-day row and the time grid, or resize it, with the pointer or the keyboard.",
+            "level": "interaction",
+            "order": 1,
+            "features": [
+                "dragAndDrop()",
+                "resize()",
+                "DragPreview",
+                "ResizeHandle"
+            ],
+            "docs": "/docs/getting-started/first-calendar",
+            "layout": "fill",
+            "height": 620,
+            "files": ["drag-and-resize/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-react"]
+        },
+        {
+            "id": "team-planner",
+            "title": "Team planner",
+            "description": "A team's week with every feature on: calendars to show or hide, a mini month, and an event editor in a modal dialog.",
+            "level": "apps",
+            "order": 1,
+            "features": [
+                "every feature",
+                "Dialog",
+                "AlertDialog",
+                "calendar.set-visible"
+            ],
+            "docs": "/docs/getting-started/introduction",
+            "layout": "fill",
+            "height": 720,
+            "files": ["team-planner/index.tsx"],
+            "registry": [],
+            "packages": ["@fragiola/calendar-react"]
+        }
+    ]
+}

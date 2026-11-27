@@ -1,0 +1,27 @@
+{
+    "sections": [
+        {
+            "label": "Getting started",
+            "pages": [
+                {
+                    "label": "Introduction",
+                    "path": "getting-started/introduction"
+                },
+                {
+                    "label": "Your first calendar",
+                    "path": "getting-started/first-calendar"
+                }
+            ]
+        },
+        {
+            "label": "More",
+            "pages": [
+                {
+                    "label": "Found a problem?",
+                    "href": "https://github.com/fragiola/calendar/issues",
+                    "external": true
+                }
+            ]
+        }
+    ]
+}

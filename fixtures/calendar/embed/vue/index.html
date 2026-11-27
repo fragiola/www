@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- The fixture embed app of www/fixtures (contract v1 §5): see app.js. -->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="robots" content="noindex" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Calendar examples (vue, fixture)</title>
+        <script id="fixture-config" type="application/json">
+            {"framework":"vue","themes":{"light":"light","dark":"dark","ide":"dark","paper":"light","terminal":"dark"},"examples":{"month":{"title":"Month","layout":"fill"},"drag-and-resize":{"title":"Drag and resize","layout":"fill"},"team-planner":{"title":"Team planner","layout":"fill","overlay":true}}}
+        </script>
+        <script>
+            (() => {
+                const schemes = JSON.parse(document.getElementById("fixture-config").textContent).themes;
+                const asked = new URLSearchParams(location.search).get("theme");
+                const theme = asked && Object.hasOwn(schemes, asked) ? asked : "light";
+                const html = document.documentElement;
+                html.dataset.theme = schemes[theme];
+                html.classList.toggle("dark", schemes[theme] === "dark");
+                html.style.colorScheme = schemes[theme];
+                html.dataset.exampleTheme = theme;
+            })();
+        </script>
+        <link rel="stylesheet" href="/calendar/embed/vue/app.css" />
+    </head>
+    <body>
+        <div id="stage" data-testid="stage"></div>
+        <script type="module" src="/calendar/embed/vue/app.js"></script>
+    </body>
+</html>

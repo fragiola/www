@@ -1,0 +1,103 @@
+{
+    "levels": [
+        {
+            "id": "basics",
+            "title": "Basics"
+        },
+        {
+            "id": "interaction",
+            "title": "Interaction"
+        },
+        {
+            "id": "apps",
+            "title": "Apps"
+        }
+    ],
+    "themes": [
+        {
+            "name": "light",
+            "title": "Light",
+            "description": "Neutral and quiet: the reference look.",
+            "scheme": "light",
+            "swatch": [
+                "oklch(0.96 0.003 250)",
+                "oklch(1 0 0)",
+                "oklch(0.55 0.2 250)",
+                "oklch(0.68 0.17 55)"
+            ],
+            "file": {
+                "path": "_themes/light.css",
+                "lang": "css",
+                "content": "/* Light: Neutral and quiet: the reference look. */\n[data-example-theme=\"light\"] {\n    --floor: rgb(255, 255, 255);\n    --ink: rgb(20, 20, 20);\n}\n"
+            }
+        },
+        {
+            "name": "dark",
+            "title": "Dark",
+            "description": "The same shapes as Light, on dark palettes.",
+            "scheme": "dark",
+            "swatch": [
+                "oklch(0.13 0.01 250)",
+                "oklch(0.19 0.01 250)",
+                "oklch(0.7 0.18 250)",
+                "oklch(0.75 0.16 55)"
+            ],
+            "file": {
+                "path": "_themes/dark.css",
+                "lang": "css",
+                "content": "/* Dark: The same shapes as Light, on dark palettes. */\n[data-example-theme=\"dark\"] {\n    --floor: rgb(17, 24, 39);\n    --ink: rgb(240, 240, 240);\n}\n"
+            }
+        },
+        {
+            "name": "ide",
+            "title": "IDE",
+            "description": "A dense code-editor planner: hairline grid, square events with a stripe.",
+            "scheme": "dark",
+            "swatch": [
+                "oklch(0.2 0.006 260)",
+                "oklch(0.235 0.006 260)",
+                "oklch(0.55 0.16 245)",
+                "oklch(0.72 0.15 60)"
+            ],
+            "file": {
+                "path": "_themes/ide.css",
+                "lang": "css",
+                "content": "/* IDE: A dense code-editor planner: hairline grid, square events with a stripe. */\n[data-example-theme=\"ide\"] {\n    --floor: rgb(30, 32, 40);\n    --ink: rgb(220, 225, 235);\n}\n"
+            }
+        },
+        {
+            "name": "paper",
+            "title": "Paper",
+            "description": "Warm and spacious: tall slots, rounded events, a serif face, dotted lines.",
+            "scheme": "light",
+            "swatch": [
+                "oklch(0.955 0.014 85)",
+                "oklch(0.99 0.006 85)",
+                "oklch(0.46 0.09 220)",
+                "oklch(0.62 0.14 45)"
+            ],
+            "file": {
+                "path": "_themes/paper.css",
+                "lang": "css",
+                "content": "/* Paper: Warm and spacious: tall slots, rounded events, a serif face, dotted lines. */\n[data-example-theme=\"paper\"] {\n    --floor: rgb(245, 239, 224);\n    --ink: rgb(60, 40, 20);\n}\n"
+            }
+        },
+        {
+            "name": "terminal",
+            "title": "Terminal",
+            "description": "Phosphor green on black: monospace, square cells, dashed lines.",
+            "scheme": "dark",
+            "swatch": [
+                "oklch(0.13 0.012 150)",
+                "oklch(0.16 0.016 150)",
+                "oklch(0.85 0.2 145)",
+                "oklch(0.8 0.16 75)"
+            ],
+            "file": {
+                "path": "_themes/terminal.css",
+                "lang": "css",
+                "content": "/* Terminal: Phosphor green on black: monospace, square cells, dashed lines. */\n[data-example-theme=\"terminal\"] {\n    --floor: rgb(0, 26, 0);\n    --ink: rgb(120, 255, 120);\n}\n"
+            }
+        }
+    ]
+}

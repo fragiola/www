@@ -1,6 +1,6 @@
 # fragiola.com
 
-The single site for every Fragiola project: `/` (the organization), `/ui`, `/dockable`, `/data-grid`, `/grid-layout`, `/dnd`, `/tree`, `/splitter`, `/flow`, `/primitives`, …
+The single site for every Fragiola project: `/` (the organization), `/ui`, `/dockable`, `/data-grid`, `/grid-layout`, `/dnd`, `/tree`, `/splitter`, `/flow`, `/primitives`, `/calendar`, …
 Each project lives in its own repo and exposes a **site export**; this repo checks the exports
 against the contract and assembles them into one static Next.js + Fumadocs site, published on
 GitHub Pages.
