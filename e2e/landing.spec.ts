@@ -287,8 +287,8 @@ test("no adapters row on a landing without a showcase", async ({ page }) => {
 test("the agent band on every landing, once, after the showcase (else the hero)", async ({
     page,
 }) => {
-    // v1.7 (§3.5): www's, the same on every landing; dockable, data-grid and primitives have a
-    // showcase
+    // v1.7 (§3.5): www's, the same on every landing; dockable, data-grid, primitives and calendar
+    // have a showcase
     const after = {
         dockable: '[data-variant="showcase"]',
         "data-grid": '[data-variant="showcase"]',
@@ -299,6 +299,7 @@ test("the agent band on every landing, once, after the showcase (else the hero)"
         splitter: '[data-testid="hero"]',
         flow: '[data-testid="hero"]',
         primitives: '[data-variant="showcase"]',
+        calendar: '[data-variant="showcase"]',
     };
     for (const [slug, previous] of Object.entries(after)) {
         await page.goto(`${slug}/`);

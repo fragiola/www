@@ -19,6 +19,7 @@ const SLIDES: [string, string][] = [
     ["splitter", "basic-horizontal"],
     ["flow", "workflow-builder"],
     ["primitives", "dialog"],
+    ["calendar", "team-planner"],
 ];
 
 const carousel = (page: Page) => page.getByTestId("live-preview");
@@ -64,7 +65,7 @@ test("right after the hero: a tab per project, in projects.json order, the first
     const slide = live.getByRole("tabpanel");
     await expect(slide).toHaveCount(1);
     await expect(slide).toHaveAttribute("aria-roledescription", "slide");
-    await expect(slide).toHaveAttribute("aria-label", /^1 of 9: Fragiola UI$/);
+    await expect(slide).toHaveAttribute("aria-label", /^1 of 10: Fragiola UI$/);
     const frame = await expectReady(slide);
     await expect(frame).toHaveAttribute("data-example-id", "clickable");
     await expect(frames(page)).toHaveCount(1);
@@ -82,6 +83,8 @@ test("no example iframe in the static HTML: the frame comes after hydration", as
 test("switching slides replaces the one iframe, at the same height, each derived from its landing", async ({
     page,
 }) => {
+    // about 3s a slide, one per project: ten pass the default 30s
+    test.setTimeout(90_000);
     const live = await openCarousel(page);
     const tabs = live.getByRole("tab");
     const stage = live.getByTestId("live-stage");

@@ -440,3 +440,40 @@ test("a landing's showcase is promoted too: primitives' dialog, in every framewo
         await page.close();
     }
 });
+
+test("calendar's showcase is promoted too: the team planner's dialog, in every framework", async ({
+    browser,
+}) => {
+    // the calendar fixture's showcase is its `team-planner`, an overlay example (its event editor
+    // is a modal dialog, fixtures/README.md)
+    for (const framework of ["react", "vue", "angular"]) {
+        const page = await browser.newPage();
+        await page.addInitScript((chosen) => {
+            if (window === window.top) {
+                localStorage.setItem("@fragiola:framework", chosen);
+            }
+        }, framework);
+        await page.goto("calendar/");
+        const block = page.locator(
+            '[data-example="team-planner"][data-variant="showcase"]',
+        );
+        const frame = await expectReady(block);
+        await expect(frame).toHaveAttribute("data-framework", framework);
+        await embed(block).getByTestId("open-overlay").click();
+        await expect(frame).toHaveAttribute("data-promoted", "");
+        // in the top layer, never moved in the DOM
+        expect(
+            await frame
+                .locator("iframe")
+                .evaluate((element) => element.matches(":popover-open")),
+        ).toBe(true);
+        await expect(embed(block).getByTestId("overlay-panel")).toHaveAttribute(
+            "data-open",
+            "",
+        );
+        await expect(embed(block).getByTestId("close-overlay")).toBeFocused();
+        await embed(block).getByTestId("close-overlay").click();
+        await expect(frame).not.toHaveAttribute("data-promoted", "");
+        await page.close();
+    }
+});
