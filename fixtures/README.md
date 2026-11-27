@@ -29,13 +29,13 @@ app at `embed/react/base/`, built for that base and marking its root `data-fixtu
 for the tests. No other fixture declares bases, so both cases are built.
 
 For v1.7 dockable's landing `Hero` orders its actions examples, then the agent (`/ai`, the site's
-AI agents docs), then the docs; every landing gets the agent band (after dockable's, data-grid's
-and primitives' showcase, after the others' `Hero`).
+AI agents docs), then the docs; every landing gets the agent band (after dockable's, data-grid's,
+primitives' and calendar's showcase, after the others' `Hero`).
 ui exports a stand-in `palettes` example (React only), so the organization's landing builds its
 "One class, one palette" section; the tests cover its absence (no section) on a copy
 (`tests/featured.test.ts`).
 
-For v1.5 every library but flow and primitives lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
+For v1.5 every library but flow, primitives and calendar lists `adapters` (`vanilla`, `react`, `vue`, `angular`) and ui none, so
 both cases are built; most fixtures embed React only, so the landing shows linked and plain adapters.
 
 For v1.4 ui's sidebar names icons (§3.1): every section has one, and the Installation page too,
@@ -64,6 +64,11 @@ landing has a `bleed` example first and a `showcase` one after it, so the organi
 the `dialog` example (theme `light`), an `"overlay": true` example like ui's `clickable`, so a
 modal example is promoted from a landing's showcase too (`e2e/promotion.spec.ts`); its `app.css`
 has the overlay's styles, like ui's.
+`calendar` was written the same way when it joined, with three frameworks (`react`, `vue`,
+`angular`), five themes and, like the real export, no `adapters`; its landing's showcase is the
+`team-planner` example (theme `light`), an `"overlay": true` example whose event editor is a modal
+dialog, so it is promoted from the showcase too (`e2e/promotion.spec.ts`), and its `Hero` links
+the agent (`/ai`) as the real landing does.
 
 What is **not** the real projects':
 
